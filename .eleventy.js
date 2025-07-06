@@ -1,7 +1,7 @@
 // .eleventy.js
-const { DateTime } = require("luxon");
+import { DateTime } from "luxon";
 
-module.exports = function (eleventyConfig) {
+export default function(eleventyConfig) {
   eleventyConfig.addFilter("date", (value, format = "yyyy") => {
     return DateTime.fromJSDate(new Date(value)).toFormat(format);
   });
@@ -13,4 +13,4 @@ module.exports = function (eleventyConfig) {
       output: "_site"
     }
   };
-};
+}
