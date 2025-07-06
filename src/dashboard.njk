@@ -11,37 +11,186 @@
 
   <hr class="my-6" />
 
-  <div>
-    <h3 class="text-xl font-semibold mb-2">📚 Your eBooks</h3>
-    <p class="text-gray-500 text-sm">No eBooks created yet. <a href="/#generate" class="text-blue-600 hover:underline">Start one now</a>.</p>
-    <!-- Later we’ll dynamically list user's saved eBooks here -->
+  <!-- 📘 eBook Generator Form -->
+  <div class="mt-6">
+    <h3 class="text-xl font-semibold mb-4">📘 Create New eBook</h3>
+    <form id="ebook-form" class="grid grid-cols-1 gap-4">
+      <!-- Core Info -->
+      <input type="text" id="title" name="title" placeholder="eBook Title" class="border px-4 py-2 rounded" required />
+      <input type="text" id="topic" name="topic" placeholder="Topic or Subject" class="border px-4 py-2 rounded" />
+      <textarea id="description" name="description" placeholder="Describe your eBook content or goal..." rows="3" class="border px-4 py-2 rounded"></textarea>
+      <input type="text" id="author_name" name="author_name" placeholder="Author Name" class="border px-4 py-2 rounded" />
+
+      <!-- Basic Settings -->
+      <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+        <select id="audience" name="audience" class="border px-4 py-2 rounded" required>
+          <option value="">Select Audience</option>
+          <option>Kids</option>
+          <option>Teens</option>
+          <option>Students</option>
+          <option>Parents</option>
+          <option>Teachers</option>
+          <option>Professionals</option>
+          <option>Entrepreneurs</option>
+          <option>Freelancers</option>
+          <option>Experts</option>
+          <option>General Public</option>
+          <option>Hobbyists</option>
+          <option>Lifelong Learners</option>
+        </select>
+        <select id="tone" name="tone" class="border px-4 py-2 rounded" required>
+          <option value="">Select Tone</option>
+          <option>Friendly</option>
+          <option>Professional</option>
+          <option>Conversational</option>
+          <option>Persuasive</option>
+          <option>Inspirational</option>
+          <option>Humorous</option>
+          <option>Casual</option>
+          <option>Educational</option>
+          <option>Empathetic</option>
+          <option>Authoritative</option>
+          <option>Story-based</option>
+        </select>
+        <select id="purpose" name="purpose" class="border px-4 py-2 rounded" required>
+          <option value="">Select Purpose</option>
+          <option>Informative</option>
+          <option>Educational / Tutorial</option>
+          <option>Promotional / Affiliate</option>
+          <option>Storytelling</option>
+          <option>Lead Generation</option>
+          <option>Thought Leadership</option>
+          <option>Problem-Solving Guide</option>
+          <option>Awareness Building</option>
+          <option>Entertainment</option>
+        </select>
+        <select id="language" class="border px-4 py-2 rounded" required>
+         <option value="">Select Language</option>
+         <option value="English">English</option>
+         <option value="Hindi">Hindi</option>
+         <option value="Spanish">Spanish</option>
+         <option value="French">French</option>
+         <option value="German">German</option>
+         <option value="Arabic">Arabic</option>
+         <option value="Portuguese">Portuguese</option>
+         <option value="Indonesian">Indonesian</option>
+         <option value="Bengali">Bengali</option>
+         <option value="Chinese">Chinese</option>
+         </select>
+      </div>
+
+      <!-- Extra Options -->
+      <div class="flex flex-col gap-2">
+        <label><input type="checkbox" id="with_images" name="with_images" /> Include Images</label>
+        <label><input type="checkbox" id="include_affiliate_links" name="include_affiliate_links" /> Add Affiliate Links Based on Keywords</label>
+        <label><input type="checkbox" id="cover_image" name="cover_image" /> Use Cover Image</label>
+        <input type="text" id="cover_title" name="cover_title" placeholder="Cover Title (optional)" class="border px-4 py-2 rounded" />
+        <input type="file" id="cover_upload" name="cover_upload" accept="image/*" class="border px-4 py-2 rounded" />
+      </div>
+
+      <!-- Pages & Formatting -->
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <input type="number" id="total_pages" name="total_pages" placeholder="Total Pages" min="10" max="200" class="border px-4 py-2 rounded" required />
+        <input type="number" id="font_size" name="font_size" placeholder="Font Size" min="10" max="48" class="border px-4 py-2 rounded" />
+        <input type="number" id="headline_size" name="headline_size" placeholder="Headline Size" class="border px-4 py-2 rounded" />
+        <input type="number" id="subheadline_size" name="subheadline_size" placeholder="Subheadline Size" class="border px-4 py-2 rounded" />
+        <input type="number" id="line_spacing" name="line_spacing" placeholder="Line Spacing" step="0.1" class="border px-4 py-2 rounded" />
+        <input type="number" id="paragraph_spacing" name="paragraph_spacing" placeholder="Paragraph Spacing" step="0.1" class="border px-4 py-2 rounded" />
+      </div>
+
+      <!-- Margins & Format -->
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <input type="number" id="margin_top" name="margin_top" placeholder="Top Margin" class="border px-4 py-2 rounded" />
+        <input type="number" id="margin_bottom" name="margin_bottom" placeholder="Bottom Margin" class="border px-4 py-2 rounded" />
+        <input type="number" id="margin_left" name="margin_left" placeholder="Left Margin" class="border px-4 py-2 rounded" />
+        <input type="number" id="margin_right" name="margin_right" placeholder="Right Margin" class="border px-4 py-2 rounded" />
+      </div>
+
+      <!-- Layout Options -->
+      <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+        <select id="text_alignment" name="text_alignment" class="border px-4 py-2 rounded">
+          <option value="">Text Alignment</option>
+          <option>justify</option>
+          <option>left</option>
+          <option>center</option>
+          <option>right</option>
+        </select>
+        <select id="font_type" name="font_type" class="border px-4 py-2 rounded" required>
+          <option value="">Select Font</option>
+          <option value="Arial">Arial</option>
+          <option value="Open Sans">Open Sans</option>
+          <option value="Roboto">Roboto</option>
+          <option value="Georgia">Georgia</option>
+          <option value="Lato">Lato</option>
+          <option value="Times New Roman">Times New Roman</option>
+          <option value="Noto Sans">Noto Sans (Best for Multilingual)</option>
+        </select>
+        <select id="page_size" name="page_size" class="border px-4 py-2 rounded" required>
+          <option value="">Select Page Size</option>
+          <option value="A4">A4 (210mm × 297mm)</option>
+          <option value="Letter">US Letter (8.5in × 11in)</option>
+          <option value="A5">A5 (148mm × 210mm)</option>
+          <option value="6x9">6×9 in (Popular for Kindle & Print-on-Demand)</option>
+        </select>
+      </div>
+
+      <!-- Preset Save Option -->
+      <label class="mt-2">
+        <input type="checkbox" id="save_formatting_preset" name="save_formatting_preset" />
+        Save this formatting as default for next time
+      </label>
+
+      <!-- Submit Button -->
+      <button type="submit" class="mt-4 bg-blue-600 text-white py-3 rounded hover:bg-blue-700 transition-all">
+        🚀 Generate eBook
+      </button>
+    </form>
   </div>
 </section>
 
 <script type="module">
   import { supabase } from '/supabaseClient.js';
+  let currentUser = null;
 
-  // Fetch current session
   const getUser = async () => {
     const { data: { session }, error } = await supabase.auth.getSession();
-
     if (error || !session) {
-      alert("Session expired or user not logged in.");
+      alert("Session expired. Please log in again.");
       window.location.href = "/login";
       return;
     }
-
-    const email = session.user.email;
-    document.getElementById("user-email").innerText = email;
+    currentUser = session.user;
+    document.getElementById("user-email").innerText = currentUser.email;
   };
 
   getUser();
 
-  // Sign out function
   window.signOut = async () => {
     await supabase.auth.signOut();
-    alert("You’ve been logged out.");
     window.location.href = "/login";
   };
+
+  const form = document.getElementById("ebook-form");
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const data = Object.fromEntries(new FormData(form));
+    const payload = {
+      user_id: currentUser.id,
+      ...data,
+      with_images: !!data.with_images,
+      include_affiliate_links: !!data.include_affiliate_links,
+      cover_image: !!data.cover_image,
+      save_formatting_preset: !!data.save_formatting_preset
+    };
+
+    const { error } = await supabase.from("ebooks").insert([payload]);
+    if (error) {
+      alert("❌ Failed to save eBook: " + error.message);
+    } else {
+      alert("✅ eBook created successfully!");
+      form.reset();
+    }
+  });
 </script>
+<script type="module" src="/description/ebook-form-handler.js"></script>
 {% endblock %}
