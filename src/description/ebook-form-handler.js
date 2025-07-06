@@ -1,4 +1,3 @@
-// /description/ebook-form-handler.js
 import { supabase } from '/supabaseClient.js';
 
 let currentUser = null;
@@ -62,7 +61,7 @@ form.addEventListener("submit", async (e) => {
     include_affiliate_links: getBool("include_affiliate_links"),
     cover_image: getBool("cover_image"),
     save_formatting_preset: getBool("save_formatting_preset")
-    // cover_upload: not stored in Supabase unless uploaded separately
+    // Note: cover_upload not handled here
   };
 
   // ✅ Save to Supabase
@@ -70,7 +69,58 @@ form.addEventListener("submit", async (e) => {
   if (error) {
     alert("❌ Failed to save eBook: " + error.message);
   } else {
-    alert("✅ eBook created successfully!");
-    form.reset();
+    document.getElementById("success-message").classList.remove("hidden");
   }
+});
+
+// ✅ Create Another – Reset form inputs (keep formatting)
+window.createAnother = () => {
+  const fieldsToReset = ["title", "topic", "description", "author_name", "cover_title", "cover_upload"];
+  fieldsToReset.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+
+  document.getElementById("with_images").checked = false;
+  document.getElementById("include_affiliate_links").checked = false;
+  document.getElementById("cover_image").checked = false;
+
+  document.getElementById("success-message").classList.add("hidden");
+  document.getElementById("title").focus();
+};
+
+// 📩 Send to Email
+document.getElementById("send-email").addEventListener("click", async () => {
+  const response = await fetch('/api/send-ebook-email', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ user_id: currentUser.id, email: currentUser.email })
+  });
+
+  const result = await response.json();
+  if (result.success) {
+    alert("✅ eBook sent to your email!");
+  } else {
+    alert("❌ Failed to send email: " + result.error);
+  }
+});
+
+// ⬇️ Download PDF
+document.getElementById("download-pdf").addEventListener("click", async () => {
+  const response = await fetch(`/api/download-pdf?user_id=${currentUser.id}`);
+  if (!response.ok) {
+    alert("❌ Failed to generate PDF");
+    return;
+  }
+
+  const blob = await response.blob();
+  const url = window.URL.createObjectURL(blob);
+
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "ebook.pdf";
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  window.URL.revokeObjectURL(url);
 });
