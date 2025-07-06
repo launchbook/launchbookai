@@ -35,8 +35,8 @@ form.addEventListener("submit", async (e) => {
   const coverFile = fileInput?.files?.[0];
 
   if (coverFile) {
-    // Check size limit (5MB)
-    if (coverFile.size > 5 * 1024 * 1024) {
+    // Check size limit (15MB)
+    if (coverFile.size > 15 * 1024 * 1024) {
       alert("❌ Cover image too large! Max allowed is 5MB.");
       return;
     }
