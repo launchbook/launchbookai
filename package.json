@@ -16,7 +16,7 @@
     "express": "^4.19.2",
     "luxon": "^3.4.3",
     "nodemailer": "^6.9.9",
-    "puppeteer": "^22.7.0",  // ✅ Add this if using Puppeteer
-    "@supabase/supabase-js": "^2.39.5" // ✅ Add Supabase SDK
+    "puppeteer": "^22.7.0",
+    "@supabase/supabase-js": "^2.39.5"
   }
 }
