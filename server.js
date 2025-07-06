@@ -1,34 +1,61 @@
 // server.js
 import express from 'express';
-import bodyParser from 'body-parser';
+import puppeteer from 'puppeteer';
+import { createClient } from '@supabase/supabase-js';
 import nodemailer from 'nodemailer';
 import dotenv from 'dotenv';
 
-dotenv.config();
+dotenv.config(); // Load .env variables
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+app.use(express.json());
 
-app.use(bodyParser.json());
+// ✅ Supabase Client (use service role only on backend)
+const supabase = createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_ROLE_KEY
+);
 
-// ✅ Test endpoint
-app.get('/', (req, res) => {
-  res.send('Leostarearn API is running!');
-});
+// ✅ PDF generation + email route
+app.post('/generate-pdf', async (req, res) => {
+  const { html, user_id, email } = req.body;
 
-// ✅ Send eBook Email route
-app.post('/api/send-ebook-email', async (req, res) => {
-  const { user_id, email } = req.body;
-
-  if (!user_id || !email) {
-    return res.status(400).json({ error: 'Missing user_id or email' });
+  if (!html || !user_id || !email) {
+    return res.status(400).json({ error: "Missing html, user_id, or email" });
   }
 
-  const pdfUrl = `https://<your-supabase-id>.supabase.co/storage/v1/object/public/generated-pdfs/${user_id}-latest.pdf`;
-
   try {
+    // 🧾 Launch Puppeteer and render the HTML to PDF
+    const browser = await puppeteer.launch({
+      headless: 'new',
+      args: ['--no-sandbox', '--disable-setuid-sandbox'],
+    });
+    const page = await browser.newPage();
+    await page.setContent(html, { waitUntil: 'networkidle0' });
+
+    const pdfBuffer = await page.pdf({ format: 'A4', printBackground: true });
+    await browser.close();
+
+    // 🗂️ Upload PDF to Supabase Storage
+    const filePath = `${user_id}-latest.pdf`;
+    const { error: uploadErr } = await supabase
+      .storage
+      .from('generated-pdfs')
+      .upload(filePath, pdfBuffer, {
+        contentType: 'application/pdf',
+        upsert: true,
+      });
+
+    if (uploadErr) return res.status(500).json({ error: uploadErr.message });
+
+    const { data: { publicUrl } } = supabase
+      .storage
+      .from('generated-pdfs')
+      .getPublicUrl(filePath);
+
+    // 📩 Send email with download link
     const transporter = nodemailer.createTransport({
-      host: "smtp.zoho.in", // or smtp.gmail.com
+      host: 'smtp.zoho.in',
       port: 465,
       secure: true,
       auth: {
@@ -40,21 +67,23 @@ app.post('/api/send-ebook-email', async (req, res) => {
     await transporter.sendMail({
       from: `"Leostarearn eBooks" <${process.env.EMAIL_USER}>`,
       to: email,
-      subject: "📘 Your eBook is Ready",
+      subject: '📘 Your eBook is Ready!',
       html: `
         <p>Hello,</p>
-        <p>Your custom eBook is ready. Click below to download:</p>
-        <p><a href="${pdfUrl}" target="_blank">📥 Download Your eBook</a></p>
+        <p>Your custom eBook is ready! Click below to download it:</p>
+        <p><a href="${publicUrl}" target="_blank">📥 Download Your eBook</a></p>
+        <p>Thanks for using Leostarearn!</p>
       `
     });
 
-    return res.status(200).json({ success: true });
+    return res.json({ success: true, url: publicUrl });
 
   } catch (err) {
-    return res.status(500).json({ success: false, error: err.message });
+    console.error("❌ Error generating or sending PDF:", err);
+    return res.status(500).json({ error: err.message });
   }
 });
 
-app.listen(PORT, () => {
-  console.log(`✅ Server running on port ${PORT}`);
-});
+// ✅ Render-compatible port
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
