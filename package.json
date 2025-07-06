@@ -1,0 +1,11 @@
+{
+  "name": "launchbookai",
+  "version": "1.0.0",
+  "description": "LaunchBook AI frontend",
+  "scripts": {
+    "build": "eleventy"
+  },
+  "devDependencies": {
+    "@11ty/eleventy": "^2.0.1"
+  }
+}
