@@ -148,6 +148,23 @@
   </div>
 </section>
 
+<!-- ✅ Success Message Box -->
+<div id="success-message" class="hidden mt-6 p-4 bg-green-100 text-green-800 rounded shadow">
+  ✅ Your eBook has been saved!
+  <div class="mt-2 flex flex-wrap gap-4">
+
+    <button onclick="createAnother()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+      ➕ Create Another
+    </button>
+    <button disabled class="bg-gray-300 text-gray-600 px-4 py-2 rounded cursor-not-allowed">
+      📩 Send to Email (Coming Soon)
+    </button>
+    <button disabled class="bg-gray-300 text-gray-600 px-4 py-2 rounded cursor-not-allowed">
+      ⬇️ Download PDF (Later)
+    </button>
+  </div>
+</div>
+
 <script type="module" src="/description/ebook-form-handler.js"></script>
 
 {% endblock %}
