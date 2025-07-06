@@ -1,14 +1,20 @@
 {
   "name": "launchbookai",
   "version": "1.0.0",
-  "description": "LaunchBook AI frontend",
+  "description": "LaunchBook AI frontend + backend",
+  "type": "module",
   "scripts": {
-    "build": "eleventy"
+    "build": "eleventy",
+    "start": "node server.js"  // ✅ For Render
   },
   "devDependencies": {
     "@11ty/eleventy": "^2.0.1"
   },
   "dependencies": {
-    "luxon": "^3.4.3"
+    "body-parser": "^1.20.2",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "luxon": "^3.4.3",
+    "nodemailer": "^6.9.9"
   }
 }
