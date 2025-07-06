@@ -1,5 +1,10 @@
+// .eleventy.js
+const { DateTime } = require("luxon");
+
 module.exports = function (eleventyConfig) {
-  eleventyConfig.addPassthroughCopy({ "src/supabaseClient.js": "supabaseClient.js" });
+  eleventyConfig.addFilter("date", (value, format = "yyyy") => {
+    return DateTime.fromJSDate(new Date(value)).toFormat(format);
+  });
 
   return {
     dir: {
