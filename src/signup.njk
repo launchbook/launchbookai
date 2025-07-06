@@ -1,65 +1,38 @@
-{% extends "_includes/base.njk" %}
+{% extends "base.njk" %}
 
 {% block content %}
-<section class="max-w-xl mx-auto mt-12 p-6 bg-white shadow rounded">
-  <h2 class="text-2xl font-bold mb-6 text-center text-blue-700">Create Your Account</h2>
+<section class="max-w-md mx-auto p-6 bg-white rounded shadow mt-10">
+  <h2 class="text-2xl font-bold mb-4">Sign Up</h2>
   <form id="signup-form" class="grid gap-4">
-    <div class="grid grid-cols-2 gap-4">
-      <input type="text" id="firstName" placeholder="First Name" required class="border px-4 py-2 rounded" />
-      <input type="text" id="lastName" placeholder="Last Name" required class="border px-4 py-2 rounded" />
-    </div>
-    <input type="email" id="email" placeholder="Email" required class="border px-4 py-2 rounded" />
-    <input type="password" id="password" placeholder="Password" required class="border px-4 py-2 rounded" />
-
-    <button type="submit" class="bg-blue-600 text-white px-6 py-3 rounded hover:bg-blue-700">Continue</button>
-
-    <p class="text-sm text-gray-600 text-center mt-2">
-      By signing up, you accept our <a href="/legal" class="underline">Terms & Conditions</a>.
-    </p>
-    <p class="text-sm text-gray-700 text-center mt-4">
-      Already have an account?
-      <a href="/signin" class="text-blue-600 underline">Sign in</a>
-    </p>
+    <input type="text" id="name" placeholder="Full Name" class="border px-4 py-2 rounded" required />
+    <input type="email" id="email" placeholder="Email" class="border px-4 py-2 rounded" required />
+    <input type="password" id="password" placeholder="Password" class="border px-4 py-2 rounded" required />
+    <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Continue</button>
   </form>
-
-  <div id="signup-message" class="text-center mt-4 text-green-600 font-semibold hidden"></div>
 </section>
 
 <script type="module">
-  import { supabase } from '/src/supabaseClient.js';
+  import { supabase } from '/supabaseClient.js';
 
   const form = document.getElementById('signup-form');
-  const messageBox = document.getElementById('signup-message');
 
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
 
-    const firstName = document.getElementById('firstName').value.trim();
-    const lastName = document.getElementById('lastName').value.trim();
-    const email = document.getElementById('email').value.trim();
+    const email = document.getElementById('email').value;
     const password = document.getElementById('password').value;
 
     const { data, error } = await supabase.auth.signUp({
       email,
-      password,
-      options: {
-        data: {
-          full_name: `${firstName} ${lastName}`
-        }
-      }
+      password
     });
 
     if (error) {
-      messageBox.textContent = error.message;
-      messageBox.classList.remove('text-green-600');
-      messageBox.classList.add('text-red-600');
+      alert('Signup failed: ' + error.message);
     } else {
-      messageBox.textContent = 'Signup successful! Please check your email to confirm.';
-      messageBox.classList.remove('text-red-600');
-      messageBox.classList.add('text-green-600');
+      alert('Signup successful! Check your email to confirm.');
+      window.location.href = "/profile"; // or dashboard
     }
-
-    messageBox.classList.remove('hidden');
   });
 </script>
 {% endblock %}
