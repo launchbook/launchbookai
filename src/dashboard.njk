@@ -1,21 +1,47 @@
 {% extends "base.njk" %}
 
 {% block content %}
-<section class="py-12 px-6 max-w-4xl mx-auto">
-  <h2 class="text-2xl font-bold mb-4">Welcome back, <span id="user-name">User</span> 👋</h2>
-  <p class="text-gray-600 mb-8">Start generating your next eBook below or view your past creations.</p>
+<section class="max-w-3xl mx-auto p-6 mt-10 bg-white rounded shadow">
+  <div class="flex justify-between items-center mb-6">
+    <h2 class="text-2xl font-bold text-gray-800">👋 Welcome Back</h2>
+    <button onclick="signOut()" class="text-red-600 font-medium hover:underline">Sign Out</button>
+  </div>
 
-  <!-- Placeholder for future features -->
-  <div class="grid gap-6">
-    <div class="p-6 bg-white rounded shadow">
-      <h3 class="font-semibold text-lg mb-2">Generate a New eBook</h3>
-      <a href="#generate" class="text-blue-600 hover:underline">Go to Generator →</a>
-    </div>
+  <p class="text-gray-600 mb-4">Logged in as: <span id="user-email" class="font-medium text-blue-600"></span></p>
 
-    <div class="p-6 bg-white rounded shadow">
-      <h3 class="font-semibold text-lg mb-2">Your eBooks</h3>
-      <p class="text-gray-500 text-sm">No books yet. Once you generate, they’ll appear here!</p>
-    </div>
+  <hr class="my-6" />
+
+  <div>
+    <h3 class="text-xl font-semibold mb-2">📚 Your eBooks</h3>
+    <p class="text-gray-500 text-sm">No eBooks created yet. <a href="/#generate" class="text-blue-600 hover:underline">Start one now</a>.</p>
+    <!-- Later we’ll dynamically list user's saved eBooks here -->
   </div>
 </section>
+
+<script type="module">
+  import { supabase } from '/supabaseClient.js';
+
+  // Fetch current session
+  const getUser = async () => {
+    const { data: { session }, error } = await supabase.auth.getSession();
+
+    if (error || !session) {
+      alert("Session expired or user not logged in.");
+      window.location.href = "/login";
+      return;
+    }
+
+    const email = session.user.email;
+    document.getElementById("user-email").innerText = email;
+  };
+
+  getUser();
+
+  // Sign out function
+  window.signOut = async () => {
+    await supabase.auth.signOut();
+    alert("You’ve been logged out.");
+    window.location.href = "/login";
+  };
+</script>
 {% endblock %}
