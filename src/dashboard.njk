@@ -89,15 +89,24 @@
   <input type="file" id="cover_upload" name="cover_upload" accept="image/*" class="border px-4 py-2 rounded" />
   <p class="text-sm text-gray-500">Max upload size: 15MB</p>
 
-  <!-- Image Preview + Remove Button -->
+ <!-- Extra Options -->
+<div class="flex flex-col gap-2">
+  <label><input type="checkbox" id="with_images" name="with_images" /> Include Images</label>
+  <label><input type="checkbox" id="include_affiliate_links" name="include_affiliate_links" /> Add Affiliate Links Based on Keywords</label>
+  <label><input type="checkbox" id="cover_image" name="cover_image" /> Use Cover Image</label>
+  
+  <input type="text" id="cover_title" name="cover_title" placeholder="Cover Title (optional)" class="border px-4 py-2 rounded" />
+  
+  <!-- File Upload -->
+  <input type="file" id="cover_upload" name="cover_upload" accept="image/*" class="border px-4 py-2 rounded" />
+  <p class="text-sm text-gray-500">Max upload size: 10MB</p>
+
+  <!-- Preview Section -->
   <div id="cover-preview-container" class="hidden mt-2 relative w-max">
     <img id="cover-preview" src="" class="rounded shadow w-40 h-auto" alt="Cover Preview" />
-    <button
-      type="button"
-      onclick="removeCoverImage()"
+    <button type="button" onclick="removeCoverImage()"
       class="absolute -top-2 -right-2 bg-white text-red-500 border border-red-500 rounded-full w-6 h-6 flex items-center justify-center text-sm hover:bg-red-500 hover:text-white transition-all"
-      title="Remove image"
-    >
+      title="Remove image">
       ×
     </button>
   </div>
