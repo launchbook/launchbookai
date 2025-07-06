@@ -148,49 +148,6 @@
   </div>
 </section>
 
-<script type="module">
-  import { supabase } from '/supabaseClient.js';
-  let currentUser = null;
-
-  const getUser = async () => {
-    const { data: { session }, error } = await supabase.auth.getSession();
-    if (error || !session) {
-      alert("Session expired. Please log in again.");
-      window.location.href = "/login";
-      return;
-    }
-    currentUser = session.user;
-    document.getElementById("user-email").innerText = currentUser.email;
-  };
-
-  getUser();
-
-  window.signOut = async () => {
-    await supabase.auth.signOut();
-    window.location.href = "/login";
-  };
-
-  const form = document.getElementById("ebook-form");
-  form.addEventListener("submit", async (e) => {
-    e.preventDefault();
-    const data = Object.fromEntries(new FormData(form));
-    const payload = {
-      user_id: currentUser.id,
-      ...data,
-      with_images: !!data.with_images,
-      include_affiliate_links: !!data.include_affiliate_links,
-      cover_image: !!data.cover_image,
-      save_formatting_preset: !!data.save_formatting_preset
-    };
-
-    const { error } = await supabase.from("ebooks").insert([payload]);
-    if (error) {
-      alert("❌ Failed to save eBook: " + error.message);
-    } else {
-      alert("✅ eBook created successfully!");
-      form.reset();
-    }
-  });
-</script>
 <script type="module" src="/description/ebook-form-handler.js"></script>
+
 {% endblock %}
