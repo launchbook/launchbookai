@@ -22,6 +22,31 @@ window.signOut = async () => {
   window.location.href = "/login";
 };
 
+// ✅ Show live preview when user uploads a cover image
+const coverUploadInput = document.getElementById("cover_upload");
+const previewImg = document.getElementById("cover-preview");
+const previewContainer = document.getElementById("cover-preview-container");
+
+coverUploadInput.addEventListener("change", () => {
+  const file = coverUploadInput.files[0];
+  if (file) {
+    previewImg.src = URL.createObjectURL(file); // Show selected image
+    previewContainer.classList.remove("hidden"); // Show container
+  } else {
+    previewImg.src = "";
+    previewContainer.classList.add("hidden"); // Hide if nothing selected
+  }
+});
+
+// ✅ Remove image preview and reset input
+window.removeCoverImage = () => {
+  coverUploadInput.value = ""; // Clear file
+  previewImg.src = "";
+  previewContainer.classList.add("hidden");
+};
+
+
+
 // ✅ Form submission
 const form = document.getElementById("ebook-form");
 form.addEventListener("submit", async (e) => {
@@ -35,9 +60,9 @@ form.addEventListener("submit", async (e) => {
   const coverFile = fileInput?.files?.[0];
 
   if (coverFile) {
-    // Check size limit (15MB)
-    if (coverFile.size > 15 * 1024 * 1024) {
-      alert("❌ Cover image too large! Max allowed is 5MB.");
+    // Check size limit (10MB)
+    if (coverFile.size > 10 * 1024 * 1024) {
+      alert("❌ Cover image too large! Max allowed is 10MB.");
       return;
     }
 
@@ -104,7 +129,7 @@ form.addEventListener("submit", async (e) => {
 // ✅ Create Another — resets only core input fields
 window.createAnother = () => {
   const resetIds = [
-    "title", "topic", "description", "author_name", "cover_title", "cover_upload"
+    "title", "topic", "description", "author_name", "cover_title"
   ];
   resetIds.forEach(id => {
     const el = document.getElementById(id);
@@ -113,6 +138,11 @@ window.createAnother = () => {
   document.getElementById("with_images").checked = false;
   document.getElementById("include_affiliate_links").checked = false;
   document.getElementById("cover_image").checked = false;
+
+  // ✅ Reset preview and file input
+  previewImg.src = "";
+  previewContainer.classList.add("hidden");
+  coverUploadInput.value = null;
 
   document.getElementById("success-message").classList.add("hidden");
   document.getElementById("title").focus();
