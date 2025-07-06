@@ -1,0 +1,21 @@
+{% extends "base.njk" %}
+
+{% block content %}
+<section class="py-12 px-6 max-w-4xl mx-auto">
+  <h2 class="text-2xl font-bold mb-4">Welcome back, <span id="user-name">User</span> 👋</h2>
+  <p class="text-gray-600 mb-8">Start generating your next eBook below or view your past creations.</p>
+
+  <!-- Placeholder for future features -->
+  <div class="grid gap-6">
+    <div class="p-6 bg-white rounded shadow">
+      <h3 class="font-semibold text-lg mb-2">Generate a New eBook</h3>
+      <a href="#generate" class="text-blue-600 hover:underline">Go to Generator →</a>
+    </div>
+
+    <div class="p-6 bg-white rounded shadow">
+      <h3 class="font-semibold text-lg mb-2">Your eBooks</h3>
+      <p class="text-gray-500 text-sm">No books yet. Once you generate, they’ll appear here!</p>
+    </div>
+  </div>
+</section>
+{% endblock %}
