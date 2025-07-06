@@ -1,62 +1,65 @@
-<!-- signup.njk -->
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <title>Sign Up - LaunchBook AI</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link
-      href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css"
-      rel="stylesheet"
-    />
-  </head>
-  <body class="bg-gray-100 flex items-center justify-center min-h-screen">
-    <div class="bg-white shadow-lg rounded-lg p-8 w-full max-w-md">
-      <div class="flex justify-between items-center mb-6">
-        <h2 class="text-2xl font-bold text-gray-800">Create Your Free Account</h2>
-        <a href="/" class="text-gray-400 hover:text-gray-600 text-xl font-bold">&times;</a>
-      </div>
+{% extends "_includes/base.njk" %}
 
-      <form class="grid gap-4">
-        <input
-          type="text"
-          placeholder="First Name"
-          class="border px-4 py-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-        />
-        <input
-          type="text"
-          placeholder="Last Name"
-          class="border px-4 py-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-        />
-        <input
-          type="email"
-          placeholder="Email Address"
-          class="border px-4 py-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-        />
-        <input
-          type="password"
-          placeholder="Password"
-          class="border px-4 py-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-        />
-
-        <button
-          type="submit"
-          class="mt-2 bg-blue-600 text-white py-3 rounded hover:bg-blue-700 transition-all text-center"
-        >
-          Continue →
-        </button>
-      </form>
-
-      <p class="text-xs text-gray-500 text-center mt-4">
-        By signing up, you agree to our
-        <a href="/terms" class="underline">Terms</a> and
-        <a href="/privacy" class="underline">Privacy Policy</a>.
-      </p>
-
-      <p class="text-sm text-center mt-6">
-        Already have an account?
-        <a href="/signin" class="text-blue-600 font-medium hover:underline">Sign In</a>
-      </p>
+{% block content %}
+<section class="max-w-xl mx-auto mt-12 p-6 bg-white shadow rounded">
+  <h2 class="text-2xl font-bold mb-6 text-center text-blue-700">Create Your Account</h2>
+  <form id="signup-form" class="grid gap-4">
+    <div class="grid grid-cols-2 gap-4">
+      <input type="text" id="firstName" placeholder="First Name" required class="border px-4 py-2 rounded" />
+      <input type="text" id="lastName" placeholder="Last Name" required class="border px-4 py-2 rounded" />
     </div>
-  </body>
-</html>
+    <input type="email" id="email" placeholder="Email" required class="border px-4 py-2 rounded" />
+    <input type="password" id="password" placeholder="Password" required class="border px-4 py-2 rounded" />
+
+    <button type="submit" class="bg-blue-600 text-white px-6 py-3 rounded hover:bg-blue-700">Continue</button>
+
+    <p class="text-sm text-gray-600 text-center mt-2">
+      By signing up, you accept our <a href="/legal" class="underline">Terms & Conditions</a>.
+    </p>
+    <p class="text-sm text-gray-700 text-center mt-4">
+      Already have an account?
+      <a href="/signin" class="text-blue-600 underline">Sign in</a>
+    </p>
+  </form>
+
+  <div id="signup-message" class="text-center mt-4 text-green-600 font-semibold hidden"></div>
+</section>
+
+<script type="module">
+  import { supabase } from '/src/supabaseClient.js';
+
+  const form = document.getElementById('signup-form');
+  const messageBox = document.getElementById('signup-message');
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const firstName = document.getElementById('firstName').value.trim();
+    const lastName = document.getElementById('lastName').value.trim();
+    const email = document.getElementById('email').value.trim();
+    const password = document.getElementById('password').value;
+
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: {
+          full_name: `${firstName} ${lastName}`
+        }
+      }
+    });
+
+    if (error) {
+      messageBox.textContent = error.message;
+      messageBox.classList.remove('text-green-600');
+      messageBox.classList.add('text-red-600');
+    } else {
+      messageBox.textContent = 'Signup successful! Please check your email to confirm.';
+      messageBox.classList.remove('text-red-600');
+      messageBox.classList.add('text-green-600');
+    }
+
+    messageBox.classList.remove('hidden');
+  });
+</script>
+{% endblock %}
