@@ -1,4 +1,6 @@
 module.exports = function (eleventyConfig) {
+  eleventyConfig.addPassthroughCopy({ "src/supabaseClient.js": "supabaseClient.js" });
+
   return {
     dir: {
       input: "src",
@@ -7,5 +9,3 @@ module.exports = function (eleventyConfig) {
     }
   };
 };
-
-
