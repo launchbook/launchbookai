@@ -156,11 +156,14 @@
     <button onclick="createAnother()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
       ➕ Create Another
     </button>
-    <button disabled class="bg-gray-300 text-gray-600 px-4 py-2 rounded cursor-not-allowed">
-      📩 Send to Email (Coming Soon)
+
+    <!-- ✅ These two buttons are now functional, so NOT disabled -->
+    <button id="send-email" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
+      📩 Send to Email
     </button>
-    <button disabled class="bg-gray-300 text-gray-600 px-4 py-2 rounded cursor-not-allowed">
-      ⬇️ Download PDF (Later)
+
+    <button id="download-pdf" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
+      ⬇️ Download PDF
     </button>
   </div>
 </div>
@@ -168,3 +171,4 @@
 <script type="module" src="/description/ebook-form-handler.js"></script>
 
 {% endblock %}
+
