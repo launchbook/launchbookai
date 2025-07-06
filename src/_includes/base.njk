@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{{ title }}</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" />
+</head>
+<body class="bg-gray-50 text-gray-900">
+  <header class="bg-white shadow">
+    <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
+      <h1 class="text-xl font-bold text-blue-600">LaunchBook AI</h1>
+      <nav class="space-x-4 hidden md:flex">
+        <a href="/" class="text-gray-700 hover:underline">Home</a>
+        <a href="#how-it-works" class="text-gray-700 hover:underline">How It Works</a>
+        <a href="#" class="text-gray-700 hover:underline">All Tools</a>
+        <a href="#" class="text-gray-700 hover:underline">Pricing</a>
+        <a href="#" class="text-gray-700 hover:underline">Lifetime Deal</a>
+        <a href="#" class="text-gray-700 hover:underline">Sign In</a>
+        <a href="#" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Get Started Now</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="max-w-4xl mx-auto px-4 py-10">
+    {{ content | safe }}
+  </main>
+
+  <footer class="bg-white mt-16 border-t py-6 text-center text-sm text-gray-500">
+    &copy; {{ "now" | date("yyyy") }} LaunchBook AI. All rights reserved.
+  </footer>
+</body>
+</html>
