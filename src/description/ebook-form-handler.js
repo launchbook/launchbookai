@@ -11,7 +11,10 @@ const getUser = async () => {
     return;
   }
   currentUser = session.user;
-  document.getElementById("user-email").innerText = currentUser.email;
+document.getElementById("user-email").innerText = currentUser.email;
+
+// ✅ Load previous eBooks
+loadPreviousEbooks();
 };
 
 getUser();
@@ -189,3 +192,43 @@ document.getElementById("download-pdf")?.addEventListener("click", async () => {
     alert("❌ Error downloading PDF: " + err.message);
   }
 });
+
+// ✅ Fetch and display previous eBooks
+const loadPreviousEbooks = async () => {
+  if (!currentUser) return;
+
+  const { data, error } = await supabase
+    .from("generated_files")
+    .select("*")
+    .eq("user_id", currentUser.id)
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    console.error("❌ Error fetching previous eBooks:", error.message);
+    return;
+  }
+
+  if (data.length === 0) return;
+
+  const listContainer = document.getElementById("ebook-list");
+  const section = document.getElementById("previous-ebooks");
+  section.classList.remove("hidden");
+
+  data.forEach((file) => {
+    const row = document.createElement("tr");
+
+    row.innerHTML = `
+      <td class="border px-3 py-2">${file.title || '-'}</td>
+      <td class="border px-3 py-2">${file.topic || '-'}</td>
+      <td class="border px-3 py-2">${file.language || '-'}</td>
+      <td class="border px-3 py-2">${file.audience || '-'}</td>
+      <td class="border px-3 py-2">${file.tone || '-'}</td>
+      <td class="border px-3 py-2">${file.purpose || '-'}</td>
+      <td class="border px-3 py-2">${new Date(file.created_at).toLocaleString()}</td>
+      <td class="border px-3 py-2 text-right">
+        <a href="${file.download_url}" target="_blank" class="text-blue-600 underline hover:text-blue-800">Download</a>
+      </td>
+    `;
+    listContainer.appendChild(row);
+  });
+};
