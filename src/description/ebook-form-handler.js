@@ -148,27 +148,44 @@ window.createAnother = () => {
   document.getElementById("title").focus();
 };
 
+// 🧠 Smart Base URL — switch between local and Render
+const BASE_URL = location.hostname === 'localhost'
+  ? 'http://localhost:3000'
+  : 'https://ebook-pdf-generator.onrender.com';
+
 // 📩 Send to Email (when ready)
 document.getElementById("send-email")?.addEventListener("click", async () => {
-  const response = await fetch('/api/send-ebook-email', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ user_id: currentUser.id, email: currentUser.email })
-  });
-  const result = await response.json();
-  alert(result.success ? "✅ eBook sent to your email!" : "❌ Failed: " + result.error);
+  try {
+    const response = await fetch(`${BASE_URL}/api/send-ebook-email`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        user_id: currentUser.id,
+        email: currentUser.email
+      })
+    });
+
+    const result = await response.json();
+    alert(result.success ? "✅ eBook sent to your email!" : "❌ Failed: " + result.error);
+  } catch (err) {
+    alert("❌ Error sending email: " + err.message);
+  }
 });
 
 // ⬇️ Download PDF (when ready)
 document.getElementById("download-pdf")?.addEventListener("click", async () => {
-  const response = await fetch(`/api/download-pdf?user_id=${currentUser.id}`);
-  if (!response.ok) return alert("❌ Failed to download PDF");
+  try {
+    const response = await fetch(`${BASE_URL}/api/download-pdf?user_id=${currentUser.id}`);
+    if (!response.ok) return alert("❌ Failed to download PDF");
 
-  const blob = await response.blob();
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
-  a.download = "ebook.pdf";
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
+    const blob = await response.blob();
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "ebook.pdf";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+  } catch (err) {
+    alert("❌ Error downloading PDF: " + err.message);
+  }
 });
