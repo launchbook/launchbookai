@@ -290,7 +290,7 @@ const BASE_URL = location.hostname === 'localhost'
 // 📩 Send to Email (when ready)
 document.getElementById("send-email")?.addEventListener("click", async () => {
   try {
-    const response = await fetch(`${BASE_URL}/api/send-ebook-email`, {
+    const res = await fetch(`${BASE_URL}/api/send-ebook-email`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -298,6 +298,24 @@ document.getElementById("send-email")?.addEventListener("click", async () => {
         email: currentUser.email
       })
     });
+
+    const result = await res.json();
+
+    if (result.success) {
+      alert("📧 eBook sent to your email!");
+      hasEmailed = true;
+
+      // ✅ Optional: Disable regeneration buttons after email
+      document.getElementById("regenerate-pdf").disabled = true;
+      document.getElementById("regenerate-image").disabled = true;
+    } else {
+      alert("❌ Failed to send email: " + result.error);
+    }
+  } catch (err) {
+    alert("❌ Email error: " + err.message);
+  }
+});
+
 
    // 🔁 Regenerate PDF Button logic with limit
 let regenCount = 0;
@@ -308,15 +326,20 @@ let hasEmailed = false;
 // Mark if downloaded (your download code should set this to true)
 document.getElementById("download-pdf")?.addEventListener("click", () => {
   hasDownloaded = true;
-});
 
-// Mark if emailed (your email button already exists)
-document.getElementById("send-email")?.addEventListener("click", () => {
-  hasEmailed = true;
+  // ✅ Disable regenerate buttons
+  document.getElementById("regenerate-pdf").disabled = true;
+  document.getElementById("regenerate-image").disabled = true;
 });
 
 document.getElementById("regenerate-pdf")?.addEventListener("click", async () => {
   const regenBtn = document.getElementById("regenerate-pdf");
+  
+    // ✅ Credit check before regenerating PDF
+  if (!(await checkCredits(currentUser.id, "regen_pdf"))) {
+    return;
+  }
+
 
   if (hasDownloaded || hasEmailed) {
     alert("⚠️ You’ve already downloaded or emailed this file. Regeneration is disabled.");
@@ -348,6 +371,13 @@ document.getElementById("regenerate-pdf")?.addEventListener("click", async () =>
 
     if (result.success) {
       regenCount++;
+      
+            // ✅ Log credit usage for regen_pdf
+      await logUsage(currentUser.id, currentUser.email, "regen_pdf", {
+        tweaks: true
+      });
+      showUserCredits(); // update UI
+
       alert(`✅ Regenerated! (${regenLimit - regenCount} tries left)`);
       document.getElementById("pdf-preview").querySelector("iframe").src = result.preview_url;
       document.getElementById("pdf-preview").classList.remove("hidden");
@@ -390,6 +420,11 @@ const imageRegenLimit = 3;
 
 document.getElementById("regenerate-image")?.addEventListener("click", async () => {
   const imageBtn = document.getElementById("regenerate-image");
+  
+    // ✅ Credit check before regenerating image
+  if (!(await checkCredits(currentUser.id, "regen_image"))) {
+    return;
+  }
 
   if (hasDownloaded || hasEmailed) {
     alert("❌ You’ve already downloaded or emailed this file. Image regeneration is disabled.");
@@ -420,6 +455,11 @@ document.getElementById("regenerate-image")?.addEventListener("click", async () 
 
     if (result.success) {
       imageRegenCount++;
+            // ✅ Log credit usage for regen_image
+      await logUsage(currentUser.id, currentUser.email, "regen_image", {
+        tweaks: true
+      });
+      showUserCredits(); // update UI
       alert(`✅ New image added! (${imageRegenLimit - imageRegenCount} tries left)`);
       document.getElementById("pdf-preview").querySelector("iframe").src = result.preview_url;
 
