@@ -54,18 +54,37 @@ window.removeCoverImage = () => {
 const form = document.getElementById("ebook-form");
 form.addEventListener("submit", async (e) => {
   e.preventDefault();
+
+  const submitBtn = form.querySelector("button[type='submit']");
+  const progressBar = document.getElementById("progress-bar");
+  submitBtn.disabled = true;
+  submitBtn.innerText = "⏳ Generating...";
+  progressBar.classList.remove("hidden");
+
   const formData = new FormData(form);
   const getBool = (key) => formData.get(key) === "on";
 
+  const title = formData.get("title");
+  const audience = formData.get("audience");
+
+  if (!title || !audience) {
+    alert("❌ Please fill out both Title and Audience fields.");
+    submitBtn.disabled = false;
+    submitBtn.innerText = "🚀 Generate eBook";
+    progressBar.classList.add("hidden");
+    return;
+  }
+
   // ✅ Cover image upload check
   let coverUrl = "";
-  const fileInput = document.getElementById("cover_upload");
-  const coverFile = fileInput?.files?.[0];
+  const coverFile = document.getElementById("cover_upload")?.files?.[0];
 
   if (coverFile) {
-    // Check size limit (10MB)
     if (coverFile.size > 10 * 1024 * 1024) {
       alert("❌ Cover image too large! Max allowed is 10MB.");
+      submitBtn.disabled = false;
+      submitBtn.innerText = "🚀 Generate eBook";
+      progressBar.classList.add("hidden");
       return;
     }
 
@@ -79,6 +98,9 @@ form.addEventListener("submit", async (e) => {
 
     if (uploadError) {
       alert("❌ Failed to upload cover image: " + uploadError.message);
+      submitBtn.disabled = false;
+      submitBtn.innerText = "🚀 Generate eBook";
+      progressBar.classList.add("hidden");
       return;
     }
 
@@ -90,13 +112,14 @@ form.addEventListener("submit", async (e) => {
     coverUrl = publicUrl;
   }
 
+  // ✅ Build final payload
   const payload = {
     user_id: currentUser.id,
-    title: formData.get("title") || "",
+    title,
     topic: formData.get("topic") || "",
     description: formData.get("description") || "",
     author_name: formData.get("author_name") || "",
-    audience: formData.get("audience") || "",
+    audience,
     tone: formData.get("tone") || "",
     purpose: formData.get("purpose") || "",
     language: formData.get("language") || "",
@@ -122,11 +145,21 @@ form.addEventListener("submit", async (e) => {
   };
 
   const { error } = await supabase.from("ebooks").insert([payload]);
+  progressBar.classList.add("hidden");
+
   if (error) {
     alert("❌ Failed to save eBook: " + error.message);
-  } else {
-    document.getElementById("success-message").classList.remove("hidden");
+    submitBtn.disabled = false;
+    submitBtn.innerText = "🚀 Generate eBook";
+    return;
   }
+
+  document.getElementById("success-message").classList.remove("hidden");
+  submitBtn.innerText = "✅ Done!";
+  setTimeout(() => {
+    submitBtn.innerText = "🚀 Generate eBook";
+    submitBtn.disabled = false;
+  }, 2000);
 });
 
 // ✅ Create Another — resets only core input fields
