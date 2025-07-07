@@ -18,7 +18,17 @@ const supabase = createClient(
 
 // ✅ PDF generation + email route
 app.post('/generate-pdf', async (req, res) => {
-  const { html, user_id, email } = req.body;
+  const {
+    html,
+    user_id,
+    email,
+    title,
+    topic,
+    language,
+    audience,
+    tone,
+    purpose
+  } = req.body;
 
   if (!html || !user_id || !email) {
     return res.status(400).json({ error: "Missing html, user_id, or email" });
@@ -52,6 +62,18 @@ app.post('/generate-pdf', async (req, res) => {
       .storage
       .from('generated-pdfs')
       .getPublicUrl(filePath);
+
+    await supabase.from("generated_files").insert([{
+       user_id,
+       title,
+       topic,
+       language,
+       audience,
+       tone,
+       purpose,
+       download_url: publicUrl,
+       created_at: new Date().toISOString()
+       }]);
 
        // 📩 Send email with download link
     /*
