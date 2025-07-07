@@ -53,7 +53,8 @@ app.post('/generate-pdf', async (req, res) => {
       .from('generated-pdfs')
       .getPublicUrl(filePath);
 
-    // 📩 Send email with download link
+       // 📩 Send email with download link
+    /*
     const transporter = nodemailer.createTransport({
       host: 'smtp.zoho.in',
       port: 465,
@@ -75,6 +76,10 @@ app.post('/generate-pdf', async (req, res) => {
         <p>Thanks for using Leostarearn!</p>
       `
     });
+    */
+
+    return res.json({ success: true, url: publicUrl });
+
 
     return res.json({ success: true, url: publicUrl });
 
