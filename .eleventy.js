@@ -1,7 +1,6 @@
-// ✅ This is correct (ESM-style)
-import { DateTime } from "luxon";
+const { DateTime } = require("luxon");
 
-export default function(eleventyConfig) {
+module.exports = function (eleventyConfig) {
   eleventyConfig.addFilter("date", (value, format = "yyyy") => {
     return DateTime.fromJSDate(new Date(value)).toFormat(format);
   });
@@ -13,4 +12,4 @@ export default function(eleventyConfig) {
       output: "_site"
     }
   };
-}
+};
