@@ -156,6 +156,7 @@ form.addEventListener("submit", async (e) => {
 
   document.getElementById("success-message").classList.remove("hidden");
   submitBtn.innerText = "✅ Done!";
+  document.getElementById("regenerate-pdf").classList.remove("hidden");
   setTimeout(() => {
     submitBtn.innerText = "🚀 Generate eBook";
     submitBtn.disabled = false;
@@ -201,12 +202,64 @@ document.getElementById("send-email")?.addEventListener("click", async () => {
       })
     });
 
+   // 🔁 Regenerate PDF Button logic with limit
+let regenCount = 0;
+const regenLimit = 3;
+let hasDownloaded = false;
+let hasEmailed = false;
+
+// Mark if downloaded (your download code should set this to true)
+document.getElementById("download-pdf")?.addEventListener("click", () => {
+  hasDownloaded = true;
+});
+
+// Mark if emailed (your email button already exists)
+document.getElementById("send-email")?.addEventListener("click", () => {
+  hasEmailed = true;
+});
+
+document.getElementById("regenerate-pdf")?.addEventListener("click", async () => {
+  if (hasDownloaded || hasEmailed) {
+    alert("⚠️ You’ve already downloaded or emailed this file. Regeneration is disabled.");
+    return;
+  }
+
+  if (regenCount >= regenLimit) {
+    alert("🚫 Regeneration limit reached. Upgrade your plan to unlock more regenerations.");
+    document.getElementById("regenerate-pdf").disabled = true;
+    return;
+  }
+
+  try {
+    const response = await fetch(`${BASE_URL}/api/regenerate-pdf`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        user_id: currentUser.id,
+        email: currentUser.email,
+        tweaks: true
+      })
+    });
+
     const result = await response.json();
-    alert(result.success ? "✅ eBook sent to your email!" : "❌ Failed: " + result.error);
+
+    if (result.success) {
+      regenCount++;
+      alert(`✅ Regenerated! (${regenLimit - regenCount} tries left)`);
+      document.getElementById("pdf-preview").querySelector("iframe").src = result.preview_url;
+      document.getElementById("pdf-preview").classList.remove("hidden");
+
+      if (regenCount >= regenLimit) {
+        document.getElementById("regenerate-pdf").disabled = true;
+      }
+    } else {
+      alert("❌ Failed to regenerate: " + result.error);
+    }
   } catch (err) {
-    alert("❌ Error sending email: " + err.message);
+    alert("❌ Regeneration error: " + err.message);
   }
 });
+
 
 // ⬇️ Download PDF (when ready)
 document.getElementById("download-pdf")?.addEventListener("click", async () => {
