@@ -2,7 +2,6 @@
   "name": "launchbookai",
   "version": "1.0.0",
   "description": "LaunchBook AI",
-  "type": "module",
   "scripts": {
     "start": "npx @11ty/eleventy --serve",
     "build": "ELEVENTY_ENV=production npx @11ty/eleventy"
