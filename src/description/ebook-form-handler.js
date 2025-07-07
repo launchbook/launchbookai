@@ -2,6 +2,81 @@ import { supabase } from '/supabaseClient.js';
 
 let currentUser = null;
 
+// ✅ LAUNCHBOOK CREDIT SYSTEM – Phase 1 & 2
+// ------------------------------------------
+
+// ✅ Credit cost per action
+const CREDIT_COSTS = {
+  generate_pdf: 3,
+  generate_epub: 4,
+  regen_pdf: 2,
+  regen_image: 2,
+  generate_from_url: 5
+};
+
+// ✅ Fetch user credits from Supabase users_plan table
+async function getUserCredits(userId) {
+  const { data, error } = await supabase
+    .from("users_plan")
+    .select("credit_limit, credits_used")
+    .eq("user_id", userId)
+    .single();
+
+  if (error) {
+    console.error("❌ Failed to fetch user credits:", error.message);
+    return null;
+  }
+
+  return data;
+}
+
+// ✅ Check if user has enough credits for the action
+async function checkCredits(userId, actionType) {
+  const cost = CREDIT_COSTS[actionType] || 0;
+  const plan = await getUserCredits(userId);
+
+  if (!plan) return false;
+
+  if ((plan.credits_used + cost) > plan.credit_limit) {
+    alert(`🚫 Not enough credits! Action requires ${cost}, you have ${plan.credit_limit - plan.credits_used} left.`);
+    return false;
+  }
+
+  return true;
+}
+
+// ✅ Deduct credits and log usage (Supabase)
+async function logUsage(userId, email, actionType, details = {}) {
+  const cost = CREDIT_COSTS[actionType] || 0;
+
+  const { error: logError } = await supabase.from("user_usage_logs").insert({
+    user_id: userId,
+    email,
+    action_type: actionType,
+    credits_used: cost,
+    metadata: details,
+  });
+
+  if (logError) console.error("❌ Failed to log usage:", logError.message);
+
+  // ✅ Increment credit counter
+  const { error: updateError } = await supabase.rpc("increment_credits_used", {
+    p_user_id: userId,
+    p_increment: cost
+  });
+
+  if (updateError) console.error("❌ Failed to update credits used:", updateError.message);
+}
+
+// ✅ Display credits on dashboard (HTML ID: #user-credits)
+async function showUserCredits() {
+  const userCredits = await getUserCredits(currentUser.id);
+  if (!userCredits) return;
+  const left = userCredits.credit_limit - userCredits.credits_used;
+  document.getElementById("user-credits").innerText = `${left} / ${userCredits.credit_limit} credits left`;
+}
+
+
 // ✅ Get user session
 const getUser = async () => {
   const { data: { session }, error } = await supabase.auth.getSession();
@@ -12,6 +87,8 @@ const getUser = async () => {
   }
   currentUser = session.user;
 document.getElementById("user-email").innerText = currentUser.email;
+  // ✅ Show available credits after user loads
+showUserCredits();
 
 // ✅ Load previous eBooks
 loadPreviousEbooks();
@@ -74,6 +151,12 @@ form.addEventListener("submit", async (e) => {
     progressBar.classList.add("hidden");
     return;
   }
+if (!(await checkCredits(currentUser.id, "generate_pdf"))) {
+  submitBtn.disabled = false;
+  submitBtn.innerText = "🚀 Generate eBook";
+  progressBar.classList.add("hidden");
+  return;
+}
 
   // ✅ Cover image upload check
   let coverUrl = "";
@@ -156,7 +239,21 @@ form.addEventListener("submit", async (e) => {
 
   document.getElementById("success-message").classList.remove("hidden");
   submitBtn.innerText = "✅ Done!";
+  
+  await logUsage(currentUser.id, currentUser.email, "generate_pdf", {
+  pages: payload.total_pages,
+  format: "pdf",
+  with_images: payload.with_images
+});
+
+showUserCredits(); // refresh UI credits
+
+
   document.getElementById("regenerate-pdf").classList.remove("hidden");
+  
+  if (payload.cover_image) {
+  document.getElementById("regenerate-image").classList.remove("hidden");
+}
   setTimeout(() => {
     submitBtn.innerText = "🚀 Generate eBook";
     submitBtn.disabled = false;
@@ -219,6 +316,8 @@ document.getElementById("send-email")?.addEventListener("click", () => {
 });
 
 document.getElementById("regenerate-pdf")?.addEventListener("click", async () => {
+  const regenBtn = document.getElementById("regenerate-pdf");
+
   if (hasDownloaded || hasEmailed) {
     alert("⚠️ You’ve already downloaded or emailed this file. Regeneration is disabled.");
     return;
@@ -226,9 +325,13 @@ document.getElementById("regenerate-pdf")?.addEventListener("click", async () =>
 
   if (regenCount >= regenLimit) {
     alert("🚫 Regeneration limit reached. Upgrade your plan to unlock more regenerations.");
-    document.getElementById("regenerate-pdf").disabled = true;
+    regenBtn.disabled = true;
     return;
   }
+
+  // ✅ Show visual loading state
+  regenBtn.disabled = true;
+  regenBtn.innerText = "⏳ Regenerating...";
 
   try {
     const response = await fetch(`${BASE_URL}/api/regenerate-pdf`, {
@@ -250,13 +353,16 @@ document.getElementById("regenerate-pdf")?.addEventListener("click", async () =>
       document.getElementById("pdf-preview").classList.remove("hidden");
 
       if (regenCount >= regenLimit) {
-        document.getElementById("regenerate-pdf").disabled = true;
+        regenBtn.disabled = true;
       }
     } else {
       alert("❌ Failed to regenerate: " + result.error);
     }
   } catch (err) {
     alert("❌ Regeneration error: " + err.message);
+  } finally {
+    regenBtn.innerText = "🔁 Regenerate PDF";
+    regenBtn.disabled = regenCount >= regenLimit;
   }
 });
 
@@ -276,6 +382,58 @@ document.getElementById("download-pdf")?.addEventListener("click", async () => {
     a.remove();
   } catch (err) {
     alert("❌ Error downloading PDF: " + err.message);
+  }
+});
+
+let imageRegenCount = 0;
+const imageRegenLimit = 3;
+
+document.getElementById("regenerate-image")?.addEventListener("click", async () => {
+  const imageBtn = document.getElementById("regenerate-image");
+
+  if (hasDownloaded || hasEmailed) {
+    alert("❌ You’ve already downloaded or emailed this file. Image regeneration is disabled.");
+    return;
+  }
+
+  if (imageRegenCount >= imageRegenLimit) {
+    alert("🚫 Image regeneration limit reached. Upgrade your plan to unlock more.");
+    imageBtn.disabled = true;
+    return;
+  }
+
+  // ✅ Show spinner state
+  imageBtn.disabled = true;
+  imageBtn.innerText = "⏳ Creating image...";
+
+  try {
+    const response = await fetch(`${BASE_URL}/api/regenerate-cover-image`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        user_id: currentUser.id,
+        email: currentUser.email
+      })
+    });
+
+    const result = await response.json();
+
+    if (result.success) {
+      imageRegenCount++;
+      alert(`✅ New image added! (${imageRegenLimit - imageRegenCount} tries left)`);
+      document.getElementById("pdf-preview").querySelector("iframe").src = result.preview_url;
+
+      if (imageRegenCount >= imageRegenLimit) {
+        imageBtn.disabled = true;
+      }
+    } else {
+      alert("❌ Failed to regenerate image: " + result.error);
+    }
+  } catch (err) {
+    alert("❌ Error: " + err.message);
+  } finally {
+    imageBtn.innerText = "🎨 Regenerate Cover";
+    imageBtn.disabled = imageRegenCount >= imageRegenLimit;
   }
 });
 
