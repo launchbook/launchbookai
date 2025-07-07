@@ -1,4 +1,4 @@
-.eleventy.js
+// .eleventy.js
 import { DateTime } from "luxon";
 
 export default function(eleventyConfig) {
