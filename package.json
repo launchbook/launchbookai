@@ -4,7 +4,7 @@
   "description": "LaunchBook AI frontend + backend",
   "type": "module",
   "scripts": {
-    "build": "eleventy",
+    "build": "npx @11ty/eleventy",
     "start": "node server.js"
   },
   "devDependencies": {
