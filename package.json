@@ -4,7 +4,7 @@
   "description": "LaunchBook AI frontend + backend",
   "type": "module",
   "scripts": {
-    "build": "npx @11ty/eleventy",
+    "build": "ELEVENTY_ENV=production npx @11ty/eleventy",
     "start": "node server.js"
   },
   "devDependencies": {
@@ -20,5 +20,3 @@
     "@supabase/supabase-js": "^2.39.5"
   }
 }
-
-
