@@ -107,14 +107,31 @@ const coverUploadInput = document.getElementById("cover_upload");
 const previewImg = document.getElementById("cover-preview");
 const previewContainer = document.getElementById("cover-preview-container");
 
-coverUploadInput.addEventListener("change", () => {
+coverUploadInput.addEventListener("change", async () => {
   const file = coverUploadInput.files[0];
   if (file) {
-    previewImg.src = URL.createObjectURL(file); // Show selected image
-    previewContainer.classList.remove("hidden"); // Show container
+    // Live preview
+    previewImg.src = URL.createObjectURL(file);
+    previewContainer.classList.remove("hidden");
+
+    // ✅ Auto-upload
+    if (file.size > 10 * 1024 * 1024) {
+      alert("❌ Image too large! Max 10MB.");
+      return;
+    }
+
+    const uploaded = await uploadCoverImageToSupabase(currentUser.id, file, false);
+    if (!uploaded) {
+      alert("❌ Failed to upload image.");
+      return;
+    }
+
+    uploadedCoverPath = uploaded.path;
+    document.getElementById("delete-cover-btn").classList.remove("hidden");
+    alert("✅ Cover image uploaded!");
   } else {
     previewImg.src = "";
-    previewContainer.classList.add("hidden"); // Hide if nothing selected
+    previewContainer.classList.add("hidden");
   }
 });
 
@@ -172,6 +189,9 @@ if (!(await checkCredits(currentUser.id, "generate_pdf"))) {
     }
 
     const uploaded = await uploadCoverImageToSupabase(currentUser.id, coverFile, false); // isAI = false
+    document.getElementById("delete-cover-btn").classList.remove("hidden");
+    uploadedCoverPath = uploaded.path; // store for deletion if needed
+
 
 if (!uploaded) {
   alert("❌ Failed to upload cover image.");
@@ -213,7 +233,7 @@ coverUrl = uploaded.url;
     cover_image: getBool("cover_image"),
     save_formatting_preset: getBool("save_formatting_preset"),
     cover_url: coverUrl
-    cover_image_type: uploaded?.type || "user",  // 👈 Add this
+    cover_image_type: uploaded?.type || "user" ,  // 👈 Add this
     cover_image_path: uploaded?.path || ""    ,  // 👈 And this
   };
 
@@ -532,4 +552,37 @@ export async function uploadCoverImageToSupabase(userId, file, isAI = false) {
     type: isAI ? 'ai' : 'user'
   };
 }
+
+let uploadedCoverPath = ""; // store uploaded image path temporarily
+
+window.deleteCoverImage = async () => {
+  if (!uploadedCoverPath) {
+    alert("No cover image to delete.");
+    return;
+  }
+
+  const confirmDelete = confirm("Are you sure you want to delete this cover image?");
+  if (!confirmDelete) return;
+
+  const { error } = await supabase.storage
+    .from("user_files")
+    .remove([uploadedCoverPath]);
+
+  if (error) {
+    console.error("❌ Failed to delete cover:", error.message);
+    alert("Failed to delete cover image.");
+    return;
+  }
+
+  // ✅ Reset preview and hide
+  uploadedCoverPath = "";
+  coverUploadInput.value = "";
+  previewImg.src = "";
+  previewContainer.classList.add("hidden");
+
+  // ✅ Hide delete button
+  document.getElementById("delete-cover-btn").classList.add("hidden");
+
+  alert("✅ Cover image deleted successfully.");
+};
 
