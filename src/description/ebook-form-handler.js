@@ -400,6 +400,11 @@ document.getElementById("regenerate-pdf")?.addEventListener("click", async () =>
       await logUsage(currentUser.id, currentUser.email, "regen_pdf", {
         tweaks: true
       });
+      await supabase.rpc("increment_regen_pdf_count", {
+  p_user_id: currentUser.id,
+  p_increment: 1
+});
+
       showUserCredits(); // update UI
 
       alert(`✅ Regenerated! (${regenLimit - regenCount} tries left)`);
@@ -483,7 +488,13 @@ document.getElementById("regenerate-image")?.addEventListener("click", async () 
       await logUsage(currentUser.id, currentUser.email, "regen_image", {
         tweaks: true
       });
+      await supabase.rpc("increment_regen_image_count", {
+      p_user_id: currentUser.id,
+      p_increment: 1
+      });
+
       showUserCredits(); // update UI
+      
       alert(`✅ New image added! (${imageRegenLimit - imageRegenCount} tries left)`);
       document.getElementById("pdf-preview").querySelector("iframe").src = result.preview_url;
 
