@@ -123,3 +123,28 @@ app.post('/generate-pdf', async (req, res) => {
 // ✅ Server start (Render-compatible)
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
+import { createClient } from '@supabase/supabase-js';
+const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
+
+// Example route to handle image upload from AI
+app.post('/upload-ai-cover', async (req, res) => {
+  const { user_id, base64Image } = req.body;
+  if (!user_id || !base64Image) return res.status(400).send({ error: 'Missing fields' });
+
+  const buffer = Buffer.from(base64Image.replace(/^data:image\/png;base64,/, ''), 'base64');
+  const filename = `ai_cover_${Date.now()}.png`;
+  const filePath = `ai_generated_covers/${user_id}/${filename}`;
+
+  const { error } = await supabase.storage
+    .from('user_files')
+    .upload(filePath, buffer, {
+      contentType: 'image/png',
+      upsert: true,
+    });
+
+  if (error) return res.status(500).send({ error: 'Upload failed' });
+
+  const { data: urlData } = await supabase.storage.from('user_files').getPublicUrl(filePath);
+  return res.json({ url: urlData.publicUrl, path: filePath });
+});
+
