@@ -92,15 +92,23 @@ showUserCredits();
 
 // ✅ Load previous eBooks
 loadPreviousEbooks();
+loadCoverHistory();
+
 };
 
 getUser();
 
 // ✅ Sign out
 window.signOut = async () => {
-  await supabase.auth.signOut();
-  window.location.href = "/login";
+  try {
+    await supabase.auth.signOut();
+    window.location.href = "/login";
+  } catch (err) {
+    alert("Error during sign out");
+    console.error(err);
+  }
 };
+
 
 // ✅ Show live preview when user uploads a cover image
 const coverUploadInput = document.getElementById("cover_upload");
@@ -202,7 +210,8 @@ if (!uploaded) {
 }
 
 coverUrl = uploaded.url;
-
+  }
+  
   // ✅ Build final payload
   const payload = {
     user_id: currentUser.id,
@@ -232,9 +241,9 @@ coverUrl = uploaded.url;
     include_affiliate_links: getBool("include_affiliate_links"),
     cover_image: getBool("cover_image"),
     save_formatting_preset: getBool("save_formatting_preset"),
-    cover_url: coverUrl
-    cover_image_type: uploaded?.type || "user" ,  // 👈 Add this
-    cover_image_path: uploaded?.path || ""    ,  // 👈 And this
+    cover_url: coverUrl,
+    cover_image_type: uploaded?.type || "user",  // 👈 Add this
+    cover_image_path: uploaded?.path || "",  // 👈 And this
   };
 
   const { error } = await supabase.from("ebooks").insert([payload]);
@@ -287,6 +296,7 @@ window.createAnother = () => {
   previewImg.src = "";
   previewContainer.classList.add("hidden");
   coverUploadInput.value = null;
+  uploadedCoverPath = "";
 
   document.getElementById("success-message").classList.add("hidden");
   document.getElementById("title").focus();
@@ -545,7 +555,13 @@ export async function uploadCoverImageToSupabase(userId, file, isAI = false) {
   }
 
   const { data: urlData } = await supabase.storage.from(bucket).getPublicUrl(filePath);
-
+  await supabase.from("cover_history").insert({
+  user_id: userId,
+  cover_url: urlData.publicUrl,
+  cover_path: filePath,
+  type: isAI ? 'ai' : 'user'
+});
+  
   return {
     url: urlData.publicUrl,
     path: filePath,
@@ -585,4 +601,92 @@ window.deleteCoverImage = async () => {
 
   alert("✅ Cover image deleted successfully.");
 };
+async function loadCoverHistory() {
+  const { data, error } = await supabase
+    .from("cover_history")
+    .select("*")
+    .eq("user_id", currentUser.id)
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    console.error("❌ Error loading cover history:", error.message);
+    return;
+  }
+
+  if (!data.length) return;
+
+  const container = document.getElementById("cover-history-container");
+  const grid = document.getElementById("cover-history-grid");
+  container.classList.remove("hidden");
+
+  data.forEach((item) => {
+    const wrapper = document.createElement("div");
+    wrapper.className = "relative";
+
+    const thumb = document.createElement("img");
+    thumb.src = item.cover_url;
+    thumb.alt = "Cover";
+    thumb.className = "w-full h-auto border cursor-pointer hover:scale-105 transition rounded";
+
+    // ✅ Reuse this cover on click
+    thumb.addEventListener("click", () => {
+      previewImg.src = item.cover_url;
+      previewContainer.classList.remove("hidden");
+      uploadedCoverPath = item.cover_path;
+
+      // Show delete button only for user uploaded ones
+      if (item.type === "user") {
+        document.getElementById("delete-cover-btn").classList.remove("hidden");
+      } else {
+        document.getElementById("delete-cover-btn").classList.add("hidden");
+      }
+
+      alert("✅ Cover applied!");
+    });
+
+    // 🗑️ Delete icon
+    const delBtn = document.createElement("button");
+    delBtn.innerHTML = "❌";
+    delBtn.className = "absolute top-1 right-1 text-xs bg-white rounded px-1 shadow";
+    delBtn.title = "Delete this cover";
+
+    delBtn.addEventListener("click", async (e) => {
+      e.stopPropagation(); // Prevent triggering the click on image
+
+      const confirmDel = confirm("❌ Delete this cover from your history?");
+      if (!confirmDel) return;
+
+      // Delete from Supabase storage
+      const { error: storageErr } = await supabase.storage
+        .from("user_files")
+        .remove([item.cover_path]);
+
+      if (storageErr) {
+        alert("❌ Failed to delete from storage.");
+        console.error(storageErr);
+        return;
+      }
+
+      // Delete from cover_history
+      const { error: dbErr } = await supabase
+        .from("cover_history")
+        .delete()
+        .eq("id", item.id);
+
+      if (dbErr) {
+        alert("❌ Failed to delete from history.");
+        console.error(dbErr);
+        return;
+      }
+
+      // Remove from UI
+      wrapper.remove();
+      alert("✅ Cover deleted.");
+    });
+
+    wrapper.appendChild(thumb);
+    wrapper.appendChild(delBtn);
+    grid.appendChild(wrapper);
+  });
+}
 
