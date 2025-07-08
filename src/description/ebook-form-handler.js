@@ -516,3 +516,30 @@ const loadPreviousEbooks = async () => {
     listContainer.appendChild(row);
   });
 };
+// 📦 FRONTEND: Upload cover image (user uploaded OR AI generated)
+// This works for both: manual uploads & AI-generated images
+export async function uploadCoverImageToSupabase(userId, file, isAI = false) {
+  const bucket = 'user_files';
+  const folder = isAI ? 'ai_generated_covers' : 'user_uploaded_covers';
+  const filename = `${isAI ? 'ai' : 'user'}_cover_${Date.now()}.png`;
+  const filePath = `${folder}/${userId}/${filename}`;
+
+  const { data, error } = await supabase.storage.from(bucket).upload(filePath, file, {
+    contentType: 'image/png',
+    upsert: true
+  });
+
+  if (error) {
+    console.error('Upload failed:', error);
+    return null;
+  }
+
+  const { data: urlData } = await supabase.storage.from(bucket).getPublicUrl(filePath);
+
+  return {
+    url: urlData.publicUrl,
+    path: filePath,
+    type: isAI ? 'ai' : 'user'
+  };
+}
+
