@@ -71,11 +71,15 @@ async function logUsage(userId, email, actionType, details = {}) {
 // ✅ Display credits on dashboard (HTML ID: #user-credits)
 async function showUserCredits() {
   const userCredits = await getUserCredits(currentUser.id);
-  if (!userCredits) return;
+
+  if (!userCredits) {
+    document.getElementById("user-credits").innerText = `0 / 0 credits`;
+    return;
+  }
+
   const left = userCredits.credit_limit - userCredits.credits_used;
   document.getElementById("user-credits").innerText = `${left} / ${userCredits.credit_limit} credits left`;
 }
-
 
 // ✅ Get user session
 const getUser = async () => {
@@ -541,7 +545,8 @@ const loadPreviousEbooks = async () => {
 export async function uploadCoverImageToSupabase(userId, file, isAI = false) {
   const bucket = 'user_files';
   const folder = isAI ? 'ai_generated_covers' : 'user_uploaded_covers';
-  const filename = `${isAI ? 'ai' : 'user'}_cover_${Date.now()}.png`;
+  const ext = file.name.split('.').pop();
+  const filename = `${isAI ? 'ai' : 'user'}_cover_${Date.now()}.${ext}`;
   const filePath = `${folder}/${userId}/${filename}`;
 
   const { data, error } = await supabase.storage.from(bucket).upload(filePath, file, {
