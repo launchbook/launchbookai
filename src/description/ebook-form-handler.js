@@ -171,29 +171,17 @@ if (!(await checkCredits(currentUser.id, "generate_pdf"))) {
       return;
     }
 
-    const filePath = `user_uploads/${currentUser.id}-${Date.now()}-${coverFile.name}`;
-    const { error: uploadError } = await supabase.storage
-      .from("ebook-covers")
-      .upload(filePath, coverFile, {
-        cacheControl: '3600',
-        upsert: false
-      });
+    const uploaded = await uploadCoverImageToSupabase(currentUser.id, coverFile, false); // isAI = false
 
-    if (uploadError) {
-      alert("❌ Failed to upload cover image: " + uploadError.message);
-      submitBtn.disabled = false;
-      submitBtn.innerText = "🚀 Generate eBook";
-      progressBar.classList.add("hidden");
-      return;
-    }
+if (!uploaded) {
+  alert("❌ Failed to upload cover image.");
+  submitBtn.disabled = false;
+  submitBtn.innerText = "🚀 Generate eBook";
+  progressBar.classList.add("hidden");
+  return;
+}
 
-    const { data: { publicUrl } } = supabase
-      .storage
-      .from("ebook-covers")
-      .getPublicUrl(filePath);
-
-    coverUrl = publicUrl;
-  }
+coverUrl = uploaded.url;
 
   // ✅ Build final payload
   const payload = {
@@ -225,6 +213,8 @@ if (!(await checkCredits(currentUser.id, "generate_pdf"))) {
     cover_image: getBool("cover_image"),
     save_formatting_preset: getBool("save_formatting_preset"),
     cover_url: coverUrl
+    cover_image_type: uploaded?.type || "user",  // 👈 Add this
+    cover_image_path: uploaded?.path || ""    ,  // 👈 And this
   };
 
   const { error } = await supabase.from("ebooks").insert([payload]);
