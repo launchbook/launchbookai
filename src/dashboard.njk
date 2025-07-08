@@ -9,6 +9,10 @@
 
   <p class="text-gray-600 mb-4">Logged in as: <span id="user-email" class="font-medium text-blue-600"></span></p>
 
+<p class="text-gray-600 mb-4">Available credits: 
+  <span id="user-credits" class="font-medium text-green-700">Loading...</span>
+</p>
+
   <hr class="my-6" />
 
   <!-- 📘 eBook Generator Form -->
@@ -64,30 +68,21 @@
           <option>Awareness Building</option>
           <option>Entertainment</option>
         </select>
-        <select id="language" class="border px-4 py-2 rounded" required>
-         <option value="">Select Language</option>
-         <option value="English">English</option>
-         <option value="Hindi">Hindi</option>
-         <option value="Spanish">Spanish</option>
-         <option value="French">French</option>
-         <option value="German">German</option>
-         <option value="Arabic">Arabic</option>
-         <option value="Portuguese">Portuguese</option>
-         <option value="Indonesian">Indonesian</option>
-         <option value="Bengali">Bengali</option>
-         <option value="Chinese">Chinese</option>
-         </select>
+        <select id="language" name="language" class="border px-4 py-2 rounded" required>
+        <option value="">Select Language</option>
+        <option value="English">English</option>
+        <option value="Hindi">Hindi</option>
+        <option value="Spanish">Spanish</option>
+        <option value="French">French</option>
+        <option value="German">German</option>
+        <option value="Arabic">Arabic</option>
+        <option value="Portuguese">Portuguese</option>
+        <option value="Indonesian">Indonesian</option>
+        <option value="Bengali">Bengali</option>
+        <option value="Chinese">Chinese</option>
+        </select>
+
       </div>
-
-      <!-- Extra Options -->
-<div class="flex flex-col gap-2">
-  <label><input type="checkbox" id="with_images" name="with_images" /> Include Images</label>
-  <label><input type="checkbox" id="include_affiliate_links" name="include_affiliate_links" /> Add Affiliate Links Based on Keywords</label>
-  <label><input type="checkbox" id="cover_image" name="cover_image" /> Use Cover Image</label>
-
-  <input type="text" id="cover_title" name="cover_title" placeholder="Cover Title (optional)" class="border px-4 py-2 rounded" />
-  <input type="file" id="cover_upload" name="cover_upload" accept="image/*" class="border px-4 py-2 rounded" />
-  <p class="text-sm text-gray-500">Max upload size: 15MB</p>
 
  <!-- Extra Options -->
 <div class="flex flex-col gap-2">
@@ -172,6 +167,15 @@
       </button>
     </form>
   </div>
+<!-- 🔄 Loading Spinner -->
+<div id="loading-spinner" class="hidden mt-6 text-center text-blue-600">
+  <svg class="animate-spin h-6 w-6 mx-auto mb-2" viewBox="0 0 24 24">
+    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+  </svg>
+  Generating your eBook, please wait...
+</div>
+
 </section>
 
 <!-- ✅ Success Message Box -->
@@ -184,7 +188,7 @@
     </button>
 
     <!-- ✅ These two buttons are now functional, so NOT disabled -->
-    <button id="download-pdf" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
+    <button id="download-pdf" disabled class="bg-blue-500 text-white px-4 py-2 rounded opacity-60 cursor-not-allowed">
       ⬇️ Download PDF
     </button>
 
