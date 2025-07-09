@@ -8,11 +8,29 @@
     </div>
   
     <p class="text-gray-600 mb-4">Logged in as: <span id="user-email" class="font-medium text-blue-600"></span></p>
-  
-  <p class="text-gray-600 mb-4">Available credits: 
+
+<div id="user-credits" 
+     class="cursor-pointer text-sm text-gray-800 hover:text-blue-600 underline"
+     title="Click to view plan details →"
+     onclick="showMyPlanModal()">
+<p class="text-gray-600 mb-4">Available credits: 
     <span id="user-credits" class="font-medium text-green-700">Loading...</span>
   </p>
-  
+</div>
+
+<button onclick="showMyPlanModal()" class="text-sm text-blue-600 underline">📋 View My Plan</button>
+
+<!-- Modal -->
+<div id="my-plan-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center">
+  <div class="bg-white p-6 rounded shadow-lg w-[90%] max-w-md">
+    <h2 class="text-lg font-semibold mb-2">📋 My Plan Details</h2>
+    <div id="my-plan-content" class="text-sm text-gray-700">
+      <!-- Dynamic content inserted here -->
+    </div>
+    <button onclick="closeMyPlanModal()" class="mt-4 px-3 py-1 bg-blue-600 text-white rounded">Close</button>
+  </div>
+</div>
+
     <hr class="my-6" />
   
     <!-- 📘 eBook Generator Form -->
