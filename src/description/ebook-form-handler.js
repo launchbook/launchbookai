@@ -1,5 +1,10 @@
 import { supabase } from '/supabaseClient.js';
 
+async function refreshUserCredits() {
+  if (!currentUser?.id) return;
+  await showUserCredits();
+}
+
 let currentUser = null;
 
 // ✅ LAUNCHBOOK CREDIT SYSTEM – Phase 1 & 2
@@ -77,9 +82,18 @@ async function logUsage(userId, email, actionType, details = {}) {
 
 // ✅ Display credits on dashboard (HTML ID: #user-credits)
 async function showUserCredits() {
+  if (!currentUser?.id) return;
+  
+  const creditBox = document.getElementById("user-credits");
+creditBox.innerHTML = "⏳ Loading your credits...";  // ✨ Instant feedback
+  
   const userCredits = await getUserCredits(currentUser.id);
   const creditBox = document.getElementById("user-credits");
 
+  const left = userCredits.credit_limit - userCredits.credits_used;
+  const percentUsed = Math.min(100, Math.round((userCredits.credits_used / userCredits.credit_limit) * 100));
+
+  // ✅ Handle expired plan
   if (!userCredits || !userCredits.is_active) {
     creditBox.innerHTML = `
       ❌ No active plan.
@@ -88,35 +102,43 @@ async function showUserCredits() {
     return;
   }
 
+  // ✅ Handle lifetime plan
   if (userCredits.plan_type === "lifetime") {
-    creditBox.innerText = `🌟 Lifetime Plan Active`;
-    return;
-  }
-
-  const left = userCredits.credit_limit - userCredits.credits_used;
-
-  // ✅ Determine if Upgrade button should show
-  const canUpgrade = !["pro", "agency"].includes(userCredits.plan_name?.toLowerCase());
-
-  const upgradeLink = canUpgrade
-    ? `<a href="/pricing" class="ml-2 text-blue-600 underline">Upgrade Plan</a>`
-    : "";
-
-  if (left <= 0) {
     creditBox.innerHTML = `
-      🚫 0 / ${userCredits.credit_limit} credits left.
-      <button onclick="topUpCredits(50)" class="ml-2 text-blue-600 underline">Add More Credits</button>
-      ${upgradeLink}
+      🌟 Lifetime Plan Active
+      <div class="text-sm text-gray-500 mt-1">(Unlimited access, no need to upgrade)</div>
     `;
     return;
   }
 
+  // ✅ Determine if upgrade link needed
+  const canUpgrade = !["pro", "agency"].includes(userCredits.plan_name?.toLowerCase());
+  const upgradeLink = canUpgrade
+    ? `<a href="/pricing" class="ml-2 text-blue-600 underline">Upgrade Plan</a>`
+    : "";
+
+  // ✅ Show progress bar with red warning if 80%+ used
   creditBox.innerHTML = `
-    ✅ ${left} / ${userCredits.credit_limit} credits left.
+    <div class="mb-1 text-sm">
+      🔋 ${left} / ${userCredits.credit_limit} credits left
+      <span class="text-xs text-gray-500">(${percentUsed}% used)</span>
+    </div>
+    <div class="w-full bg-gray-200 rounded-full h-2">
+      <div class="${percentUsed >= 80 ? 'bg-red-500' : 'bg-blue-500'} h-2 rounded-full" style="width: ${percentUsed}%"></div>
+    </div>
     ${upgradeLink}
   `;
 }
 
+ if (userCredits.plan_type === "lifetime") {
+  creditBox.innerHTML = `
+    🌟 Lifetime Plan Active
+    <div class="text-sm text-gray-500 mt-1">(Unlimited access, no need to upgrade)</div>
+  `;
+  return;
+}
+
+  const left = userCredits.credit_limit - userCredits.credits_used;
 
 // ✅ Get user session
 const getUser = async () => {
@@ -129,7 +151,7 @@ const getUser = async () => {
   currentUser = session.user;
 document.getElementById("user-email").innerText = currentUser.email;
   // ✅ Show available credits after user loads
-showUserCredits();
+refreshUserCredits();
   
 const plan = await getUserCredits(currentUser.id);
 if (!plan?.is_active) {
@@ -314,7 +336,7 @@ coverUrl = uploaded.url;
   with_images: payload.with_images
 });
 
-showUserCredits(); // refresh UI credits
+refreshUserCredits(); // refresh UI credits
 
 
   document.getElementById("regenerate-pdf").classList.remove("hidden");
@@ -450,7 +472,7 @@ document.getElementById("regenerate-pdf")?.addEventListener("click", async () =>
   p_increment: 1
 });
 
-      showUserCredits(); // update UI
+      refreshUserCredits(); // update UI
 
       alert(`✅ Regenerated! (${regenLimit - regenCount} tries left)`);
       document.getElementById("pdf-preview").querySelector("iframe").src = result.preview_url;
@@ -538,7 +560,7 @@ document.getElementById("regenerate-image")?.addEventListener("click", async () 
       p_increment: 1
       });
 
-      showUserCredits(); // update UI
+     refreshUserCredits(); // update UI
       
       alert(`✅ New image added! (${imageRegenLimit - imageRegenCount} tries left)`);
       document.getElementById("pdf-preview").querySelector("iframe").src = result.preview_url;
@@ -753,6 +775,7 @@ async function loadCoverHistory() {
 
 // ✅ Top-up Credits and Extend Plan by 30 Days
 async function topUpCredits(extraCredits = 50) {
+  if (!currentUser?.id) return;
   const plan = await getUserCredits(currentUser.id);
 
   // ⛔ Block if plan is expired
@@ -782,7 +805,7 @@ async function topUpCredits(extraCredits = 50) {
   });
 
   alert(`✅ ${extraCredits} credits added! Plan extended by 30 days.`);
-  showUserCredits(); // refresh UI
+  refreshUserCredits(); // refresh UI
 }
 
 await supabase.from("user_usage_logs").insert({
@@ -792,4 +815,58 @@ await supabase.from("user_usage_logs").insert({
   credits_used: 0,
   metadata: { added_credits: extraCredits }
 });
+// ✅ Show "My Plan" details popup
+async function showMyPlanModal() {
+  if (!currentUser?.id) return;
+  const plan = await getUserCredits(currentUser.id);
+  if (!plan) {
+    alert("❌ Failed to load your plan.");
+    return;
+  }
+
+  const total = plan.credit_limit || 0;
+  const used = plan.credits_used || 0;
+  const left = total - used;
+  const badge = plan.plan_type === "lifetime" ? "🌟 Lifetime" : "";
+  const now = new Date();
+  let warning = "";
+  let daysLeftText = "";
+  let start = null;
+  let end = null;
+
+  if (plan.plan_type !== "lifetime" && plan.start_date && plan.end_date) {
+    start = new Date(plan.start_date);
+    end = new Date(plan.end_date);
+    const diff = Math.ceil((end - now) / (1000 * 60 * 60 * 24));
+    daysLeftText = `🌒 ${diff} day${diff === 1 ? '' : 's'} left in your plan`;
+
+    if (diff <= 3) {
+      warning = `<p class="text-red-600 mt-2 font-medium">⚠️ Your plan ends in ${diff} day${diff === 1 ? '' : 's'}!</p>`;
+    }
+  }
+
+  const container = document.getElementById("my-plan-container");
+  if (!container) {
+    alert("⚠️ Plan container not found in HTML.");
+    return;
+  }
+
+  container.innerHTML = `
+    <p><strong>Plan:</strong> ${plan.plan_name || "Unknown"} ${badge}</p>
+    <p><strong>Status:</strong> ${plan.is_active ? "✅ Active" : "❌ Expired"}</p>
+    <p><strong>Credits:</strong> ${left} / ${total}</p>
+    ${plan.plan_type !== "lifetime" ? `
+      <p><strong>Start:</strong> ${start?.toDateString()}</p>
+      <p><strong>End:</strong> ${end?.toDateString()}</p>
+      <p>${daysLeftText}</p>
+      ${warning}
+    ` : ""}
+    <div class="mt-4">
+      <button onclick="topUpCredits(50)" class="text-blue-600 underline">🔁 Add More Credits</button>
+    </div>
+  `;
+
+  // ✅ Show modal (you can style this yourself)
+  document.getElementById("my-plan-modal").classList.remove("hidden");
+}
 
