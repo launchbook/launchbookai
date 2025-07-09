@@ -18,7 +18,7 @@ const CREDIT_COSTS = {
 async function getUserCredits(userId) {
   const { data, error } = await supabase
     .from("users_plan")
-    .select("credit_limit, credits_used")
+    .select("credit_limit, credits_used, is_active, plan_type")
     .eq("user_id", userId)
     .single();
 
@@ -35,7 +35,14 @@ async function checkCredits(userId, actionType) {
   const cost = CREDIT_COSTS[actionType] || 0;
   const plan = await getUserCredits(userId);
 
-  if (!plan) return false;
+  // ✅ Block if no plan or inactive
+  if (!plan || !plan.is_active) {
+    alert("❌ Your plan is inactive or expired. Please upgrade to continue.");
+    return false;
+  }
+
+  // ✅ Skip credit limit if lifetime plan
+  if (plan.plan_type === "lifetime") return true;
 
   if ((plan.credits_used + cost) > plan.credit_limit) {
     alert(`🚫 Not enough credits! Action requires ${cost}, you have ${plan.credit_limit - plan.credits_used} left.`);
@@ -71,15 +78,45 @@ async function logUsage(userId, email, actionType, details = {}) {
 // ✅ Display credits on dashboard (HTML ID: #user-credits)
 async function showUserCredits() {
   const userCredits = await getUserCredits(currentUser.id);
+  const creditBox = document.getElementById("user-credits");
 
-  if (!userCredits) {
-    document.getElementById("user-credits").innerText = `0 / 0 credits`;
+  if (!userCredits || !userCredits.is_active) {
+    creditBox.innerHTML = `
+      ❌ No active plan.
+      <a href="/pricing" class="ml-2 text-blue-600 underline">Upgrade Plan</a>
+    `;
+    return;
+  }
+
+  if (userCredits.plan_type === "lifetime") {
+    creditBox.innerText = `🌟 Lifetime Plan Active`;
     return;
   }
 
   const left = userCredits.credit_limit - userCredits.credits_used;
-  document.getElementById("user-credits").innerText = `${left} / ${userCredits.credit_limit} credits left`;
+
+  // ✅ Determine if Upgrade button should show
+  const canUpgrade = !["pro", "agency"].includes(userCredits.plan_name?.toLowerCase());
+
+  const upgradeLink = canUpgrade
+    ? `<a href="/pricing" class="ml-2 text-blue-600 underline">Upgrade Plan</a>`
+    : "";
+
+  if (left <= 0) {
+    creditBox.innerHTML = `
+      🚫 0 / ${userCredits.credit_limit} credits left.
+      <button onclick="topUpCredits(50)" class="ml-2 text-blue-600 underline">Add More Credits</button>
+      ${upgradeLink}
+    `;
+    return;
+  }
+
+  creditBox.innerHTML = `
+    ✅ ${left} / ${userCredits.credit_limit} credits left.
+    ${upgradeLink}
+  `;
 }
+
 
 // ✅ Get user session
 const getUser = async () => {
@@ -93,7 +130,15 @@ const getUser = async () => {
 document.getElementById("user-email").innerText = currentUser.email;
   // ✅ Show available credits after user loads
 showUserCredits();
+  
+const plan = await getUserCredits(currentUser.id);
+if (!plan?.is_active) {
+  alert("❌ Your plan has expired. Please renew to access eBook creation.");
+  window.location.href = "/pricing";
+  return;
+}
 
+  
 // ✅ Load previous eBooks
 loadPreviousEbooks();
 loadCoverHistory();
@@ -705,4 +750,46 @@ async function loadCoverHistory() {
     grid.appendChild(wrapper);
   });
 }
+
+// ✅ Top-up Credits and Extend Plan by 30 Days
+async function topUpCredits(extraCredits = 50) {
+  const plan = await getUserCredits(currentUser.id);
+
+  // ⛔ Block if plan is expired
+  if (!plan?.is_active) {
+    alert("❌ Cannot add credits. Your plan is expired. Please upgrade instead.");
+    window.location.href = "/pricing";
+    return;
+  }
+
+  const { error } = await supabase.rpc("add_credits_and_extend", {
+    p_user_id: currentUser.id,
+    p_credits: extraCredits
+  });
+
+  if (error) {
+    alert("❌ Failed to add credits: " + error.message);
+    return;
+  }
+
+  // ✅ Log top-up
+  await supabase.from("user_usage_logs").insert({
+    user_id: currentUser.id,
+    email: currentUser.email,
+    action_type: "topup",
+    credits_used: 0,
+    metadata: { added_credits: extraCredits }
+  });
+
+  alert(`✅ ${extraCredits} credits added! Plan extended by 30 days.`);
+  showUserCredits(); // refresh UI
+}
+
+await supabase.from("user_usage_logs").insert({
+  user_id: currentUser.id,
+  email: currentUser.email,
+  action_type: "topup",
+  credits_used: 0,
+  metadata: { added_credits: extraCredits }
+});
 
