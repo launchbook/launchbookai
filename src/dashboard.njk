@@ -105,6 +105,17 @@
    <!-- Extra Options -->
   <div class="flex flex-col gap-2">
     <label><input type="checkbox" id="with_images" name="with_images" /> Include Images</label>
+
+   <div id="imageCountContainer" class="mt-3">
+  <label for="imageCount" class="block text-sm font-medium text-gray-700">
+    Number of Images to Add (0–15)
+  </label>
+  <select id="imageCount" name="imageCount" required
+    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+    ${[...Array(16).keys()].map(i => `<option value="${i}">${i}</option>`).join('')}
+    </select>
+     </div>
+
     <label><input type="checkbox" id="include_affiliate_links" name="include_affiliate_links" /> Add Affiliate Links Based on Keywords</label>
     <label><input type="checkbox" id="cover_image" name="cover_image" /> Use Cover Image</label>
     
