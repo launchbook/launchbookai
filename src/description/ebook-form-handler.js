@@ -88,8 +88,7 @@ async function showUserCredits() {
 creditBox.innerHTML = "⏳ Loading your credits...";  // ✨ Instant feedback
   
   const userCredits = await getUserCredits(currentUser.id);
-  const creditBox = document.getElementById("user-credits");
-
+  
   const left = userCredits.credit_limit - userCredits.credits_used;
   const percentUsed = Math.min(100, Math.round((userCredits.credits_used / userCredits.credit_limit) * 100));
 
@@ -378,8 +377,11 @@ const BASE_URL = location.hostname === 'localhost'
   ? 'http://localhost:3000'
   : 'https://ebook-pdf-generator.onrender.com';
 
-// 📩 Send to Email (when ready)
 document.getElementById("send-email")?.addEventListener("click", async () => {
+  const emailBtn = document.getElementById("send-email");
+  emailBtn.disabled = true;
+  emailBtn.innerText = "⏳ Sending...";
+
   try {
     const res = await fetch(`${BASE_URL}/api/send-ebook-email`, {
       method: 'POST',
@@ -396,17 +398,25 @@ document.getElementById("send-email")?.addEventListener("click", async () => {
       alert("📧 eBook sent to your email!");
       hasEmailed = true;
 
-      // ✅ Optional: Disable regeneration buttons after email
+      // ✅ Disable regeneration buttons after email
       document.getElementById("regenerate-pdf").disabled = true;
       document.getElementById("regenerate-image").disabled = true;
     } else {
       alert("❌ Failed to send email: " + result.error);
     }
+
+    // ✅ Restore email button state
+    emailBtn.innerText = "📩 Send to Email";
+    emailBtn.disabled = false;
+
   } catch (err) {
     alert("❌ Email error: " + err.message);
+
+    // ✅ Restore on error too
+    emailBtn.innerText = "📩 Send to Email";
+    emailBtn.disabled = false;
   }
 });
-
 
    // 🔁 Regenerate PDF Button logic with limit
 let regenCount = 0;
@@ -487,8 +497,12 @@ document.getElementById("regenerate-pdf")?.addEventListener("click", async () =>
   } catch (err) {
     alert("❌ Regeneration error: " + err.message);
   } finally {
-    regenBtn.innerText = "🔁 Regenerate PDF";
-    regenBtn.disabled = regenCount >= regenLimit;
+    regenBtn.innerText = regenCount >= regenLimit
+  ? `🔁 Regenerate PDF (${regenLimit}/${regenLimit})`
+  : `🔁 Regenerate PDF (${regenCount}/${regenLimit})`;
+    regenBtn.title = `Used ${regenCount} of ${regenLimit} regenerations`;
+    
+     regenBtn.disabled = regenCount >= regenLimit;
   }
 });
 
@@ -527,11 +541,13 @@ document.getElementById("regenerate-image")?.addEventListener("click", async () 
     return;
   }
 
-  if (imageRegenCount >= imageRegenLimit) {
-    alert("🚫 Image regeneration limit reached. Upgrade your plan to unlock more.");
-    imageBtn.disabled = true;
-    return;
-  }
+  if (regenCount >= regenLimit) {
+  regenBtn.disabled = true;
+  regenBtn.innerText = `🔁 Regenerate PDF (Limit Reached)`;
+  regenBtn.title = `You have used all ${regenLimit} regenerations. Upgrade for more.`;
+  alert("🚫 Regeneration limit reached. Upgrade your plan to unlock more regenerations.");
+  return;
+}
 
   // ✅ Show spinner state
   imageBtn.disabled = true;
@@ -565,17 +581,27 @@ document.getElementById("regenerate-image")?.addEventListener("click", async () 
       alert(`✅ New image added! (${imageRegenLimit - imageRegenCount} tries left)`);
       document.getElementById("pdf-preview").querySelector("iframe").src = result.preview_url;
 
-      if (imageRegenCount >= imageRegenLimit) {
-        imageBtn.disabled = true;
-      }
-    } else {
+     if (imageRegenCount >= imageRegenLimit) {
+  imageBtn.disabled = true;
+  imageBtn.innerText = `🎨 Regenerate Image (Limit Reached)`;
+  imageBtn.title = `You have used all ${imageRegenLimit} regenerations.`;
+  alert("🚫 Image regeneration limit reached. Upgrade your plan to unlock more.");
+  return;
+}
+ else {
       alert("❌ Failed to regenerate image: " + result.error);
     }
   } catch (err) {
     alert("❌ Error: " + err.message);
   } finally {
-    imageBtn.innerText = "🎨 Regenerate Cover";
-    imageBtn.disabled = imageRegenCount >= imageRegenLimit;
+    imageBtn.innerText = imageRegenCount >= imageRegenLimit
+  ? `🎨 Regenerate Image (${imageRegenLimit}/${imageRegenLimit})`
+  : `🎨 Regenerate Image (${imageRegenCount}/${imageRegenLimit})`;
+
+    imageBtn.title = `Used ${imageRegenCount} of ${imageRegenLimit} regenerations`;
+
+   imageBtn.disabled = imageRegenCount >= imageRegenLimit;
+
   }
 });
 
