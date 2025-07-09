@@ -58,6 +58,12 @@ app.post('/generate-pdf', async (req, res) => {
     return res.status(400).json({ error: "Missing html, user_id, or email" });
   }
 
+  // 🔒 Step 1: Validate Plan
+  const planCheck = await validateActivePlan(user_id);
+  if (!planCheck.allowed) {
+    return res.status(403).json({ success: false, error: planCheck.reason });
+  }
+
   try {
     // 🧾 Render PDF using Puppeteer
     const browser = await puppeteer.launch({
@@ -70,11 +76,11 @@ app.post('/generate-pdf', async (req, res) => {
     const pdfBuffer = await page.pdf({ format: 'A4', printBackground: true });
     await browser.close();
 
-    // 🗂️ Upload PDF to Supabase Storage (user_files bucket)
+    // 🗂️ Upload PDF to Supabase Storage
     const fileName = `generated-${Date.now()}.pdf`;
     const signedUrl = await uploadGeneratedPDF(user_id, pdfBuffer, fileName);
 
-    // 💾 Save metadata to Supabase table
+    // 💾 Save metadata to Supabase
     await supabase.from("generated_files").insert([{
       user_id,
       title,
@@ -86,6 +92,196 @@ app.post('/generate-pdf', async (req, res) => {
       download_url: signedUrl,
       created_at: new Date().toISOString()
     }]);
+
+    return res.json({ success: true, url: signedUrl });
+
+  } catch (err) {
+    console.error("❌ Error generating or uploading PDF:", err);
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/generate-epub', async (req, res) => {
+  const { html, user_id, email, title, topic, language, audience, tone, purpose } = req.body;
+
+  if (!html || !user_id || !email) {
+    return res.status(400).json({ error: "Missing html, user_id, or email" });
+  }
+
+  const planCheck = await validateActivePlan(user_id);
+  if (!planCheck.allowed) {
+    return res.status(403).json({ error: planCheck.reason });
+  }
+
+  try {
+    const fileName = `ebook-${Date.now()}.epub`;
+    const epubBuffer = Buffer.from(html); // Use a proper EPUB generator in production
+
+    const signedUrl = await uploadGeneratedPDF(user_id, epubBuffer, fileName);
+
+    await supabase.from("generated_files").insert([{
+      user_id,
+      title,
+      topic,
+      language,
+      audience,
+      tone,
+      purpose,
+      download_url: signedUrl,
+      created_at: new Date().toISOString()
+    }]);
+
+    return res.json({ success: true, url: signedUrl });
+
+  } catch (err) {
+    console.error("❌ EPUB Generation error:", err);
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/regenerate-pdf', async (req, res) => {
+  const { user_id, html } = req.body;
+
+  if (!user_id || !html) {
+    return res.status(400).json({ error: 'Missing user_id or html' });
+  }
+
+  const planCheck = await validateActivePlan(user_id);
+  if (!planCheck.allowed) {
+    return res.status(403).json({ success: false, error: planCheck.reason });
+  }
+
+  try {
+    const browser = await puppeteer.launch({
+      headless: 'new',
+      args: ['--no-sandbox', '--disable-setuid-sandbox'],
+    });
+    const page = await browser.newPage();
+    await page.setContent(html, { waitUntil: 'networkidle0' });
+
+    const pdfBuffer = await page.pdf({ format: 'A4', printBackground: true });
+    await browser.close();
+
+    const fileName = `regenerated-${Date.now()}.pdf`;
+    const signedUrl = await uploadGeneratedPDF(user_id, pdfBuffer, fileName);
+
+    return res.json({ success: true, url: signedUrl });
+
+  } catch (err) {
+    console.error('❌ PDF regeneration error:', err);
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/regenerate-cover-image', async (req, res) => {
+  const { user_id, base64Image } = req.body;
+
+  if (!user_id || !base64Image) {
+    return res.status(400).json({ error: 'Missing user_id or base64Image' });
+  }
+
+  const planCheck = await validateActivePlan(user_id);
+  if (!planCheck.allowed) {
+    return res.status(403).json({ success: false, error: planCheck.reason });
+  }
+
+  try {
+    const buffer = Buffer.from(base64Image.replace(/^data:image\/png;base64,/, ''), 'base64');
+    const filename = `cover_${Date.now()}.png`;
+    const path = `ai_generated_covers/${user_id}/${filename}`;
+
+    const { error } = await supabase.storage
+      .from('user_files')
+      .upload(path, buffer, {
+        contentType: 'image/png',
+        upsert: true,
+      });
+
+    if (error) return res.status(500).json({ error: 'Upload failed' });
+
+    const { data: urlData } = await supabase.storage.from('user_files').getPublicUrl(path);
+    return res.json({ success: true, url: urlData.publicUrl });
+
+  } catch (err) {
+    console.error('❌ Image regeneration error:', err);
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/send-ebook-email', async (req, res) => {
+  const { email, user_id, download_url, title } = req.body;
+
+  if (!email || !user_id || !download_url || !title) {
+    return res.status(400).json({ error: 'Missing email, title, url, or user_id' });
+  }
+
+  const planCheck = await validateActivePlan(user_id);
+  if (!planCheck.allowed) {
+    return res.status(403).json({ success: false, error: planCheck.reason });
+  }
+
+  try {
+    const transporter = nodemailer.createTransport({
+      host: 'smtp.zoho.in',
+      port: 465,
+      secure: true,
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS
+      }
+    });
+
+    await transporter.sendMail({
+      from: `"Leostarearn eBooks" <${process.env.EMAIL_USER}>`,
+      to: email,
+      subject: '📘 Your eBook is Ready!',
+      html: `
+        <p>Hello,</p>
+        <p>Your eBook titled <b>${title}</b> is ready. Click below to download it:</p>
+        <p><a href="${download_url}" target="_blank">📥 Download Now</a></p>
+        <p>Thanks for using Leostarearn!</p>
+      `
+    });
+
+    return res.json({ success: true });
+
+  } catch (err) {
+    console.error("❌ Email error:", err);
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/generate-from-url', async (req, res) => {
+  const { url, user_id } = req.body;
+
+  if (!url || !user_id) {
+    return res.status(400).json({ error: 'Missing url or user_id' });
+  }
+
+  const planCheck = await validateActivePlan(user_id);
+  if (!planCheck.allowed) {
+    return res.status(403).json({ error: planCheck.reason });
+  }
+
+  try {
+    const browser = await puppeteer.launch({ headless: 'new', args: ['--no-sandbox'] });
+    const page = await browser.newPage();
+    await page.goto(url, { waitUntil: 'networkidle0' });
+
+    const pdfBuffer = await page.pdf({ format: 'A4', printBackground: true });
+    await browser.close();
+
+    const fileName = `url-generated-${Date.now()}.pdf`;
+    const signedUrl = await uploadGeneratedPDF(user_id, pdfBuffer, fileName);
+
+    return res.json({ success: true, url: signedUrl });
+
+  } catch (err) {
+    console.error('❌ URL PDF generation error:', err);
+    return res.status(500).json({ error: err.message });
+  }
+});
+
 
     // 📩 Optional: send email (currently commented)
     /*
