@@ -147,4 +147,31 @@ app.post('/upload-ai-cover', async (req, res) => {
   const { data: urlData } = await supabase.storage.from('user_files').getPublicUrl(filePath);
   return res.json({ url: urlData.publicUrl, path: filePath });
 });
+import { createClient } from '@supabase/supabase-js';
+
+const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
+
+export async function validateActivePlan(userId) {
+  const { data, error } = await supabase
+    .from("users_plan")
+    .select("is_active, plan_type, start_date, end_date")
+    .eq("user_id", userId)
+    .single();
+
+  if (error || !data) {
+    return { allowed: false, reason: "Plan not found or error." };
+  }
+
+  if (data.plan_type === "lifetime") return { allowed: true };
+
+  const now = new Date();
+  const start = data.start_date ? new Date(data.start_date) : null;
+  const end = data.end_date ? new Date(data.end_date) : null;
+
+  if (!data.is_active || !start || !end || now > end) {
+    return { allowed: false, reason: "Your plan has expired. Please renew or upgrade." };
+  }
+
+  return { allowed: true };
+}
 
