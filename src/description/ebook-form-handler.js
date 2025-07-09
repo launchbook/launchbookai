@@ -815,7 +815,9 @@ await supabase.from("user_usage_logs").insert({
   credits_used: 0,
   metadata: { added_credits: extraCredits }
 });
+
 // ✅ Show "My Plan" details popup
+
 async function showMyPlanModal() {
   if (!currentUser?.id) return;
   const plan = await getUserCredits(currentUser.id);
@@ -831,12 +833,12 @@ async function showMyPlanModal() {
   const now = new Date();
   let warning = "";
   let daysLeftText = "";
-  let start = null;
-  let end = null;
+  
+  // ✅ Use fallbacks in case dates are null
+  const start = plan.start_date ? new Date(plan.start_date) : null;
+  const end = plan.end_date ? new Date(plan.end_date) : null;
 
-  if (plan.plan_type !== "lifetime" && plan.start_date && plan.end_date) {
-    start = new Date(plan.start_date);
-    end = new Date(plan.end_date);
+  if (plan.plan_type !== "lifetime" && start && end) {
     const diff = Math.ceil((end - now) / (1000 * 60 * 60 * 24));
     daysLeftText = `🌒 ${diff} day${diff === 1 ? '' : 's'} left in your plan`;
 
@@ -855,9 +857,9 @@ async function showMyPlanModal() {
     <p><strong>Plan:</strong> ${plan.plan_name || "Unknown"} ${badge}</p>
     <p><strong>Status:</strong> ${plan.is_active ? "✅ Active" : "❌ Expired"}</p>
     <p><strong>Credits:</strong> ${left} / ${total}</p>
-    ${plan.plan_type !== "lifetime" ? `
-      <p><strong>Start:</strong> ${start?.toDateString()}</p>
-      <p><strong>End:</strong> ${end?.toDateString()}</p>
+    ${plan.plan_type !== "lifetime" && start && end ? `
+      <p><strong>Start:</strong> ${start.toDateString()}</p>
+      <p><strong>End:</strong> ${end.toDateString()}</p>
       <p>${daysLeftText}</p>
       ${warning}
     ` : ""}
@@ -869,4 +871,3 @@ async function showMyPlanModal() {
   // ✅ Show modal (you can style this yourself)
   document.getElementById("my-plan-modal").classList.remove("hidden");
 }
-
