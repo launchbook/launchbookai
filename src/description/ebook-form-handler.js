@@ -10,7 +10,6 @@ let currentUser = null;
 // ✅ LAUNCHBOOK CREDIT SYSTEM – Phase 1 & 2
 // ------------------------------------------
 
-// ✅ Credit cost per action
 // ✅ Final Phase 4 — Dynamic Credit Estimation Functions
 function estimateCreditCost({ 
   wordCount = 0, 
@@ -27,7 +26,10 @@ function estimateCreditCost({
   const floor = isRegeneration ? 500 : 1000;
   return Math.max(total, floor);
 }
-
+function showCreditEstimate({ wordCount, imageCount, withCover, isRegeneration }) {
+  const estimated = estimateCreditCost({ wordCount, imageCount, withCover, isRegeneration });
+  document.getElementById("credit-estimate-msg").textContent = `Estimated credits: ${estimated}`;
+}
 function estimateCoverImageCost({ style = "default" }) {
   return 300; // Flat for now
 }
@@ -157,15 +159,6 @@ creditBox.innerHTML = "⏳ Loading your credits...";  // ✨ Instant feedback
     return;
   }
 
-  // ✅ Handle lifetime plan
-  if (userCredits.plan_type === "lifetime") {
-    creditBox.innerHTML = `
-      🌟 Lifetime Plan Active
-      <div class="text-sm text-gray-500 mt-1">(Unlimited access, no need to upgrade)</div>
-    `;
-    return;
-  }
-
   // ✅ Determine if upgrade link needed
   const canUpgrade = !["pro", "agency"].includes(userCredits.plan_name?.toLowerCase());
   const upgradeLink = canUpgrade
@@ -183,14 +176,6 @@ creditBox.innerHTML = "⏳ Loading your credits...";  // ✨ Instant feedback
     </div>
     ${upgradeLink}
   `;
-}
-
- if (userCredits.plan_type === "lifetime") {
-  creditBox.innerHTML = `
-    🌟 Lifetime Plan Active
-    <div class="text-sm text-gray-500 mt-1">(Unlimited access, no need to upgrade)</div>
-  `;
-  return;
 }
 
   const left = userCredits.credit_limit - userCredits.credits_used;
@@ -302,12 +287,21 @@ form.addEventListener("submit", async (e) => {
     progressBar.classList.add("hidden");
     return;
   }
-if (!(await checkCredits(currentUser.id, "generate_pdf"))) {
-  submitBtn.disabled = false;
-  submitBtn.innerText = "🚀 Generate eBook";
-  progressBar.classList.add("hidden");
-  return;
-}
+
+  // ✅ Get dynamic credit estimate
+  const wordCount = (formData.get("description") || "").trim().split(/\s+/).length;
+  const imageCount = parseInt(formData.get("image-count")) || 0;
+  const withCover = formData.get("cover_image") === "on";
+
+  const costEstimate = estimateCreditCost({ wordCount, imageCount, withCover, isRegeneration: false });
+
+  // ✅ Dynamic credit check
+  if (!(await checkCredits(currentUser.id, costEstimate))) {
+    submitBtn.disabled = false;
+    submitBtn.innerText = "🚀 Generate eBook";
+    progressBar.classList.add("hidden");
+    return;
+  }
 
   // ✅ Cover image upload check
   let coverUrl = "";
@@ -322,20 +316,19 @@ if (!(await checkCredits(currentUser.id, "generate_pdf"))) {
       return;
     }
 
-    const uploaded = await uploadCoverImageToSupabase(currentUser.id, coverFile, false); // isAI = false
+    const uploaded = await uploadCoverImageToSupabase(currentUser.id, coverFile, false);
     document.getElementById("delete-cover-btn").classList.remove("hidden");
-    uploadedCoverPath = uploaded.path; // store for deletion if needed
+    uploadedCoverPath = uploaded.path;
 
+    if (!uploaded) {
+      alert("❌ Failed to upload cover image.");
+      submitBtn.disabled = false;
+      submitBtn.innerText = "🚀 Generate eBook";
+      progressBar.classList.add("hidden");
+      return;
+    }
 
-if (!uploaded) {
-  alert("❌ Failed to upload cover image.");
-  submitBtn.disabled = false;
-  submitBtn.innerText = "🚀 Generate eBook";
-  progressBar.classList.add("hidden");
-  return;
-}
-
-coverUrl = uploaded.url;
+    coverUrl = uploaded.url;
   }
   
   // ✅ Build final payload
@@ -475,8 +468,6 @@ document.getElementById("send-email")?.addEventListener("click", async () => {
 });
 
    // 🔁 Regenerate PDF Button logic with limit
-let regenCount = 0;
-const regenLimit = 3;
 let hasDownloaded = false;
 let hasEmailed = false;
 
@@ -488,24 +479,16 @@ document.getElementById("download-pdf")?.addEventListener("click", () => {
   document.getElementById("regenerate-pdf").disabled = true;
   document.getElementById("regenerate-image").disabled = true;
 });
-
-document.getElementById("regenerate-pdf")?.addEventListener("click", async () => {
-  const regenBtn = document.getElementById("regenerate-pdf");
   
-    // ✅ Credit check before regenerating PDF
-  if (!(await checkCredits(currentUser.id, "regen_pdf"))) {
-    return;
-  }
+  // ✅ Show visual loading state
+  document.getElementById("regenerate-pdf")?.addEventListener("click", async () => {
+  const regenBtn = document.getElementById("regenerate-pdf");
 
+  // ✅ Check credits before regenerating PDF
+  if (!(await checkCredits(currentUser.id, "regen_pdf"))) return;
 
   if (hasDownloaded || hasEmailed) {
-    alert("⚠️ You’ve already downloaded or emailed this file. Regeneration is disabled.");
-    return;
-  }
-
-  if (regenCount >= regenLimit) {
-    alert("🚫 Regeneration limit reached. Upgrade your plan to unlock more regenerations.");
-    regenBtn.disabled = true;
+    alert("❌ You’ve already downloaded or emailed this file. PDF regeneration is disabled.");
     return;
   }
 
@@ -515,8 +498,8 @@ document.getElementById("regenerate-pdf")?.addEventListener("click", async () =>
 
   try {
     const response = await fetch(`${BASE_URL}/api/regenerate-pdf`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         user_id: currentUser.id,
         email: currentUser.email,
@@ -527,41 +510,29 @@ document.getElementById("regenerate-pdf")?.addEventListener("click", async () =>
     const result = await response.json();
 
     if (result.success) {
-      regenCount++;
-      
-            // ✅ Log credit usage for regen_pdf
-      await logUsage(currentUser.id, currentUser.email, "regen_pdf", {
-        tweaks: true
-      });
+      await logUsage(currentUser.id, currentUser.email, "regen_pdf", { tweaks: true });
+
       await supabase.rpc("increment_regen_pdf_count", {
-  p_user_id: currentUser.id,
-  p_increment: 1
-});
+        p_user_id: currentUser.id,
+        p_increment: 1
+      });
 
-      refreshUserCredits(); // update UI
+      refreshUserCredits(); // ✅ update credit display
 
-      alert(`✅ Regenerated! (${regenLimit - regenCount} tries left)`);
+      alert("✅ PDF regenerated successfully!");
       document.getElementById("pdf-preview").querySelector("iframe").src = result.preview_url;
       document.getElementById("pdf-preview").classList.remove("hidden");
-
-      if (regenCount >= regenLimit) {
-        regenBtn.disabled = true;
-      }
     } else {
       alert("❌ Failed to regenerate: " + result.error);
     }
   } catch (err) {
     alert("❌ Regeneration error: " + err.message);
   } finally {
-    regenBtn.innerText = regenCount >= regenLimit
-  ? `🔁 Regenerate PDF (${regenLimit}/${regenLimit})`
-  : `🔁 Regenerate PDF (${regenCount}/${regenLimit})`;
-    regenBtn.title = `Used ${regenCount} of ${regenLimit} regenerations`;
-    
-     regenBtn.disabled = regenCount >= regenLimit;
+    regenBtn.disabled = false;
+    regenBtn.innerText = "🔁 Regenerate PDF";
+    regenBtn.title = "";
   }
 });
-
 
 // ⬇️ Download PDF (when ready)
 document.getElementById("download-pdf")?.addEventListener("click", async () => {
@@ -581,31 +552,17 @@ document.getElementById("download-pdf")?.addEventListener("click", async () => {
   }
 });
 
-let imageRegenCount = 0;
-const imageRegenLimit = 3;
-
 document.getElementById("regenerate-image")?.addEventListener("click", async () => {
   const imageBtn = document.getElementById("regenerate-image");
-  
-    // ✅ Credit check before regenerating image
-  if (!(await checkCredits(currentUser.id, "regen_image"))) {
-    return;
-  }
+
+  // ✅ Credit check before regenerating image
+  if (!(await checkCredits(currentUser.id, "regen_image"))) return;
 
   if (hasDownloaded || hasEmailed) {
     alert("❌ You’ve already downloaded or emailed this file. Image regeneration is disabled.");
     return;
   }
 
-  if (regenCount >= regenLimit) {
-  regenBtn.disabled = true;
-  regenBtn.innerText = `🔁 Regenerate PDF (Limit Reached)`;
-  regenBtn.title = `You have used all ${regenLimit} regenerations. Upgrade for more.`;
-  alert("🚫 Regeneration limit reached. Upgrade your plan to unlock more regenerations.");
-  return;
-}
-
-  // ✅ Show spinner state
   imageBtn.disabled = true;
   imageBtn.innerText = "⏳ Creating image...";
 
@@ -622,42 +579,25 @@ document.getElementById("regenerate-image")?.addEventListener("click", async () 
     const result = await response.json();
 
     if (result.success) {
-      imageRegenCount++;
-            // ✅ Log credit usage for regen_image
-      await logUsage(currentUser.id, currentUser.email, "regen_image", {
-        tweaks: true
-      });
+      await logUsage(currentUser.id, currentUser.email, "regen_image", { tweaks: true });
+
       await supabase.rpc("increment_regen_image_count", {
-      p_user_id: currentUser.id,
-      p_increment: 1
+        p_user_id: currentUser.id,
+        p_increment: 1
       });
 
-     refreshUserCredits(); // update UI
-      
-      alert(`✅ New image added! (${imageRegenLimit - imageRegenCount} tries left)`);
+      refreshUserCredits();
       document.getElementById("pdf-preview").querySelector("iframe").src = result.preview_url;
-
-     if (imageRegenCount >= imageRegenLimit) {
-  imageBtn.disabled = true;
-  imageBtn.innerText = `🎨 Regenerate Image (Limit Reached)`;
-  imageBtn.title = `You have used all ${imageRegenLimit} regenerations.`;
-  alert("🚫 Image regeneration limit reached. Upgrade your plan to unlock more.");
-  return;
-}
- else {
+      alert("✅ New image added!");
+    } else {
       alert("❌ Failed to regenerate image: " + result.error);
     }
   } catch (err) {
     alert("❌ Error: " + err.message);
   } finally {
-    imageBtn.innerText = imageRegenCount >= imageRegenLimit
-  ? `🎨 Regenerate Image (${imageRegenLimit}/${imageRegenLimit})`
-  : `🎨 Regenerate Image (${imageRegenCount}/${imageRegenLimit})`;
-
-    imageBtn.title = `Used ${imageRegenCount} of ${imageRegenLimit} regenerations`;
-
-   imageBtn.disabled = imageRegenCount >= imageRegenLimit;
-
+    imageBtn.disabled = false;
+    imageBtn.innerText = "🎨 Regenerate Image";
+    imageBtn.title = "";
   }
 });
 
@@ -700,6 +640,7 @@ const loadPreviousEbooks = async () => {
     listContainer.appendChild(row);
   });
 };
+
 // 📦 FRONTEND: Upload cover image (user uploaded OR AI generated)
 // This works for both: manual uploads & AI-generated images
 export async function uploadCoverImageToSupabase(userId, file, isAI = false) {
@@ -911,7 +852,11 @@ async function showMyPlanModal() {
   const total = plan.credit_limit || 0;
   const used = plan.credits_used || 0;
   const left = total - used;
-  const badge = plan.plan_type === "lifetime" ? "🌟 Lifetime" : "";
+let badge = "";
+if (plan.plan_type === "lifetime") badge = "🌟 Lifetime";
+else if (plan.plan_type === "annual") badge = "📅 12-Month Plan";
+else if (plan.plan_type === "monthly") badge = "📆 Monthly Plan";
+else if (plan.plan_type === "trial") badge = "🧪 Trial Plan";
   const now = new Date();
   let warning = "";
   let daysLeftText = "";
@@ -939,8 +884,8 @@ async function showMyPlanModal() {
     <p><strong>Plan:</strong> ${plan.plan_name || "Unknown"} ${badge}</p>
     <p><strong>Status:</strong> ${plan.is_active ? "✅ Active" : "❌ Expired"}</p>
     <p><strong>Credits:</strong> ${left} / ${total}</p>
-    ${plan.plan_type !== "lifetime" && start && end ? `
-      <p><strong>Start:</strong> ${start.toDateString()}</p>
+    ${plan.plan_type !== "trial" && start && end ? `<div class="text-sm text-gray-400 mt-1"> Active from <strong>${formatDate(start)}</strong> to <strong>${formatDate(end)}</strong>
+  </div> : ""}</p>
       <p><strong>End:</strong> ${end.toDateString()}</p>
       <p>${daysLeftText}</p>
       ${warning}
@@ -953,3 +898,108 @@ async function showMyPlanModal() {
   // ✅ Show modal (you can style this yourself)
   document.getElementById("my-plan-modal").classList.remove("hidden");
 }
+// 👇 Wait for DOM content before attaching listeners
+document.addEventListener("DOMContentLoaded", () => {
+  const descriptionInput = document.getElementById("description");
+  const imageSelect = document.getElementById("image-count");
+  const coverCheckbox = document.getElementById("include-cover");
+
+  const updateEstimate = () => {
+    const text = descriptionInput.value;
+    const wordCount = text.trim().split(/\s+/).length;
+    const imageCount = parseInt(imageSelect.value || 0);
+    const withCover = coverCheckbox.checked;
+
+    showCreditEstimate({ wordCount, imageCount, withCover, isRegeneration: false });
+  };
+
+  descriptionInput.addEventListener("input", updateEstimate);
+  imageSelect.addEventListener("change", updateEstimate);
+  coverCheckbox.addEventListener("change", updateEstimate);
+
+  // 👇 Show estimate on initial load
+  updateEstimate();
+});
+
+                      // ✅ LAUNCHBOOK CREDIT SYSTEM – Phase 4: Credit-Based Regeneration Only
+
+// 🔁 Regeneration Settings (Remove Free Limit)
+const regenBtn = document.getElementById("regenerate-pdf");
+const imageBtn = document.getElementById("regenerate-image");
+
+// PDF Regeneration
+regenBtn?.addEventListener("click", async () => {
+  if (!(await checkCredits(currentUser.id, CREDIT_COSTS.regen_pdf))) return;
+  if (hasDownloaded || hasEmailed) return alert("⚠️ Regeneration disabled after download/email.");
+
+  regenBtn.disabled = true;
+  regenBtn.innerText = "⏳ Regenerating...";
+
+  try {
+    const res = await fetch(`${BASE_URL}/api/regenerate-pdf`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ user_id: currentUser.id, email: currentUser.email })
+    });
+    const result = await res.json();
+
+    if (result.success) {
+      await logUsage(currentUser.id, currentUser.email, "regen_pdf", {});
+      await supabase.rpc("increment_credits_used", { p_user_id: currentUser.id, p_increment: CREDIT_COSTS.regen_pdf });
+      document.getElementById("pdf-preview").querySelector("iframe").src = result.preview_url;
+      document.getElementById("pdf-preview").classList.remove("hidden");
+      alert("✅ Regenerated!");
+    } else {
+      alert("❌ Failed: " + result.error);
+    }
+  } catch (err) {
+    alert("❌ Error: " + err.message);
+  } finally {
+    regenBtn.disabled = false;
+    regenBtn.innerText = "🔁 Regenerate PDF";
+  }
+});
+
+// Image Regeneration
+imageBtn?.addEventListener("click", async () => {
+  if (!(await checkCredits(currentUser.id, CREDIT_COSTS.regen_image))) return;
+  if (hasDownloaded || hasEmailed) return alert("⚠️ Image regen disabled after download/email.");
+
+  imageBtn.disabled = true;
+  imageBtn.innerText = "⏳ Creating image...";
+
+  try {
+    const res = await fetch(`${BASE_URL}/api/regenerate-cover-image`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ user_id: currentUser.id, email: currentUser.email })
+    });
+    const result = await res.json();
+
+    if (result.success) {
+      await logUsage(currentUser.id, currentUser.email, "regen_image", {});
+      await supabase.rpc("increment_credits_used", { p_user_id: currentUser.id, p_increment: CREDIT_COSTS.regen_image });
+      document.getElementById("pdf-preview").querySelector("iframe").src = result.preview_url;
+      document.getElementById("pdf-preview").classList.remove("hidden");
+      alert("✅ New image added!");
+    } else {
+      alert("❌ Failed: " + result.error);
+    }
+  } catch (err) {
+    alert("❌ Error: " + err.message);
+  } finally {
+    imageBtn.disabled = false;
+    imageBtn.innerText = "🎨 Regenerate Image";
+  }
+});
+
+// 🔒 CREDIT_COSTS Map
+const CREDIT_COSTS = {
+  generate_pdf: 1000,     // base
+  regen_pdf: 500,
+  regen_image: 100,
+  generate_epub: 1000,
+  send_email: 30,
+  generate_cover: 300,
+  generate_from_url: 800,
+};
