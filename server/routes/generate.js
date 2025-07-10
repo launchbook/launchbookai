@@ -4,7 +4,7 @@ const nodemailer = require('nodemailer');
 const { supabase, uploadGeneratedFile } = require('../lib/supabase');
 const { validateActivePlan } = require('../lib/plan');
 const { generateEpubBuffer } = require('../lib/epub');
-const { estimateCreditCost } = require('../lib/credits');
+const { estimateCreditCost, estimateURLConversionCost } = require('../lib/credits');
 
 
 const router = express.Router();
