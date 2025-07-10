@@ -35,7 +35,7 @@ router.post('/upload-ai-image', async (req, res) => {
 
     // ✅ Size check (2MB max)
     if (buffer.length > MAX_IMAGE_SIZE_MB * 1024 * 1024) {
-      return res.status(400).json({ error: 'Image exceeds 2MB limit' });
+      return res.status(400).json({ error: 'Image exceeds 10MB limit' });
     }
 
     const filename = `ebook_image_${Date.now()}.${ext}`;
