@@ -36,7 +36,9 @@ router.post('/generate-pdf', async (req, res) => {
     tone,
     purpose,
     output_format = 'pdf',
-    estimated_credits = 1000
+    estimated_credits = 1000,
+    image_count = 0,
+    cover_url = null
   } = req.body;
 
   if (!html || !user_id || !email) {
@@ -66,7 +68,7 @@ router.post('/generate-pdf', async (req, res) => {
 
     const signedUrl = await uploadGeneratedFile(user_id, fileBuffer, fileName);
 
-    // ✅ Store metadata
+    // ✅ Store metadata including image_count, cover_url, file size
     await supabase.from('generated_files').insert([{
       user_id,
       title: safeTitle,
@@ -77,6 +79,9 @@ router.post('/generate-pdf', async (req, res) => {
       purpose,
       format: output_format,
       download_url: signedUrl,
+      image_count,
+      cover_url,
+      file_size: fileBuffer.length,
       created_at: new Date().toISOString()
     }]);
 
@@ -92,7 +97,12 @@ router.post('/generate-pdf', async (req, res) => {
 
 // ✅ POST /generate-from-url
 router.post('/generate-from-url', async (req, res) => {
-  const { url, user_id, output_format = 'pdf', estimated_credits = 800 } = req.body;
+  const {
+    url,
+    user_id,
+    output_format = 'pdf',
+    estimated_credits = 800
+  } = req.body;
 
   if (!url || !user_id) {
     return res.status(400).json({ error: 'Missing url or user_id' });
@@ -132,6 +142,9 @@ router.post('/generate-from-url', async (req, res) => {
       purpose: null,
       format: output_format,
       download_url: signedUrl,
+      image_count: 0,
+      cover_url: null,
+      file_size: fileBuffer.length,
       created_at: new Date().toISOString()
     }]);
 
