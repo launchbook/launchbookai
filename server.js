@@ -6,6 +6,7 @@ import regenerateRoutes from './server/routes/regenerate.js';
 import coverRoutes from './server/routes/cover.js';
 import emailRoutes from './server/routes/email.js';
 import imageRoutes from './server/routes/image.js';
+import regenerateRoutes from './server/routes/regenerate.js';
 
 dotenv.config();
 const app = express();
@@ -17,6 +18,8 @@ app.use('/', regenerateRoutes);
 app.use('/', coverRoutes);
 app.use('/', emailRoutes);
 app.use('/', imageRoutes);
+app.use(regenerateRoutes);
+
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`\uD83D\uDE80 Server running on port ${PORT}`));
