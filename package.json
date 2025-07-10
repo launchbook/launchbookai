@@ -4,10 +4,17 @@
   "description": "LaunchBook AI",
   "scripts": {
     "start": "npx @11ty/eleventy --serve",
-    "build": "ELEVENTY_ENV=production npx @11ty/eleventy"
+    "build": "ELEVENTY_ENV=production npx @11ty/eleventy",
+    "server": "node server.js"
   },
   "dependencies": {
-    "luxon": "^3.4.4"
+    "@supabase/supabase-js": "^2.39.7",
+    "dotenv": "^16.3.1",
+    "epub-gen-memory": "^1.0.5",
+    "express": "^4.18.2",
+    "luxon": "^3.4.4",
+    "nodemailer": "^6.9.8",
+    "puppeteer": "^21.3.8"
   },
   "devDependencies": {
     "@11ty/eleventy": "^2.0.1"
