@@ -1,39 +1,103 @@
-// server/routes/regenerate.js
 const express = require('express');
 const puppeteer = require('puppeteer');
-const { supabase } = require('../lib/supabase');
+const { supabase, uploadGeneratedFile } = require('../lib/supabase');
 const { validateActivePlan } = require('../lib/plan');
+const { generateEpubBuffer } = require('../lib/epub');
 
 const router = express.Router();
 
-// ✅ Upload helper
-const uploadToSupabase = async (user_id, buffer, fileName) => {
-  const fullPath = `${user_id}/${fileName}`;
+const logAndDeductCredits = async (user_id, action, credits) => {
+  // ✅ Log usage
+  await supabase.from('user_usage_logs').insert([{
+    user_id,
+    action,
+    credits_used: credits,
+    created_at: new Date().toISOString()
+  }]);
 
-  const { error: uploadError } = await supabase.storage
-    .from('user_files')
-    .upload(fullPath, buffer, {
-      contentType: 'application/pdf',
-      upsert: true,
-    });
+  // ✅ Deduct credits
+  const { error: deductError } = await supabase.rpc('increment_credits_used', {
+    p_user_id: user_id,
+    p_increment: credits
+  });
 
-  if (uploadError) throw new Error(uploadError.message);
-
-  const { data: signedData, error: urlError } = await supabase.storage
-    .from('user_files')
-    .createSignedUrl(fullPath, 60 * 60 * 24 * 7); // 7-day URL
-
-  if (urlError) throw new Error(urlError.message);
-
-  return signedData.signedUrl;
+  if (deductError) throw new Error('Credit deduction failed');
 };
 
-// ✅ POST /regenerate-pdf
-router.post('/regenerate-pdf', async (req, res) => {
-  const { html, user_id } = req.body;
+// ✅ POST /generate-pdf
+router.post('/generate-pdf', async (req, res) => {
+  const {
+    html,
+    user_id,
+    email,
+    title,
+    topic,
+    language,
+    audience,
+    tone,
+    purpose,
+    output_format = 'pdf'
+  } = req.body;
 
-  if (!html || !user_id) {
-    return res.status(400).json({ error: 'Missing html or user_id' });
+  if (!html || !user_id || !email) {
+    return res.status(400).json({ error: 'Missing html, user_id, or email' });
+  }
+
+  const planCheck = await validateActivePlan(user_id);
+  if (!planCheck.allowed) {
+    return res.status(403).json({ success: false, error: planCheck.reason });
+  }
+
+  try {
+    let fileBuffer, fileName;
+
+    if (output_format === 'epub') {
+      fileBuffer = await generateEpubBuffer({ html, title, author: user_id });
+      fileName = `generated-${Date.now()}.epub`;
+    } else {
+      const browser = await puppeteer.launch({ headless: 'new', args: ['--no-sandbox'] });
+      const page = await browser.newPage();
+      await page.setContent(html, { waitUntil: 'networkidle0' });
+      fileBuffer = await page.pdf({ format: 'A4', printBackground: true });
+      await browser.close();
+      fileName = `generated-${Date.now()}.pdf`;
+    }
+
+    const signedUrl = await uploadGeneratedFile(user_id, fileBuffer, fileName);
+
+    // ✅ Insert into Supabase
+    await supabase.from('generated_files').insert([{
+      user_id,
+      title,
+      topic,
+      language,
+      audience,
+      tone,
+      purpose,
+      format: output_format,
+      download_url: signedUrl,
+      created_at: new Date().toISOString()
+    }]);
+
+    // ✅ Credit logic: Estimate credits based on length, images etc (your frontend must send `estimated_credits`)
+    const estimatedCredits = req.body.estimated_credits || 1000;
+
+    await logAndDeductCredits(user_id, 'generate-pdf', estimatedCredits);
+
+    return res.json({ success: true, url: signedUrl });
+
+  } catch (err) {
+    console.error('❌ Generation error:', err);
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+// ✅ POST /generate-from-url
+router.post('/generate-from-url', async (req, res) => {
+  const { url, user_id, output_format = 'pdf', estimated_credits = 800 } = req.body;
+
+  if (!url || !user_id) {
+    return res.status(400).json({ error: 'Missing url or user_id' });
   }
 
   const planCheck = await validateActivePlan(user_id);
@@ -42,46 +106,43 @@ router.post('/regenerate-pdf', async (req, res) => {
   }
 
   try {
-    // 🧠 Generate PDF
-    const browser = await puppeteer.launch({
-      headless: 'new',
-      args: ['--no-sandbox', '--disable-setuid-sandbox'],
-    });
+    let fileBuffer, fileName;
 
-    const page = await browser.newPage();
-    await page.setContent(html, { waitUntil: 'networkidle0' });
-
-    const fileBuffer = await page.pdf({ format: 'A4', printBackground: true });
-    await browser.close();
-
-    const fileName = `regenerated-${Date.now()}.pdf`;
-    const signedUrl = await uploadToSupabase(user_id, fileBuffer, fileName);
-
-    // ✅ Backend Credit Log (Required for abuse prevention)
-    const { error: logError } = await supabase.from('user_usage_logs').insert([
-      {
-        user_id,
-        action: 'regenerate-pdf',
-        credits_used: 100,
-        created_at: new Date().toISOString()
-      }
-    ]);
-
-    // ✅ Deduct Credits on Supabase (same as frontend)
-    const { error: deductError } = await supabase.rpc('increment_credits_used', {
-      p_user_id: user_id,
-      p_increment: 100
-    });
-
-    if (logError || deductError) {
-      console.error('❌ Usage log or credit deduction failed', { logError, deductError });
-      return res.status(500).json({ error: 'Failed to record usage or deduct credits' });
+    if (output_format === 'epub') {
+      const dummyHTML = `<h1>Content from ${url}</h1><p>This is a placeholder EPUB.</p>`;
+      fileBuffer = await generateEpubBuffer({ html: dummyHTML, title: 'Generated from URL', author: user_id });
+      fileName = `url-generated-${Date.now()}.epub`;
+    } else {
+      const browser = await puppeteer.launch({ headless: 'new', args: ['--no-sandbox'] });
+      const page = await browser.newPage();
+      await page.goto(url, { waitUntil: 'networkidle0' });
+      fileBuffer = await page.pdf({ format: 'A4', printBackground: true });
+      await browser.close();
+      fileName = `url-generated-${Date.now()}.pdf`;
     }
+
+    const signedUrl = await uploadGeneratedFile(user_id, fileBuffer, fileName);
+
+    await supabase.from('generated_files').insert([{
+      user_id,
+      title: 'Generated from URL',
+      topic: url,
+      language: null,
+      audience: null,
+      tone: null,
+      purpose: null,
+      format: output_format,
+      download_url: signedUrl,
+      created_at: new Date().toISOString()
+    }]);
+
+    // ✅ Log + Deduct credits
+    await logAndDeductCredits(user_id, 'generate-from-url', estimated_credits);
 
     return res.json({ success: true, url: signedUrl });
 
   } catch (err) {
-    console.error('❌ PDF Regeneration error:', err);
+    console.error('❌ URL Generation error:', err);
     return res.status(500).json({ error: err.message });
   }
 });
