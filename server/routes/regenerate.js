@@ -1,11 +1,13 @@
-import express from 'express';
-import puppeteer from 'puppeteer';
-import { validateActivePlan } from '../lib/plan.js';
-import { supabase } from '../lib/supabase.js';
+// server/routes/regenerate.js
+
+const express = require('express');
+const puppeteer = require('puppeteer');
+const { supabase } = require('../lib/supabase');
+const { validateActivePlan } = require('../lib/plan');
 
 const router = express.Router();
 
-// ✅ Helper for Supabase upload
+// ✅ Upload helper
 const uploadToSupabase = async (user_id, buffer, fileName) => {
   const fullPath = `${user_id}/${fileName}`;
 
@@ -61,5 +63,4 @@ router.post('/regenerate-pdf', async (req, res) => {
   }
 });
 
-export default router;
-
+module.exports = router;
