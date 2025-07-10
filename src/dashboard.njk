@@ -8,12 +8,22 @@
     </div>
   
     <p class="text-gray-600 mb-4">Logged in as: <span id="user-email" class="font-medium text-blue-600"></span></p>
+<div class="bg-white rounded-xl p-4 shadow mb-6 flex flex-col md:flex-row md:justify-between md:items-center gap-2" id="plan-bar">
+  <div>
+    <p class="text-sm font-medium" id="plan-badge">📅 Monthly Plan</p>
+    <p class="text-gray-700 text-xs" id="credit-status">🔋 3200 / 5000 credits left</p>
+    <p class="text-gray-500 text-xs" id="renewal-date">Renewal: 10 Aug 2025</p>
+  </div>
+  <div>
+    <a href="/pricing" class="text-blue-600 underline text-sm font-semibold">⬆️ Upgrade Plan</a>
+  </div>
+</div>
 
-<div id="user-credits" 
+<div id="user-credits-container" 
      class="cursor-pointer text-sm text-gray-800 hover:text-blue-600 underline"
      title="Click to view plan details →"
      onclick="showMyPlanModal()">
-<p class="text-gray-600 mb-4">Available credits: 
+  <p class="text-gray-600 mb-4">Available credits: 
     <span id="user-credits" class="font-medium text-green-700">Loading...</span>
   </p>
 </div>
@@ -125,7 +135,12 @@
      </div>
 
     <label><input type="checkbox" id="include_affiliate_links" name="include_affiliate_links" /> Add Affiliate Links Based on Keywords</label>
-    <label><input type="checkbox" id="cover_image" name="cover_image" /> Use Cover Image</label>
+
+   <div class="flex items-center gap-2">
+   <label> <input type="checkbox" id="cover_image" name="cover_image" />Use Cover Image</label>
+  <span title="Costs 100 credits extra (charged only if selected)" class="text-xs text-gray-500 cursor-help"> 💡</span>
+  </div>
+
     
     <input type="text" id="cover_title" name="cover_title" placeholder="Cover Title (optional)" class="border px-4 py-2 rounded" />
     
@@ -235,7 +250,11 @@
   
       <!-- ✅ These two buttons are now functional, so NOT disabled -->
 
-     <p id="credit-estimate-msg" style="margin-top: 10px; font-weight: bold; color: #008000;"> Estimated credits: —</p>
+    <div class="flex items-center gap-2">
+  <p id="credit-estimate-msg" style="margin-top: 10px; font-weight: bold; color: #008000;">Estimated credits: — </p>
+  <span title="Estimated based on selected page count, images, and features" class="text-xs text-gray-500 cursor-help"> ℹ️ </span>
+</div>
+
 
       <button id="download-pdf" disabled class="bg-blue-500 text-white px-4 py-2 rounded opacity-60 cursor-not-allowed">
         ⬇️ Download PDF
@@ -251,29 +270,32 @@
     </div>
   </div>
   
-  <!-- 📂 Previous eBooks Section -->
-  <div id="previous-ebooks" class="mt-10 hidden">
-    <h3 class="text-xl font-semibold mb-4">📘 Your Generated eBooks</h3>
-    <div class="overflow-x-auto">
-      <table class="w-full table-auto border text-sm text-left">
-        <thead>
-          <tr class="bg-gray-100">
-            <th class="border px-3 py-2">Title</th>
-            <th class="border px-3 py-2">Topic</th>
-            <th class="border px-3 py-2">Language</th>
-            <th class="border px-3 py-2">Audience</th>
-            <th class="border px-3 py-2">Tone</th>
-            <th class="border px-3 py-2">Purpose</th>
-            <th class="border px-3 py-2">Created</th>
-            <th class="border px-3 py-2">Download</th>
-          </tr>
-        </thead>
-        <tbody id="ebook-list">
-          <!-- Rows injected by JS -->
-        </tbody>
-      </table>
-    </div>
+  <section id="previous-ebooks" class="hidden mt-6">
+  <h2 class="text-xl font-semibold mb-2">📚 Your Previous eBooks</h2>
+  <div class="overflow-x-auto border rounded-lg">
+    <table class="min-w-full text-sm text-left whitespace-nowrap">
+      <thead>
+        <tr class="bg-gray-100 text-gray-700">
+          <th class="px-4 py-2">Title</th>
+          <th class="px-4 py-2">Topic</th>
+          <th class="px-4 py-2">Language</th>
+          <th class="px-4 py-2">Audience</th>
+          <th class="px-4 py-2">Tone</th>
+          <th class="px-4 py-2">Purpose</th>
+          <th class="px-4 py-2">Format</th>
+          <th class="px-4 py-2">Created At</th>
+          <th class="px-4 py-2">Size</th>
+          <th class="px-4 py-2">Download</th>
+          <th class="px-4 py-2">❌</th>
+        </tr>
+      </thead>
+      <tbody id="ebook-list">
+        <!-- Populated by JS -->
+      </tbody>
+    </table>
   </div>
+</section>
+
   
   <script type="module" src="/description/ebook-form-handler.js"></script>
   
