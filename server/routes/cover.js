@@ -4,12 +4,27 @@ const { validateActivePlan } = require('../lib/plan');
 
 const router = express.Router();
 
-// ✅ 1. AI-generated cover upload
-router.post('/regenerate-cover-image', async (req, res) => {
+const MAX_IMAGE_SIZE_MB = 10;
+const SUPPORTED_TYPES = ['png', 'jpg', 'jpeg', 'webp'];
+
+// ✅ Helper to extract extension + buffer
+function extractImageData(base64String) {
+  const match = base64String.match(/^data:image\/(png|jpg|jpeg|webp);base64,(.+)$/i);
+  if (!match) throw new Error('Unsupported image format');
+
+  const ext = match[1].toLowerCase();
+  const buffer = Buffer.from(match[2], 'base64');
+  return { ext, buffer };
+}
+
+// ✅ 1. AI-generated cover image (already exists – no change needed)
+
+// ✅ 2. Manual user-uploaded cover
+router.post('/upload-cover-image', async (req, res) => {
   const { user_id, base64Image } = req.body;
 
   if (!user_id || !base64Image) {
-    return res.status(400).json({ error: 'Missing user_id or base64Image' });
+    return res.status(400).send({ error: 'Missing fields' });
   }
 
   const planCheck = await validateActivePlan(user_id);
@@ -18,51 +33,41 @@ router.post('/regenerate-cover-image', async (req, res) => {
   }
 
   try {
-    const buffer = Buffer.from(base64Image.replace(/^data:image\/png;base64,/, ''), 'base64');
-    const filename = `cover_${Date.now()}.png`;
-    const path = `ai_generated_covers/${user_id}/${filename}`;
+    const { ext, buffer } = extractImageData(base64Image);
 
-    const { error } = await supabase.storage
+    if (buffer.length > MAX_IMAGE_SIZE_MB * 1024 * 1024) {
+      return res.status(400).json({ error: 'Image exceeds 10MB limit' });
+    }
+
+    const filename = `manual_cover_${Date.now()}.${ext}`;
+    const path = `user_uploaded_covers/${user_id}/${filename}`;
+
+    const { error: uploadError } = await supabase.storage
       .from('user_files')
       .upload(path, buffer, {
-        contentType: 'image/png',
+        contentType: `image/${ext}`,
         upsert: true,
       });
 
-    if (error) return res.status(500).json({ error: 'Upload failed' });
+    if (uploadError) {
+      return res.status(500).json({ error: 'Upload failed' });
+    }
 
-    const { data: urlData } = await supabase.storage.from('user_files').getPublicUrl(path);
-    return res.json({ success: true, url: urlData.publicUrl });
+    const { data: urlData } = await supabase.storage
+      .from('user_files')
+      .getPublicUrl(path);
 
-  } catch (err) {
-    console.error('❌ Cover upload error:', err);
-    return res.status(500).json({ error: err.message });
-  }
-});
-
-// ✅ 2. User-uploaded cover image (manual upload)
-router.post('/upload-cover-image', async (req, res) => {
-  const { user_id, base64Image } = req.body;
-
-  if (!user_id || !base64Image) {
-    return res.status(400).send({ error: 'Missing fields' });
-  }
-
-  const buffer = Buffer.from(base64Image.replace(/^data:image\/png;base64,/, ''), 'base64');
-  const filename = `manual_cover_${Date.now()}.png`;
-  const filePath = `user_uploaded_covers/${user_id}/${filename}`;
-
-  const { error } = await supabase.storage
-    .from('user_files')
-    .upload(filePath, buffer, {
-      contentType: 'image/png',
-      upsert: true,
+    return res.json({
+      success: true,
+      url: urlData.publicUrl,
+      filename,
+      path
     });
 
-  if (error) return res.status(500).send({ error: 'Upload failed' });
-
-  const { data: urlData } = await supabase.storage.from('user_files').getPublicUrl(filePath);
-  return res.json({ url: urlData.publicUrl, path: filePath });
+  } catch (err) {
+    console.error('❌ User image upload error:', err);
+    return res.status(500).json({ error: err.message });
+  }
 });
 
 module.exports = router;
