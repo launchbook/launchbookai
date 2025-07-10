@@ -1,7 +1,6 @@
-import express from 'express';
-import { validateActivePlan } from '../lib/plan.js';
-import { supabase } from '../lib/supabase.js';
-import nodemailer from 'nodemailer';
+const express = require('express');
+const nodemailer = require('nodemailer');
+const { validateActivePlan } = require('../lib/plan');
 
 const router = express.Router();
 
@@ -30,24 +29,23 @@ router.post('/send-ebook-email', async (req, res) => {
     });
 
     await transporter.sendMail({
-      from: `"Leostarearn eBooks" <${process.env.EMAIL_USER}>`,
+      from: `"LaunchBook AI" <${process.env.EMAIL_USER}>`,
       to: email,
       subject: '📘 Your eBook is Ready!',
       html: `
         <p>Hello,</p>
-        <p>Your eBook titled <b>${title}</b> is ready. Click below to download it:</p>
+        <p>Your eBook titled <b>${title}</b> is ready. Click the button below to download:</p>
         <p><a href="${download_url}" target="_blank">📥 Download Now</a></p>
-        <p>Thanks for using Leostarearn!</p>
+        <p>Thank you for using LaunchBook AI!</p>
       `
     });
 
     return res.json({ success: true });
 
   } catch (err) {
-    console.error("❌ Email error:", err);
+    console.error("❌ Email send error:", err);
     return res.status(500).json({ error: err.message });
   }
 });
 
-export default router;
-
+module.exports = router;
