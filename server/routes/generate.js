@@ -1,5 +1,6 @@
 const express = require('express');
 const puppeteer = require('puppeteer');
+const nodemailer = require('nodemailer');
 const { supabase, uploadGeneratedFile } = require('../lib/supabase');
 const { validateActivePlan } = require('../lib/plan');
 const { generateEpubBuffer } = require('../lib/epub');
@@ -68,7 +69,6 @@ router.post('/generate-pdf', async (req, res) => {
 
     const signedUrl = await uploadGeneratedFile(user_id, fileBuffer, fileName);
 
-    // ✅ Store metadata including image_count, cover_url, file size
     await supabase.from('generated_files').insert([{
       user_id,
       title: safeTitle,
@@ -87,6 +87,27 @@ router.post('/generate-pdf', async (req, res) => {
 
     await logAndDeductCredits(user_id, 'generate-pdf', estimated_credits);
 
+    // ✅ Send email notification
+    const transporter = nodemailer.createTransport({
+      host: 'smtp.zoho.in',
+      port: 465,
+      secure: true,
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS
+      }
+    });
+
+    await transporter.sendMail({
+      from: `"LaunchBook AI" <${process.env.EMAIL_USER}>`,
+      to: email,
+      subject: `Your eBook "${safeTitle}" is ready!`,
+      html: `<p>Hello,</p>
+             <p>Your eBook titled <strong>${safeTitle}</strong> has been generated successfully.</p>
+             <p><a href="${signedUrl}" target="_blank">Click here to download</a></p>
+             <p>Thanks,<br/>LaunchBook AI Team</p>`
+    });
+
     return res.json({ success: true, url: signedUrl });
 
   } catch (err) {
@@ -100,12 +121,13 @@ router.post('/generate-from-url', async (req, res) => {
   const {
     url,
     user_id,
+    email,
     output_format = 'pdf',
     estimated_credits = 800
   } = req.body;
 
-  if (!url || !user_id) {
-    return res.status(400).json({ error: 'Missing url or user_id' });
+  if (!url || !user_id || !email) {
+    return res.status(400).json({ error: 'Missing url, user_id or email' });
   }
 
   const planCheck = await validateActivePlan(user_id);
@@ -114,8 +136,8 @@ router.post('/generate-from-url', async (req, res) => {
   }
 
   try {
-    let fileBuffer, fileName;
     const fallbackTitle = 'Generated from URL';
+    let fileBuffer, fileName;
 
     if (output_format === 'epub') {
       const dummyHTML = `<h1>Content from ${url}</h1><p>This is a placeholder EPUB.</p>`;
@@ -149,6 +171,27 @@ router.post('/generate-from-url', async (req, res) => {
     }]);
 
     await logAndDeductCredits(user_id, 'generate-from-url', estimated_credits);
+
+    // ✅ Send email notification
+    const transporter = nodemailer.createTransport({
+      host: 'smtp.zoho.in',
+      port: 465,
+      secure: true,
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS
+      }
+    });
+
+    await transporter.sendMail({
+      from: `"LaunchBook AI" <${process.env.EMAIL_USER}>`,
+      to: email,
+      subject: `Your eBook "${fallbackTitle}" is ready!`,
+      html: `<p>Hello,</p>
+             <p>Your eBook titled <strong>${fallbackTitle}</strong> has been generated successfully.</p>
+             <p><a href="${signedUrl}" target="_blank">Click here to download</a></p>
+             <p>Thanks,<br/>LaunchBook AI Team</p>`
+    });
 
     return res.json({ success: true, url: signedUrl });
 
