@@ -6,8 +6,8 @@ const { generateEpubBuffer } = require('../lib/epub');
 
 const router = express.Router();
 
+// ✅ Reusable credit + log helper
 const logAndDeductCredits = async (user_id, action, credits) => {
-  // ✅ Log usage
   await supabase.from('user_usage_logs').insert([{
     user_id,
     action,
@@ -15,7 +15,6 @@ const logAndDeductCredits = async (user_id, action, credits) => {
     created_at: new Date().toISOString()
   }]);
 
-  // ✅ Deduct credits
   const { error: deductError } = await supabase.rpc('increment_credits_used', {
     p_user_id: user_id,
     p_increment: credits
@@ -24,7 +23,7 @@ const logAndDeductCredits = async (user_id, action, credits) => {
   if (deductError) throw new Error('Credit deduction failed');
 };
 
-// ✅ POST /generate-pdf
+// ✅ POST /generate-pdf or EPUB
 router.post('/generate-pdf', async (req, res) => {
   const {
     html,
@@ -36,7 +35,8 @@ router.post('/generate-pdf', async (req, res) => {
     audience,
     tone,
     purpose,
-    output_format = 'pdf'
+    output_format = 'pdf',
+    estimated_credits = 1000
   } = req.body;
 
   if (!html || !user_id || !email) {
@@ -49,10 +49,11 @@ router.post('/generate-pdf', async (req, res) => {
   }
 
   try {
+    const safeTitle = (title || 'Untitled').trim();
     let fileBuffer, fileName;
 
     if (output_format === 'epub') {
-      fileBuffer = await generateEpubBuffer({ html, title, author: user_id });
+      fileBuffer = await generateEpubBuffer({ html, title: safeTitle, author: user_id });
       fileName = `generated-${Date.now()}.epub`;
     } else {
       const browser = await puppeteer.launch({ headless: 'new', args: ['--no-sandbox'] });
@@ -65,10 +66,10 @@ router.post('/generate-pdf', async (req, res) => {
 
     const signedUrl = await uploadGeneratedFile(user_id, fileBuffer, fileName);
 
-    // ✅ Insert into Supabase
+    // ✅ Store metadata
     await supabase.from('generated_files').insert([{
       user_id,
-      title,
+      title: safeTitle,
       topic,
       language,
       audience,
@@ -79,10 +80,7 @@ router.post('/generate-pdf', async (req, res) => {
       created_at: new Date().toISOString()
     }]);
 
-    // ✅ Credit logic: Estimate credits based on length, images etc (your frontend must send `estimated_credits`)
-    const estimatedCredits = req.body.estimated_credits || 1000;
-
-    await logAndDeductCredits(user_id, 'generate-pdf', estimatedCredits);
+    await logAndDeductCredits(user_id, 'generate-pdf', estimated_credits);
 
     return res.json({ success: true, url: signedUrl });
 
@@ -107,10 +105,11 @@ router.post('/generate-from-url', async (req, res) => {
 
   try {
     let fileBuffer, fileName;
+    const fallbackTitle = 'Generated from URL';
 
     if (output_format === 'epub') {
       const dummyHTML = `<h1>Content from ${url}</h1><p>This is a placeholder EPUB.</p>`;
-      fileBuffer = await generateEpubBuffer({ html: dummyHTML, title: 'Generated from URL', author: user_id });
+      fileBuffer = await generateEpubBuffer({ html: dummyHTML, title: fallbackTitle, author: user_id });
       fileName = `url-generated-${Date.now()}.epub`;
     } else {
       const browser = await puppeteer.launch({ headless: 'new', args: ['--no-sandbox'] });
@@ -125,7 +124,7 @@ router.post('/generate-from-url', async (req, res) => {
 
     await supabase.from('generated_files').insert([{
       user_id,
-      title: 'Generated from URL',
+      title: fallbackTitle,
       topic: url,
       language: null,
       audience: null,
@@ -136,7 +135,6 @@ router.post('/generate-from-url', async (req, res) => {
       created_at: new Date().toISOString()
     }]);
 
-    // ✅ Log + Deduct credits
     await logAndDeductCredits(user_id, 'generate-from-url', estimated_credits);
 
     return res.json({ success: true, url: signedUrl });
