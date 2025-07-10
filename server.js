@@ -9,6 +9,7 @@ import imageRoutes from './server/routes/image.js';
 import regenerateRoutes from './server/routes/regenerate.js';
 import coverRoutes from './server/routes/cover.js';
 import emailRoutes from './server/routes/email.js';
+import imageRoutes from './server/routes/image.js';
 
 
 dotenv.config();
@@ -24,6 +25,7 @@ app.use('/', imageRoutes);
 app.use(regenerateRoutes);
 app.use(coverRoutes);
 app.use(emailRoutes);
+app.use(imageRoutes);
 
 
 const PORT = process.env.PORT || 3000;
