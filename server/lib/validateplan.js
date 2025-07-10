@@ -1,3 +1,4 @@
+// server/lib/validatePlan.js
 import { supabase } from './supabase.js';
 
 export async function validateActivePlan(userId) {
@@ -11,10 +12,10 @@ export async function validateActivePlan(userId) {
   if (data.plan_type === "lifetime") return { allowed: true };
 
   const now = new Date();
-  const start = new Date(data.start_date);
-  const end = new Date(data.end_date);
+  const start = data.start_date ? new Date(data.start_date) : null;
+  const end = data.end_date ? new Date(data.end_date) : null;
 
-  if (!data.is_active || now > end) {
+  if (!data.is_active || !start || !end || now > end) {
     return { allowed: false, reason: "Your plan has expired. Please renew or upgrade." };
   }
 
