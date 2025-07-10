@@ -27,20 +27,48 @@ const logAndDeductCredits = async (user_id, action, credits) => {
 // ✅ POST /generate-pdf or EPUB
 router.post('/generate-pdf', async (req, res) => {
   const {
-    html,
-    user_id,
-    email,
-    title,
-    topic,
-    language,
-    audience,
-    tone,
-    purpose,
-    output_format = 'pdf',
-    estimated_credits = 1000,
-    image_count = 0,
-    cover_url = null
-  } = req.body;
+  html,
+  user_id,
+  email,
+
+  title,
+  topic,
+  description,
+  author_name,
+
+  audience,
+  tone,
+  purpose,
+  language,
+
+  with_images,
+  imageCount,
+  include_affiliate_links,
+  cover_image,
+  cover_title,
+
+  total_pages,
+  font_size,
+  headline_size,
+  subheadline_size,
+  line_spacing,
+  paragraph_spacing,
+
+  margin_top,
+  margin_bottom,
+  margin_left,
+  margin_right,
+
+  text_alignment,
+  font_type,
+  page_size,
+
+  save_formatting_preset,
+  output_format = 'pdf',
+  estimated_credits = 1000,
+  cover_url = null
+} = req.body;
+
 
   if (!html || !user_id || !email) {
     return res.status(400).json({ error: 'Missing html, user_id, or email' });
@@ -155,20 +183,20 @@ router.post('/generate-from-url', async (req, res) => {
     const signedUrl = await uploadGeneratedFile(user_id, fileBuffer, fileName);
 
     await supabase.from('generated_files').insert([{
-      user_id,
-      title: fallbackTitle,
-      topic: url,
-      language: null,
-      audience: null,
-      tone: null,
-      purpose: null,
-      format: output_format,
-      download_url: signedUrl,
-      image_count: 0,
-      cover_url: null,
-      file_size: fileBuffer.length,
-      created_at: new Date().toISOString()
-    }]);
+  user_id,
+  title: safeTitle,
+  topic,
+  language,
+  audience,
+  tone,
+  purpose,
+  format: output_format,
+  download_url: signedUrl,
+  image_count,
+  cover_url,
+  file_size: fileBuffer.length,
+  created_at: new Date().toISOString()
+}]);
 
     await logAndDeductCredits(user_id, 'generate-from-url', estimated_credits);
 
