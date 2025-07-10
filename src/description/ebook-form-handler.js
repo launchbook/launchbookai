@@ -363,6 +363,8 @@ form.addEventListener("submit", async (e) => {
     cover_url: coverUrl,
     cover_image_type: uploaded?.type || "user",  // 👈 Add this
     cover_image_path: uploaded?.path || "",  // 👈 And this
+    output_format: formData.get("output_format") || "pdf",
+
   };
 
   const { error } = await supabase.from("ebooks").insert([payload]);
@@ -378,9 +380,9 @@ form.addEventListener("submit", async (e) => {
   document.getElementById("success-message").classList.remove("hidden");
   submitBtn.innerText = "✅ Done!";
   
-  await logUsage(currentUser.id, currentUser.email, "generate_pdf", {
+  await logUsage(currentUser.id, currentUser.email, payload.output_format === "epub" ? "generate_epub" : "generate_pdf", {
   pages: payload.total_pages,
-  format: "pdf",
+  format: payload.output_format,
   with_images: payload.with_images
 });
 
