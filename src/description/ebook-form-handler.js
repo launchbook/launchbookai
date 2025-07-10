@@ -11,13 +11,37 @@ let currentUser = null;
 // ------------------------------------------
 
 // ✅ Credit cost per action
-const CREDIT_COSTS = {
-  generate_pdf: 3,
-  generate_epub: 4,
-  regen_pdf: 2,
-  regen_image: 2,
-  generate_from_url: 5
-};
+// ✅ Final Phase 4 — Dynamic Credit Estimation Functions
+function estimateCreditCost({ 
+  wordCount = 0, 
+  imageCount = 0, 
+  withCover = false, 
+  isRegeneration = false 
+}) {
+  const base = Math.ceil(wordCount / 200) * 40; // 40 credits per 200 words
+  const imageCost = imageCount * 120;
+  const coverCost = withCover ? 300 : 0;
+  const regenPenalty = 0; // ❌ Removed based on your decision
+
+  const total = base + imageCost + coverCost + regenPenalty;
+  const floor = isRegeneration ? 500 : 1000;
+  return Math.max(total, floor);
+}
+
+function estimateCoverImageCost({ style = "default" }) {
+  return 300; // Flat for now
+}
+
+function estimateURLConversionCost({ wordCount = 0, imageCount = 0 }) {
+  const base = Math.ceil(wordCount / 200) * 40;
+  const images = imageCount * 120;
+  return Math.max(base + images, 800); // Floor of 800
+}
+
+function estimateEmailCost() {
+  return 30;
+}
+
 
 // ✅ Fetch user credits from Supabase users_plan table
 async function getUserCredits(userId) {
@@ -35,22 +59,54 @@ async function getUserCredits(userId) {
   return data;
 }
 
+// ✅ Phase 4 – Dynamic Credit Estimation System
+
+function estimateCreditCost({ 
+  wordCount = 0, 
+  imageCount = 0, 
+  withCover = false, 
+  isRegeneration = false 
+}) {
+  const base = Math.ceil(wordCount / 200) * 40;
+  const imageCost = imageCount * 120;
+  const coverCost = withCover ? 300 : 0;
+  const regenPenalty = 0; // ❌ Removed as per latest decision
+
+  const total = base + imageCost + coverCost + regenPenalty;
+  const floor = isRegeneration ? 500 : 1000;
+  return Math.max(total, floor);
+}
+
+function estimateCoverImageCost({ style = "default" }) {
+  return 300; // Static for now
+}
+
+function estimateURLConversionCost({ wordCount = 0, imageCount = 0 }) {
+  const base = Math.ceil(wordCount / 200) * 40;
+  const images = imageCount * 120;
+  return Math.max(base + images, 800); // 800 floor
+}
+
+function estimateEmailCost() {
+  return 30;
+}
+
+
 // ✅ Check if user has enough credits for the action
-async function checkCredits(userId, actionType) {
-  const cost = CREDIT_COSTS[actionType] || 0;
+// ✅ Check if user has enough credits for a dynamic action
+async function checkCredits(userId, costEstimate) {
   const plan = await getUserCredits(userId);
 
-  // ✅ Block if no plan or inactive
+  // ⛔ Block if no plan or inactive
   if (!plan || !plan.is_active) {
     alert("❌ Your plan is inactive or expired. Please upgrade to continue.");
     return false;
   }
 
-  // ✅ Skip credit limit if lifetime plan
-  if (plan.plan_type === "lifetime") return true;
+  const remaining = plan.credit_limit - plan.credits_used;
 
-  if ((plan.credits_used + cost) > plan.credit_limit) {
-    alert(`🚫 Not enough credits! Action requires ${cost}, you have ${plan.credit_limit - plan.credits_used} left.`);
+  if (costEstimate > remaining) {
+    alert(`❌ Not enough credits. You need ${costEstimate} credits, but have only ${remaining}.`);
     return false;
   }
 
