@@ -1,5 +1,4 @@
 // server/routes/regenerate.js
-
 const express = require('express');
 const puppeteer = require('puppeteer');
 const { supabase } = require('../lib/supabase');
@@ -17,11 +16,13 @@ const uploadToSupabase = async (user_id, buffer, fileName) => {
       contentType: 'application/pdf',
       upsert: true,
     });
+
   if (uploadError) throw new Error(uploadError.message);
 
   const { data: signedData, error: urlError } = await supabase.storage
     .from('user_files')
-    .createSignedUrl(fullPath, 60 * 60 * 24 * 7);
+    .createSignedUrl(fullPath, 60 * 60 * 24 * 7); // 7-day URL
+
   if (urlError) throw new Error(urlError.message);
 
   return signedData.signedUrl;
@@ -54,6 +55,16 @@ router.post('/regenerate-pdf', async (req, res) => {
 
     const fileName = `regenerated-${Date.now()}.pdf`;
     const signedUrl = await uploadToSupabase(user_id, fileBuffer, fileName);
+
+    // ✅ Log 100 credit usage
+    await supabase.from('user_usage_logs').insert([
+      {
+        user_id,
+        action: 'regenerate-pdf',
+        credits_used: 100,
+        created_at: new Date().toISOString()
+      }
+    ]);
 
     return res.json({ success: true, url: signedUrl });
 
