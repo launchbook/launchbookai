@@ -4,6 +4,8 @@ const nodemailer = require('nodemailer');
 const { supabase, uploadGeneratedFile } = require('../lib/supabase');
 const { validateActivePlan } = require('../lib/plan');
 const { generateEpubBuffer } = require('../lib/epub');
+const { estimateCreditCost } = require('../lib/credits');
+
 
 const router = express.Router();
 
@@ -27,48 +29,46 @@ const logAndDeductCredits = async (user_id, action, credits) => {
 // ✅ POST /generate-pdf or EPUB
 router.post('/generate-pdf', async (req, res) => {
   const {
-  html,
-  user_id,
-  email,
+    html,
+    user_id,
+    email,
 
-  title,
-  topic,
-  description,
-  author_name,
+    title,
+    topic,
+    description,
+    author_name,
 
-  audience,
-  tone,
-  purpose,
-  language,
+    audience,
+    tone,
+    purpose,
+    language,
 
-  with_images,
-  imageCount,
-  include_affiliate_links,
-  cover_image,
-  cover_title,
+    with_images,
+    imageCount,
+    include_affiliate_links,
+    cover_image,
+    cover_title,
 
-  total_pages,
-  font_size,
-  headline_size,
-  subheadline_size,
-  line_spacing,
-  paragraph_spacing,
+    total_pages,
+    font_size,
+    headline_size,
+    subheadline_size,
+    line_spacing,
+    paragraph_spacing,
 
-  margin_top,
-  margin_bottom,
-  margin_left,
-  margin_right,
+    margin_top,
+    margin_bottom,
+    margin_left,
+    margin_right,
 
-  text_alignment,
-  font_type,
-  page_size,
+    text_alignment,
+    font_type,
+    page_size,
 
-  save_formatting_preset,
-  output_format = 'pdf',
-  estimated_credits = 1000,
-  cover_url = null
-} = req.body;
-
+    save_formatting_preset,
+    output_format = 'pdf',
+    cover_url = null
+  } = req.body;
 
   if (!html || !user_id || !email) {
     return res.status(400).json({ error: 'Missing html, user_id, or email' });
@@ -78,6 +78,22 @@ router.post('/generate-pdf', async (req, res) => {
   if (!planCheck.allowed) {
     return res.status(403).json({ success: false, error: planCheck.reason });
   }
+
+  // ✅ Calculate dynamic credit estimate
+  const parsedImageCount = parseInt(imageCount || 0, 10);
+  const parsedTotalPages = parseInt(total_pages || 20, 10);
+  const hasCover = cover_image === true || cover_image === 'true';
+
+  const estimatedWordCount = parsedTotalPages * 300;
+
+  const estimated_credits = estimateCreditCost({
+    wordCount: estimatedWordCount,
+    imageCount: parsedImageCount,
+    withCover: hasCover,
+    isRegeneration: false
+  });
+
+  console.log('🔢 Credits Estimated:', estimated_credits);
 
   try {
     const safeTitle = (title || 'Untitled').trim();
@@ -107,7 +123,7 @@ router.post('/generate-pdf', async (req, res) => {
       purpose,
       format: output_format,
       download_url: signedUrl,
-      image_count,
+      image_count: parsedImageCount,
       cover_url,
       file_size: fileBuffer.length,
       created_at: new Date().toISOString()
@@ -143,6 +159,7 @@ router.post('/generate-pdf', async (req, res) => {
     return res.status(500).json({ error: err.message });
   }
 });
+
 
 // ✅ POST /generate-from-url
 router.post('/generate-from-url', async (req, res) => {
