@@ -168,7 +168,6 @@ router.post('/generate-from-url', async (req, res) => {
     user_id,
     email,
     output_format = 'pdf',
-    estimated_credits = 800
   } = req.body;
 
   if (!url || !user_id || !email) {
@@ -182,6 +181,23 @@ router.post('/generate-from-url', async (req, res) => {
 
   try {
     const fallbackTitle = 'Generated from URL';
+
+    const browser = await puppeteer.launch({ headless: 'new', args: ['--no-sandbox'] });
+    const page = await browser.newPage();
+    await page.goto(url, { waitUntil: 'networkidle0' });
+
+    // ✅ Extract and clean text content for word count estimation
+    const extractedText = await page.evaluate(() => {
+      return document.body.innerText || ''; // Fallback in case of null
+    });
+
+    const estimatedWordCount = extractedText.trim().split(/\s+/).length;
+
+    const estimated_credits = estimateURLConversionCost({
+      wordCount: estimatedWordCount,
+      imageCount: 0 // Optional: can extract actual images in future
+    });
+
     let fileBuffer, fileName;
 
     if (output_format === 'epub') {
@@ -189,31 +205,29 @@ router.post('/generate-from-url', async (req, res) => {
       fileBuffer = await generateEpubBuffer({ html: dummyHTML, title: fallbackTitle, author: user_id });
       fileName = `url-generated-${Date.now()}.epub`;
     } else {
-      const browser = await puppeteer.launch({ headless: 'new', args: ['--no-sandbox'] });
-      const page = await browser.newPage();
-      await page.goto(url, { waitUntil: 'networkidle0' });
       fileBuffer = await page.pdf({ format: 'A4', printBackground: true });
-      await browser.close();
       fileName = `url-generated-${Date.now()}.pdf`;
     }
+
+    await browser.close();
 
     const signedUrl = await uploadGeneratedFile(user_id, fileBuffer, fileName);
 
     await supabase.from('generated_files').insert([{
-  user_id,
-  title: safeTitle,
-  topic,
-  language,
-  audience,
-  tone,
-  purpose,
-  format: output_format,
-  download_url: signedUrl,
-  image_count,
-  cover_url,
-  file_size: fileBuffer.length,
-  created_at: new Date().toISOString()
-}]);
+      user_id,
+      title: fallbackTitle,
+      topic: url,
+      language: null,
+      audience: null,
+      tone: null,
+      purpose: null,
+      format: output_format,
+      download_url: signedUrl,
+      image_count: 0,
+      cover_url: null,
+      file_size: fileBuffer.length,
+      created_at: new Date().toISOString()
+    }]);
 
     await logAndDeductCredits(user_id, 'generate-from-url', estimated_credits);
 
@@ -233,7 +247,7 @@ router.post('/generate-from-url', async (req, res) => {
       to: email,
       subject: `Your eBook "${fallbackTitle}" is ready!`,
       html: `<p>Hello,</p>
-             <p>Your eBook titled <strong>${fallbackTitle}</strong> has been generated successfully.</p>
+             <p>Your eBook titled <strong>${fallbackTitle}</strong> has been generated successfully from the URL you provided.</p>
              <p><a href="${signedUrl}" target="_blank">Click here to download</a></p>
              <p>Thanks,<br/>LaunchBook AI Team</p>`
     });
