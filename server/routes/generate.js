@@ -186,17 +186,23 @@ router.post('/generate-from-url', async (req, res) => {
     const page = await browser.newPage();
     await page.goto(url, { waitUntil: 'networkidle0' });
 
-    // ✅ Extract and clean text content for word count estimation
-    const extractedText = await page.evaluate(() => {
-      return document.body.innerText || ''; // Fallback in case of null
-    });
+    // ✅ Extract clean text and image count from loaded page
+   const { extractedText, imageCount } = await page.evaluate(() => {
+  const text = document.body.innerText || '';
+  const images = Array.from(document.images || []);
+  return {
+    extractedText: text,
+    imageCount: images.length
+  };
+});
 
-    const estimatedWordCount = extractedText.trim().split(/\s+/).length;
+ const estimatedWordCount = extractedText.trim().split(/\s+/).length;
 
-    const estimated_credits = estimateURLConversionCost({
-      wordCount: estimatedWordCount,
-      imageCount: 0 // Optional: can extract actual images in future
-    });
+ const estimated_credits = estimateURLConversionCost({
+  wordCount: estimatedWordCount,
+  imageCount
+});
+
 
     let fileBuffer, fileName;
 
