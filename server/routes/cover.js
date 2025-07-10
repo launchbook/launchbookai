@@ -78,4 +78,3 @@ router.post('/upload-cover-image', async (req, res) => {
 });
 
 export default router;
-
