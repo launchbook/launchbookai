@@ -1,6 +1,6 @@
-import express from 'express';
-import { supabase } from '../lib/supabase.js';
-import { validateActivePlan } from '../lib/plan.js';
+const express = require('express');
+const { supabase } = require('../lib/supabase');
+const { validateActivePlan } = require('../lib/plan');
 
 const router = express.Router();
 
@@ -18,22 +18,21 @@ router.post('/upload-ai-image', async (req, res) => {
   }
 
   try {
-    const buffer = Buffer.from(base64Image.replace(/^data:image\/\w+;base64,/, ''), 'base64');
-    const filename = `ai_image_${Date.now()}.png`;
-    const filePath = `ai_generated_images/${user_id}/${filename}`;
+    const buffer = Buffer.from(base64Image.replace(/^data:image\/png;base64,/, ''), 'base64');
+    const filename = `ebook_image_${Date.now()}.png`;
+    const path = `ai_generated_images/${user_id}/${filename}`;
 
     const { error } = await supabase.storage
       .from('user_files')
-      .upload(filePath, buffer, {
+      .upload(path, buffer, {
         contentType: 'image/png',
         upsert: true,
       });
 
     if (error) return res.status(500).json({ error: 'Upload failed' });
 
-    const { data: urlData } = await supabase.storage.from('user_files').getPublicUrl(filePath);
-
-    return res.json({ success: true, url: urlData.publicUrl, path: filePath });
+    const { data: urlData } = await supabase.storage.from('user_files').getPublicUrl(path);
+    return res.json({ success: true, url: urlData.publicUrl });
 
   } catch (err) {
     console.error('❌ AI image upload error:', err);
@@ -41,4 +40,4 @@ router.post('/upload-ai-image', async (req, res) => {
   }
 });
 
-export default router;
+module.exports = router;
