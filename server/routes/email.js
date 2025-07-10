@@ -55,7 +55,7 @@ router.post('/send-ebook-email', async (req, res) => {
       fileSizeInfo = ` (~${sizeInMB.toFixed(1)} MB)`;
     }
 
-    const openTrackerPixel = `<img src="${process.env.BASE_URL || 'https://launchbook.in'}/track-open?user_id=${user_id}&email=${encodeURIComponent(email)}" width="1" height="1" style="display:none;" />`;
+    const openTrackerPixel = `<img src="${process.env.BASE_URL || 'https://launchbook.in'}/track-open?user_id=${user_id}&email=${encodeURIComponent(email)}&language=${encodeURIComponent(language)}" width="1" height="1" style="display:none;" />`;
 
     const transporter = nodemailer.createTransport({
       host: 'smtp.zoho.in',
@@ -107,9 +107,9 @@ router.post('/send-ebook-email', async (req, res) => {
   }
 });
 
-// ✅ Open Tracker Logging Route
+// ✅ Open Tracker Logging Route (📊 logs `language`)
 router.get('/track-open', async (req, res) => {
-  const { user_id, email } = req.query;
+  const { user_id, email, language = 'English' } = req.query;
 
   if (!user_id || !email) return res.status(400).end();
 
@@ -118,7 +118,8 @@ router.get('/track-open', async (req, res) => {
       {
         user_id,
         email,
-        opened_at: new Date().toISOString()
+        opened_at: new Date().toISOString(),
+        language
       }
     ]);
   } catch (e) {
@@ -138,3 +139,4 @@ router.get('/track-open', async (req, res) => {
 });
 
 module.exports = router;
+
