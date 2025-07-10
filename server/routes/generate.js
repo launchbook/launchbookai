@@ -1,10 +1,30 @@
 const express = require('express');
-const router = express.Router();
+const puppeteer = require('puppeteer');
 const { supabase, uploadGeneratedFile } = require('../lib/supabase');
 const { validateActivePlan } = require('../lib/plan');
-const puppeteer = require('puppeteer');
 const { generateEpubBuffer } = require('../lib/epub');
 
+const router = express.Router();
+
+const logAndDeductCredits = async (user_id, action, credits) => {
+  // ✅ Log usage
+  await supabase.from('user_usage_logs').insert([{
+    user_id,
+    action,
+    credits_used: credits,
+    created_at: new Date().toISOString()
+  }]);
+
+  // ✅ Deduct credits
+  const { error: deductError } = await supabase.rpc('increment_credits_used', {
+    p_user_id: user_id,
+    p_increment: credits
+  });
+
+  if (deductError) throw new Error('Credit deduction failed');
+};
+
+// ✅ POST /generate-pdf
 router.post('/generate-pdf', async (req, res) => {
   const {
     html,
@@ -16,11 +36,11 @@ router.post('/generate-pdf', async (req, res) => {
     audience,
     tone,
     purpose,
-    output_format = "pdf"
+    output_format = 'pdf'
   } = req.body;
 
   if (!html || !user_id || !email) {
-    return res.status(400).json({ error: "Missing html, user_id, or email" });
+    return res.status(400).json({ error: 'Missing html, user_id, or email' });
   }
 
   const planCheck = await validateActivePlan(user_id);
@@ -31,7 +51,7 @@ router.post('/generate-pdf', async (req, res) => {
   try {
     let fileBuffer, fileName;
 
-    if (output_format === "epub") {
+    if (output_format === 'epub') {
       fileBuffer = await generateEpubBuffer({ html, title, author: user_id });
       fileName = `generated-${Date.now()}.epub`;
     } else {
@@ -45,7 +65,8 @@ router.post('/generate-pdf', async (req, res) => {
 
     const signedUrl = await uploadGeneratedFile(user_id, fileBuffer, fileName);
 
-    await supabase.from("generated_files").insert([{
+    // ✅ Insert into Supabase
+    await supabase.from('generated_files').insert([{
       user_id,
       title,
       topic,
@@ -58,15 +79,22 @@ router.post('/generate-pdf', async (req, res) => {
       created_at: new Date().toISOString()
     }]);
 
+    // ✅ Credit logic: Estimate credits based on length, images etc (your frontend must send `estimated_credits`)
+    const estimatedCredits = req.body.estimated_credits || 1000;
+
+    await logAndDeductCredits(user_id, 'generate-pdf', estimatedCredits);
+
     return res.json({ success: true, url: signedUrl });
+
   } catch (err) {
-    console.error("❌ Generation error:", err);
+    console.error('❌ Generation error:', err);
     return res.status(500).json({ error: err.message });
   }
 });
 
+// ✅ POST /generate-from-url
 router.post('/generate-from-url', async (req, res) => {
-  const { url, user_id, output_format = "pdf" } = req.body;
+  const { url, user_id, output_format = 'pdf', estimated_credits = 800 } = req.body;
 
   if (!url || !user_id) {
     return res.status(400).json({ error: 'Missing url or user_id' });
@@ -80,9 +108,9 @@ router.post('/generate-from-url', async (req, res) => {
   try {
     let fileBuffer, fileName;
 
-    if (output_format === "epub") {
+    if (output_format === 'epub') {
       const dummyHTML = `<h1>Content from ${url}</h1><p>This is a placeholder EPUB.</p>`;
-      fileBuffer = await generateEpubBuffer({ html: dummyHTML, title: "Generated from URL", author: user_id });
+      fileBuffer = await generateEpubBuffer({ html: dummyHTML, title: 'Generated from URL', author: user_id });
       fileName = `url-generated-${Date.now()}.epub`;
     } else {
       const browser = await puppeteer.launch({ headless: 'new', args: ['--no-sandbox'] });
@@ -95,9 +123,9 @@ router.post('/generate-from-url', async (req, res) => {
 
     const signedUrl = await uploadGeneratedFile(user_id, fileBuffer, fileName);
 
-    await supabase.from("generated_files").insert([{
+    await supabase.from('generated_files').insert([{
       user_id,
-      title: `Generated from URL`,
+      title: 'Generated from URL',
       topic: url,
       language: null,
       audience: null,
@@ -108,9 +136,13 @@ router.post('/generate-from-url', async (req, res) => {
       created_at: new Date().toISOString()
     }]);
 
+    // ✅ Log + Deduct credits
+    await logAndDeductCredits(user_id, 'generate-from-url', estimated_credits);
+
     return res.json({ success: true, url: signedUrl });
+
   } catch (err) {
-    console.error("❌ URL Generation error:", err);
+    console.error('❌ URL Generation error:', err);
     return res.status(500).json({ error: err.message });
   }
 });
