@@ -3,8 +3,7 @@ const { supabase } = require('../lib/supabase');
 const { validateActivePlan } = require('../lib/plan');
 const router = express.Router();
 
-- const MAX_IMAGE_SIZE_MB = 2;
-+ const MAX_IMAGE_SIZE_MB = 10;
+const MAX_IMAGE_SIZE_MB = 10;
 const SUPPORTED_TYPES = ['png', 'jpg', 'jpeg', 'webp'];
 
 // ✅ Helper: Extract extension and base64 buffer
@@ -31,9 +30,24 @@ router.post('/upload-ai-image', async (req, res) => {
   }
 
   try {
+    // ✅ DAILY LIMIT CHECK: Max 20 uploads per user/day
+    const today = new Date().toISOString().split('T')[0]; // e.g., "2025-07-10"
+    const { count } = await supabase
+      .from('user_usage_logs')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', user_id)
+      .eq('action', 'upload-ai-image')
+      .gte('created_at', today);
+
+    if (count >= 20) {
+      return res.status(429).json({
+        error: 'Daily upload limit reached (20 images/day).'
+      });
+    }
+
     const { ext, buffer } = extractImageData(base64Image);
 
-    // ✅ Size check (2MB max)
+    // ✅ Size check (10MB max)
     if (buffer.length > MAX_IMAGE_SIZE_MB * 1024 * 1024) {
       return res.status(400).json({ error: 'Image exceeds 10MB limit' });
     }
