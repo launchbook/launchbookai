@@ -261,7 +261,30 @@ window.removeCoverImage = () => {
   previewContainer.classList.add("hidden");
 };
 
+// ✅ Disable fields if source_url is filled
+document.addEventListener("DOMContentLoaded", () => {
+  const urlInput = document.getElementById("source_url");
+  if (!urlInput) return;
 
+  // Run once on load
+  if (urlInput.value.trim()) {
+    urlInput.dispatchEvent(new Event("input"));
+  }
+
+  // Attach change listener
+  urlInput.addEventListener("input", () => {
+    const value = urlInput.value.trim();
+    const disabled = !!value;
+
+    const idsToToggle = [
+      "title", "topic", "description", "author_name", "audience", "tone", "purpose"
+    ];
+    idsToToggle.forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.disabled = disabled;
+    });
+  });
+});
 
 // ✅ Form submission
 const form = document.getElementById("ebook-form");
@@ -330,11 +353,27 @@ form.addEventListener("submit", async (e) => {
 
     coverUrl = uploaded.url;
   }
+  const source_url = formData.get("source_url")?.trim();
+
+// ✅ Determine credit cost if source_url is filled
+let costEstimate;
+
+if (source_url) {
+  const imageCount = parseInt(formData.get("image-count")) || 0;
+  costEstimate = estimateURLConversionCost({ wordCount: 2000, imageCount }); // assumed 2000 words fallback
+} else {
+  const wordCount = (formData.get("description") || "").trim().split(/\s+/).length;
+  const imageCount = parseInt(formData.get("image-count")) || 0;
+  const withCover = formData.get("cover_image") === "on";
+  costEstimate = estimateCreditCost({ wordCount, imageCount, withCover, isRegeneration: false });
+}
+
   
   // ✅ Build final payload
   const payload = {
     user_id: currentUser.id,
     title,
+    source_url,
     topic: formData.get("topic") || "",
     description: formData.get("description") || "",
     author_name: formData.get("author_name") || "",
@@ -380,11 +419,16 @@ form.addEventListener("submit", async (e) => {
   document.getElementById("success-message").classList.remove("hidden");
   submitBtn.innerText = "✅ Done!";
   
-  await logUsage(currentUser.id, currentUser.email, payload.output_format === "epub" ? "generate_epub" : "generate_pdf", {
-  pages: payload.total_pages,
-  format: payload.output_format,
-  with_images: payload.with_images
-});
+  await logUsage(currentUser.id,currentUser.email,source_url ? "generate_from_url" : (payload.output_format === "epub" ? "generate_epub" : "generate_pdf"),
+  {
+    pages: payload.total_pages,
+    format: payload.output_format,
+    with_images: payload.with_images,
+    from_url: !!source_url,
+    source_url
+  }
+);
+
 
 refreshUserCredits(); // refresh UI credits
 
