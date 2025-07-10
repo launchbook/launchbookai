@@ -42,6 +42,7 @@ router.post('/regenerate-pdf', async (req, res) => {
   }
 
   try {
+    // 🧠 Generate PDF
     const browser = await puppeteer.launch({
       headless: 'new',
       args: ['--no-sandbox', '--disable-setuid-sandbox'],
@@ -56,8 +57,8 @@ router.post('/regenerate-pdf', async (req, res) => {
     const fileName = `regenerated-${Date.now()}.pdf`;
     const signedUrl = await uploadToSupabase(user_id, fileBuffer, fileName);
 
-    // ✅ Log 100 credit usage
-    await supabase.from('user_usage_logs').insert([
+    // ✅ Backend Credit Log (Required for abuse prevention)
+    const { error: logError } = await supabase.from('user_usage_logs').insert([
       {
         user_id,
         action: 'regenerate-pdf',
@@ -65,6 +66,17 @@ router.post('/regenerate-pdf', async (req, res) => {
         created_at: new Date().toISOString()
       }
     ]);
+
+    // ✅ Deduct Credits on Supabase (same as frontend)
+    const { error: deductError } = await supabase.rpc('increment_credits_used', {
+      p_user_id: user_id,
+      p_increment: 100
+    });
+
+    if (logError || deductError) {
+      console.error('❌ Usage log or credit deduction failed', { logError, deductError });
+      return res.status(500).json({ error: 'Failed to record usage or deduct credits' });
+    }
 
     return res.json({ success: true, url: signedUrl });
 
