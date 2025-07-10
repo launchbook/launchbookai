@@ -1,7 +1,8 @@
 // server/lib/validatePlan.js
-import { supabase } from './supabase.js';
 
-export async function validateActivePlan(userId) {
+const { supabase } = require('./supabase');
+
+async function validateActivePlan(userId) {
   const { data, error } = await supabase
     .from("users_plan")
     .select("is_active, plan_type, start_date, end_date")
@@ -21,3 +22,5 @@ export async function validateActivePlan(userId) {
 
   return { allowed: true };
 }
+
+module.exports = { validateActivePlan };
