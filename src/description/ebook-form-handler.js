@@ -61,40 +61,6 @@ async function getUserCredits(userId) {
   return data;
 }
 
-// ✅ Phase 4 – Dynamic Credit Estimation System
-
-function estimateCreditCost({ 
-  wordCount = 0, 
-  imageCount = 0, 
-  withCover = false, 
-  isRegeneration = false 
-}) {
-  const base = Math.ceil(wordCount / 200) * 40;
-  const imageCost = imageCount * 120;
-  const coverCost = withCover ? 150 : 0;
-  const regenPenalty = 0; // ❌ Removed as per latest decision
-
-  const total = base + imageCost + coverCost + regenPenalty;
-  const floor = isRegeneration ? 500 : 1000;
-  return Math.max(total, floor);
-}
-
-function estimateCoverImageCost({ style = "default" }) {
-  return 300; // Static for now
-}
-
-function estimateURLConversionCost({ wordCount = 0, imageCount = 0 }) {
-  const base = Math.ceil(wordCount / 200) * 40;
-  const images = imageCount * 120;
-  return Math.max(base + images, 800); // 800 floor
-}
-
-function estimateEmailCost() {
-  return 30;
-}
-
-
-// ✅ Check if user has enough credits for the action
 // ✅ Check if user has enough credits for a dynamic action
 async function checkCredits(userId, costEstimate) {
   const plan = await getUserCredits(userId);
@@ -456,6 +422,7 @@ refreshUserCredits(); // refresh UI credits
 
 // ✅ Create Another — resets only core input fields
 window.createAnother = () => {
+  if (!confirm("⚠️ Start a new eBook? All current fields will be cleared.")) return;
   const resetIds = [
     "title", "topic", "description", "author_name", "cover_title"
   ];
