@@ -922,35 +922,48 @@ else if (plan.plan_type === "trial") badge = "🧪 Trial Plan";
   document.getElementById("my-plan-modal").classList.remove("hidden");
 }
 // 👇 Wait for DOM content before attaching listeners
-document.addEventListener("DOMContentLoaded", () => {
+let currentUser = null;
+
+document.addEventListener("DOMContentLoaded", async () => {
+  // 🔐 Get Supabase logged-in user
+  const { data: { user } } = await supabase.auth.getUser();
+  currentUser = user;
+
+  // ✅ Load formatting preset if available
+  if (currentUser) {
+    loadFormattingPreset();
+  }
+
+  // 📌 Define 'form' globally for formatting save
+  const form = document.getElementById("ebook-form"); // Make sure your form has this ID
+
+  // 📊 Word count and credit estimate logic
   const descriptionInput = document.getElementById("description");
   const imageSelect = document.getElementById("image-count");
   const coverCheckbox = document.getElementById("include-cover");
   const wordCountLabel = document.getElementById("word-count-label");
+
   const updateWordCount = () => {
-  const count = descriptionInput.value.trim().split(/\s+/).length;
-  if (wordCountLabel) wordCountLabel.textContent = `📝 Words: ${count}`;
-};
- descriptionInput.addEventListener("input", updateWordCount);
- updateWordCount();
+    const count = descriptionInput.value.trim().split(/\s+/).length;
+    if (wordCountLabel) wordCountLabel.textContent = `📝 Words: ${count}`;
+  };
 
   const updateEstimate = () => {
     const text = descriptionInput.value;
     const wordCount = text.trim().split(/\s+/).length;
     const imageCount = parseInt(imageSelect.value || 0);
     const withCover = coverCheckbox.checked;
-
     showCreditEstimate({ wordCount, imageCount, withCover, isRegeneration: false });
   };
 
+  descriptionInput.addEventListener("input", updateWordCount);
   descriptionInput.addEventListener("input", updateEstimate);
   imageSelect.addEventListener("change", updateEstimate);
   coverCheckbox.addEventListener("change", updateEstimate);
 
-  // 👇 Show estimate on initial load
+  updateWordCount();
   updateEstimate();
 });
-
                       // ✅ LAUNCHBOOK CREDIT SYSTEM – Phase 4: Credit-Based Regeneration Only
 
 // 🔁 Regeneration Settings (Remove Free Limit)
@@ -1068,4 +1081,46 @@ function mapToISOCode(language) {
     "Chinese": "zh",
   };
   return map[language];
+}
+// 💾 Save formatting preset
+document.getElementById("save-formatting")?.addEventListener("click", async () => {
+  const formData = new FormData(document.getElementById("ebook-form")); // Must match form ID
+  const preset = {
+    font_type: formData.get("font_type"),
+    font_size: formData.get("font_size"),
+    headline_size: formData.get("headline_size"),
+    subheadline_size: formData.get("subheadline_size"),
+    line_spacing: formData.get("line_spacing"),
+    paragraph_spacing: formData.get("paragraph_spacing"),
+    text_alignment: formData.get("text_alignment"),
+    page_size: formData.get("page_size"),
+    margin_top: formData.get("margin_top"),
+    margin_bottom: formData.get("margin_bottom"),
+    margin_left: formData.get("margin_left"),
+    margin_right: formData.get("margin_right"),
+  };
+
+  await supabase.from("user_presets").upsert({
+    user_id: currentUser.id,
+    preset_json: preset,
+  });
+
+  alert("✅ Formatting preset saved!");
+});
+
+// 📥 Load formatting preset
+async function loadFormattingPreset() {
+  const { data } = await supabase
+    .from("user_presets")
+    .select("preset_json")
+    .eq("user_id", currentUser.id)
+    .single();
+
+  if (!data) return;
+
+  const preset = data.preset_json;
+  Object.entries(preset).forEach(([key, value]) => {
+    const el = document.getElementById(key);
+    if (el) el.value = value;
+  });
 }
