@@ -18,18 +18,24 @@
 
 </head>
 
-<body class="bg-gray-50 text-gray-900 flex flex-col min-h-screen">
+<body class="transition-colors duration-300 bg-gray-50 text-gray-900 dark:bg-gray-900 dark:text-gray-100 flex flex-col min-h-screen">
+
   <!-- 🔝 Header -->
   <header class="bg-white shadow-sm sticky top-0 z-50">
     <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
 <a href="/" class="text-2xl font-bold text-blue-600 hover:opacity-80 no-underline transition">LaunchBook AI</a>
       <nav class="hidden md:flex items-center space-x-6 text-sm font-medium">
-        <a href="#how-it-works" class="text-gray-600 hover:text-blue-600 transition">How It Works</a>
-        <a href="#tools" class="text-gray-600 hover:text-blue-600 transition">Tools</a>
-        <a href="#pricing" class="text-gray-600 hover:text-blue-600 transition">Pricing</a>
-        <a href="/login" class="text-gray-600 hover:text-blue-600 transition">Sign In</a>
-        <a href="/signup" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition">Get Started</a>
-      </nav>
+  <a href="#how-it-works" class="text-gray-600 hover:text-blue-600 transition">How It Works</a>
+  <a href="#tools" class="text-gray-600 hover:text-blue-600 transition">Tools</a>
+  <a href="#pricing" class="text-gray-600 hover:text-blue-600 transition">Pricing</a>
+  <a href="/login" class="text-gray-600 hover:text-blue-600 transition">Sign In</a>
+  <a href="/signup" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition">Get Started</a>
+  <!-- 🌙 Dark Mode Toggle Button -->
+  <button id="darkToggle" class="ml-4 text-xl hover:text-blue-600 transition" title="Toggle dark mode">
+    🌙
+  </button>
+</nav>
+
     </div>
   </header>
 
@@ -86,6 +92,35 @@
     });
   }
 </script>
+
+<script>
+  // ✅ Dark mode toggle logic
+  const toggleBtn = document.getElementById('darkToggle');
+  const html = document.documentElement;
+
+  // Initial load: check localStorage
+  if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+    html.classList.add('dark');
+    toggleBtn.textContent = '☀️';
+  } else {
+    html.classList.remove('dark');
+    toggleBtn.textContent = '🌙';
+  }
+
+  // Toggle on click
+  toggleBtn.addEventListener('click', () => {
+    if (html.classList.contains('dark')) {
+      html.classList.remove('dark');
+      localStorage.theme = 'light';
+      toggleBtn.textContent = '🌙';
+    } else {
+      html.classList.add('dark');
+      localStorage.theme = 'dark';
+      toggleBtn.textContent = '☀️';
+    }
+  });
+</script>
+
 
 </body>
 </html>
