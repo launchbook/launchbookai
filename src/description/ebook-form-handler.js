@@ -1124,3 +1124,23 @@ async function loadFormattingPreset() {
     if (el) el.value = value;
   });
 }
+document.getElementById("top-up-btn")?.addEventListener("click", () => {
+  topUpCredits(50);
+});
+async function topUpCredits(amount) {
+  if (!currentUser) return;
+
+  const { error } = await supabase.rpc("top_up_credits", {
+    user_id_input: currentUser.id,
+    credits_to_add: amount,
+  });
+
+  if (error) {
+    alert("❌ Credit top-up failed.");
+    console.error(error);
+    return;
+  }
+
+  alert(`✅ Added ${amount} credits!`);
+  location.reload(); // Refresh to reflect new balance
+}
