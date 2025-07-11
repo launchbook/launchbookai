@@ -1,6 +1,7 @@
 const express = require('express');
 const { supabase } = require('../lib/supabase');
 const { validateActivePlan } = require('../lib/plan');
+const { CREDIT_COSTS } = require('../lib/credits');
 
 const router = express.Router();
 const MAX_IMAGE_SIZE_MB = 10;
@@ -73,8 +74,8 @@ router.post('/regenerate-cover-image', async (req, res) => {
 
     const { data: urlData } = await supabase.storage.from('user_files').getPublicUrl(path);
 
-    // ✅ Log + Deduct 100 credits
-    await logAndDeductCredits(user_id, 'regenerate-cover-image', 100);
+    // ✅ Log + Deduct credits using defined cost constant
+    await logAndDeductCredits(user_id, 'regenerate-cover-image', CREDIT_COSTS.regen_image);
 
     return res.json({ success: true, url: urlData.publicUrl, filename, path });
 
@@ -83,3 +84,5 @@ router.post('/regenerate-cover-image', async (req, res) => {
     return res.status(500).json({ error: err.message });
   }
 });
+
+module.exports = router;
