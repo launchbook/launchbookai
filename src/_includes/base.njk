@@ -4,43 +4,49 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>{{ title or 'LaunchBook AI' }}</title>
+  <link rel="icon" href="/favicon.ico" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/style.css" />
+  <style>
+    body { font-family: 'Inter', sans-serif; }
+  </style>
 </head>
 
-<body class="bg-gray-50 text-gray-900">
- <!-- Header -->
-<header class="bg-white shadow">
-  <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
-    <a href="/" class="text-xl font-bold text-blue-600 hover:underline">LaunchBook AI</a>
-    <nav class="space-x-4 hidden md:flex" id="nav-guest">
-      <a href="#how-it-works" class="text-gray-700 hover:underline">How It Works</a>
-      <a href="#" class="text-gray-700 hover:underline">Tools</a>
-      <a href="#" class="text-gray-700 hover:underline">Pricing</a>
-      <a href="/login" class="text-gray-700 hover:underline">Sign In</a>
-      <a href="/signup" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Get Started Now</a>
-    </nav>
-    <div class="hidden md:flex items-center space-x-4" id="nav-user" style="display:none;">
-      <span id="user-name" class="text-gray-700 font-medium">👤 Welcome, Ashish</span>
-      <a href="/dashboard" class="text-gray-700 hover:underline">Dashboard</a>
-      <button onclick="signOut()" class="text-red-600 hover:underline">Sign Out</button>
+<body class="bg-gray-50 text-gray-900 flex flex-col min-h-screen">
+  <!-- 🔝 Header -->
+  <header class="bg-white shadow-sm sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
+<a href="/" class="text-2xl font-bold text-blue-600 hover:opacity-80 no-underline transition">LaunchBook AI</a>
+      <nav class="hidden md:flex items-center space-x-6 text-sm font-medium">
+        <a href="#how-it-works" class="text-gray-600 hover:text-blue-600 transition">How It Works</a>
+        <a href="#tools" class="text-gray-600 hover:text-blue-600 transition">Tools</a>
+        <a href="#pricing" class="text-gray-600 hover:text-blue-600 transition">Pricing</a>
+        <a href="/login" class="text-gray-600 hover:text-blue-600 transition">Sign In</a>
+        <a href="/signup" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition">Get Started</a>
+      </nav>
     </div>
-  </div>
-</header>
+  </header>
 
-  <!-- Main Content -->
-<main>
-  {% block content %}  {% endblock %}
-</main>
+  <!-- 📄 Main Content -->
+  <main class="flex-1">
+    {% block content %}{% endblock %}
+  </main>
 
-  <!-- Footer main -->
-  <footer class="bg-white mt-16 border-t py-6 text-center text-sm text-gray-500">
-    &copy; {{ "now" | date("yyyy") }} LaunchBook AI. Built with ❤️ by Leostarearn Hub.
+  <!-- 🔻 Footer -->
+  <footer class="bg-gray-900 text-gray-300 py-8 text-sm">
+    <div class="max-w-7xl mx-auto px-4 flex flex-col md:flex-row justify-between items-center">
+      <p>&copy; {{ "now" | date("yyyy") }} LaunchBook AI. All rights reserved.</p>
+      <div class="space-x-4 mt-4 md:mt-0">
+        <a href="/terms" class="hover:underline">Terms</a>
+        <a href="/privacy" class="hover:underline">Privacy</a>
+        <a href="/contact" class="hover:underline">Contact</a>
+      </div>
+    </div>
   </footer>
 
-  <!-- JS to toggle view later -->
+  <!-- 👤 User Auth Simulation -->
   <script>
-    // Simulate login (temporary)
     const userLoggedIn = false;
     if (userLoggedIn) {
       document.getElementById("nav-user").style.display = "flex";
