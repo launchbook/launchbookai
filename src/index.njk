@@ -100,7 +100,6 @@
   </a>
 </section>
 
-<!-- 💸 PRICING PLANS -->
 <!-- 💎 ELITE PLAN REBUILD -->
 <section id="elite-plan" class="relative py-28 bg-gradient-to-br from-indigo-700 via-blue-800 to-purple-900 text-white px-6" data-aos="fade-up">
   <div class="max-w-5xl mx-auto text-center">
@@ -183,56 +182,115 @@
       💎 Get Elite Access Now
     </a>
   </div>
+</section>
 
-  <!-- 🔽 Other 4 Plans -->
-  <div class="max-w-7xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-    {% set plans = [
-      { name: "Starter", price: "$27", credits: "5,000 Monthly Credits", tag: "Bonus", recommended: false, best: false },
-      { name: "Growth", price: "$47", credits: "12,500 Monthly Credits", tag: "Bonus", recommended: false, best: false },
-      { name: "Pro", price: "$67", credits: "25,000 Monthly Credits", tag: "Bonus", recommended: true, best: false },
-      { name: "Agency", price: "$97", credits: "50,000 Monthly Credits", tag: "Bonus", recommended: false, best: false }
-    ] %}
-    {% for plan in plans %}
-    <div class="relative bg-white p-6 rounded-2xl shadow-lg border border-gray-200 flex flex-col justify-between" data-aos="zoom-in" data-aos-delay="{{ loop.index0 * 100 }}">
-      {% if plan.recommended %}
-        <div class="absolute top-0 left-0 bg-yellow-500 text-white text-xs font-bold px-2 py-1 rounded-br">⭐ Recommended</div>
-      {% endif %}
-      {% if plan.best %}
-        <div class="absolute top-0 right-0 bg-green-600 text-white text-xs font-bold px-2 py-1 rounded-bl">💎 Best Value</div>
-      {% endif %}
-      <div>
-        <h3 class="text-2xl font-bold text-blue-700 mb-1">{{ plan.name }}</h3>
-        <p class="text-gray-600 text-sm">{{ plan.credits }}</p>
-        <p class="text-4xl font-extrabold my-4 text-gray-900">{{ plan.price }}</p>
+<!-- 🔽 Other 4 Plans -->
+<section id="more-plans" class="py-16 bg-white dark:bg-gray-900" data-aos="fade-up">
+  <div class="max-w-7xl mx-auto px-4">
+    <h2 class="text-3xl md:text-4xl font-extrabold text-center text-gray-800 dark:text-white mb-12">
+      🔽 Choose the Right Plan for You
+    </h2>
 
-        <ul class="text-left text-sm text-gray-700 space-y-2">
-          <li>✅ {{ plan.credits }}</li>
-          <li>🎁 <strong>(Bonus)</strong> Commercial Usage Rights</li>
-          <li>🎁 <strong>(Bonus)</strong> Roll-Over Credits</li>
-          <li>🎁 <strong>(Bonus)</strong> Amazon KDP Training</li>
-          <li>📘 Up to 150 Pages Per Book</li>
-          <li>🔗 Add Affiliate Links</li>
-<li class="flex items-center gap-2">
-  <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-    <path d="M21 15V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10M3 21l6-6 4 4 8-8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-  </svg>
-  Built-in AI Image Generator
-</li>
-          <li>🤖 Multiple AI Models (e.g., GPT-4, Claude)</li>
-          <li>📤 Export as PDF or EPUB</li>
-          <li>✏️ Edit Any Page Manually</li>
-          <li>🖍️ Add Custom Backgrounds</li>
-          <li>🧩 Customizable Formatting</li>
-          <li>🧠 Use Your Own OpenAI API Key</li>
-        </ul>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      {% set plans = [
+        { name: "Starter", price: "$27", credits: "5,000 Monthly Credits", recommended: false },
+        { name: "Growth", price: "$47", credits: "12,500 Monthly Credits", recommended: false },
+        { name: "Pro", price: "$67", credits: "25,000 Monthly Credits", recommended: true },
+        { name: "Agency", price: "$97", credits: "50,000 Monthly Credits", recommended: false }
+      ] %}
+      {% for plan in plans %}
+      <div class="relative bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 flex flex-col justify-between transition hover:shadow-2xl hover:border-blue-500">
+        
+        {% if plan.recommended %}
+        <div class="absolute top-0 left-0 bg-yellow-500 text-white text-xs font-bold px-2 py-1 rounded-br">
+          ⭐ Recommended
+        </div>
+        {% endif %}
+
+        <div>
+          <h3 class="text-2xl font-bold text-blue-700 dark:text-blue-400 mb-1">{{ plan.name }}</h3>
+          <p class="text-gray-600 dark:text-gray-300 text-sm">{{ plan.credits }}</p>
+          <p class="text-4xl font-extrabold my-4 text-gray-900 dark:text-white">{{ plan.price }}</p>
+
+          <ul class="text-left text-sm text-gray-700 dark:text-gray-300 space-y-3">
+            <li class="flex items-start gap-2">
+              <svg class="w-5 h-5 text-green-500 mt-1" fill="none" stroke="currentColor" stroke-width="2"
+                viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+              </svg>
+              {{ plan.credits }}
+            </li>
+
+            <li class="flex items-start gap-2">
+              <svg class="w-5 h-5 text-yellow-500 mt-1" fill="none" stroke="currentColor" stroke-width="2"
+                viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M8 7v6l4 2" />
+              </svg>
+              Commercial Usage Rights + Roll-Over Credits
+            </li>
+
+            <li class="flex items-start gap-2">
+              <svg class="w-5 h-5 text-purple-500 mt-1" fill="none" stroke="currentColor" stroke-width="2"
+                viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+              </svg>
+              Amazon KDP Monetization Training
+            </li>
+
+            <li class="flex items-start gap-2">
+              <svg class="w-5 h-5 text-indigo-500 mt-1" fill="none" stroke="currentColor" stroke-width="2"
+                viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M3 10h4l3 10h8l3-10h4" />
+              </svg>
+              Up to 150 Pages Per Book
+            </li>
+
+            <li class="flex items-start gap-2">
+              <svg class="w-5 h-5 text-teal-500 mt-1" fill="none" stroke="currentColor" stroke-width="2"
+                viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M10 6h4M8 10h8m-6 4h4" />
+              </svg>
+              Add Affiliate Links & AI Images
+            </li>
+
+            <li class="flex items-start gap-2">
+              <svg class="w-5 h-5 text-blue-500 mt-1" fill="none" stroke="currentColor" stroke-width="2"
+                viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M5 12h14M12 5l7 7-7 7" />
+              </svg>
+              Export as PDF or EPUB
+            </li>
+
+            <li class="flex items-start gap-2">
+              <svg class="w-5 h-5 text-pink-500 mt-1" fill="none" stroke="currentColor" stroke-width="2"
+                viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M11 11V9a4 4 0 018 0v2m0 4v6m-4-4h4" />
+              </svg>
+              Edit Pages + Custom Backgrounds
+            </li>
+
+            <li class="flex items-start gap-2">
+              <svg class="w-5 h-5 text-gray-700 dark:text-gray-300 mt-1" fill="none" stroke="currentColor" stroke-width="2"
+                viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m2 0a2 2 0 10-4 0 2 2 0 104 0z" />
+              </svg>
+              Bring Your Own API Key
+            </li>
+          </ul>
+        </div>
+
+        <div class="mt-6">
+          <a href="/signup"
+            class="inline-block w-full bg-blue-600 hover:bg-blue-700 text-white text-center px-5 py-3 rounded-lg font-semibold transition">
+            Choose {{ plan.name }}
+          </a>
+        </div>
       </div>
-      <div class="mt-6">
-        <a href="/signup" class="inline-block w-full bg-blue-600 text-white text-center px-5 py-3 rounded-lg font-semibold hover:bg-blue-700 transition">Choose {{ plan.name }}</a>
-      </div>
+      {% endfor %}
     </div>
-    {% endfor %}
   </div>
 </section>
+
 
 <!-- 🎯 Main Call to Action (after Pricing) -->
 <section class="py-24 bg-blue-50 px-4" data-aos="fade-up">
