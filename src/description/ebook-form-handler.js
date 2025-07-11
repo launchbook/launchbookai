@@ -71,7 +71,7 @@ function estimateCreditCost({
 }) {
   const base = Math.ceil(wordCount / 200) * 40;
   const imageCost = imageCount * 120;
-  const coverCost = withCover ? 300 : 0;
+  const coverCost = withCover ? 150 : 0;
   const regenPenalty = 0; // ❌ Removed as per latest decision
 
   const total = base + imageCost + coverCost + regenPenalty;
