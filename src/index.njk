@@ -42,52 +42,70 @@
   </a>
 </section>
 
+<!-- 💸 PRICING PLANS -->
 <section id="pricing" class="py-24 bg-gray-100 px-4">
-  <h2 class="text-4xl font-extrabold text-center text-gray-800 mb-12">💰 Our Pricing Plans</h2>
-  <div class="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
+  <h2 class="text-4xl font-bold text-center text-gray-800 mb-12">💰 Choose Your Plan</h2>
+
+  <!-- ⭐ Elite Annual Hero Plan -->
+  <div class="max-w-4xl mx-auto mb-16 p-8 bg-green-50 border-2 border-green-600 rounded-xl shadow-lg text-center relative">
+    <div class="absolute top-0 right-0 bg-green-600 text-white text-xs font-bold px-2 py-1 rounded-bl">💎 Best Value</div>
+    <h3 class="text-2xl font-bold text-green-700 mb-2">Elite Annual Plan</h3>
+    <p class="text-gray-600 mb-1 text-sm">For Serious Creators, Agencies & Entrepreneurs</p>
+    <p class="text-4xl font-extrabold text-gray-900 my-4">$997 <span class="text-base font-normal text-gray-500">/year</span></p>
+    <p class="text-green-700 font-semibold mb-6">Includes 50,000 Credits Every Month for 12 Months</p>
+
+    <ul class="text-left text-gray-700 text-sm grid grid-cols-2 gap-x-6 gap-y-2 max-w-2xl mx-auto mb-6">
+      <li>✅ Commercial Usage Rights</li>
+      <li>✅ Roll-Over Credits</li>
+      <li>✅ Amazon KDP Training Included</li>
+      <li>✅ Up to 150 Pages Per Book</li>
+      <li>✅ Add Affiliate Links</li>
+      <li>✅ AI Image Generator Access</li>
+      <li>✅ GPT-4, Claude, etc. Support</li>
+      <li>✅ PDF & EPUB Export</li>
+      <li>✅ Use Your Own OpenAI API Key</li>
+      <li>✅ Manual Page Editing</li>
+      <li>✅ Custom Backgrounds & Formatting</li>
+      <li>✅ Priority Support + Feature Requests</li>
+    </ul>
+
+    <a href="/signup" class="inline-block bg-green-600 text-white px-6 py-3 rounded-lg text-lg hover:bg-green-700 transition shadow">
+      💎 Get Elite Access
+    </a>
+  </div>
+
+  <!-- 🔽 Other 4 Plans Grid -->
+  <div class="max-w-6xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
     {% set plans = [
-      { name: "Starter", price: "$27", credits: "5,000 Monthly Credits", tag: "Bonus", recommended: false, best: false },
-      { name: "Growth", price: "$47", credits: "12,500 Monthly Credits", tag: "Bonus", recommended: false, best: false },
-      { name: "Pro", price: "$67", credits: "25,000 Monthly Credits", tag: "Bonus", recommended: true, best: false },
-      { name: "Agency", price: "$97", credits: "50,000 Monthly Credits", tag: "Bonus", recommended: false, best: false },
-      { name: "Elite Annual", price: "$997", credits: "50,000 Monthly Credits", tag: "Best Value", recommended: false, best: true }
+      { name: "Starter", price: "$27", credits: "5,000", tag: "🎁 Bonus Included", color: "blue" },
+      { name: "Growth", price: "$47", credits: "12,500", tag: "⭐ Most Popular", color: "yellow" },
+      { name: "Pro", price: "$67", credits: "25,000", tag: "🔥 High Value", color: "purple" },
+      { name: "Agency", price: "$97", credits: "50,000", tag: "🚀 Best for Teams", color: "gray" }
     ] %}
     {% for plan in plans %}
-    <div class="relative bg-white p-6 rounded-2xl shadow-lg border border-gray-200 flex flex-col justify-between">
-      {% if plan.recommended %}
-        <div class="absolute top-0 left-0 bg-yellow-500 text-white text-xs font-bold px-2 py-1 rounded-br">⭐ Recommended</div>
-      {% endif %}
-      {% if plan.best %}
-        <div class="absolute top-0 right-0 bg-green-600 text-white text-xs font-bold px-2 py-1 rounded-bl">💎 Best Value</div>
-      {% endif %}
-      <div>
-        <h3 class="text-2xl font-bold text-blue-700 mb-1">{{ plan.name }}</h3>
-        <p class="text-gray-600 text-sm">{{ plan.credits }}</p>
-        <p class="text-4xl font-extrabold my-4 text-gray-900">{{ plan.price }}</p>
-
-        <ul class="text-left text-sm text-gray-700 space-y-2">
-          <li>✅ {{ plan.credits }}</li>
-          <li>🎁 <strong>(Bonus)</strong> Commercial Usage Rights</li>
-          <li>🎁 <strong>(Bonus)</strong> Roll-Over Credits</li>
-          <li>🎁 <strong>(Bonus)</strong> Amazon KDP Training</li>
-          <li>📘 Up to 150 Pages Per Book</li>
-          <li>🔗 Add Affiliate Links</li>
-          <li>🖼️ Built-in AI Image Generator</li>
-          <li>🤖 Multiple AI Models (e.g., GPT-4, Claude)</li>
-          <li>📤 Export as PDF or EPUB</li>
-          <li>✏️ Edit Any Page Manually</li>
-          <li>🖍️ Add Custom Backgrounds</li>
-          <li>🧩 Customizable Formatting</li>
-          <li>🧠 Use Your Own OpenAI API Key</li>
-        </ul>
-      </div>
-      <div class="mt-6">
-        <a href="/signup" class="inline-block w-full bg-blue-600 text-white text-center px-5 py-3 rounded-lg font-semibold hover:bg-blue-700 transition">Choose {{ plan.name }}</a>
-      </div>
+    <div class="bg-white p-6 rounded-xl shadow text-center border-2 border-{{ plan.color }}-500 relative">
+      <div class="absolute top-0 left-0 bg-{{ plan.color }}-500 text-white text-xs font-bold px-2 py-1 rounded-br">{{ plan.tag }}</div>
+      <h3 class="text-xl font-bold text-{{ plan.color }}-700 mt-4">{{ plan.name }}</h3>
+      <p class="text-gray-600 mt-1">{{ plan.credits }} Monthly Credits</p>
+      <p class="text-3xl font-bold my-4">{{ plan.price }}</p>
+      <ul class="text-sm text-gray-600 space-y-2 text-left mt-4">
+        <li>📘 Up to 150 Pages</li>
+        <li>🔗 Affiliate Links</li>
+        <li>🖼️ AI Image Generator</li>
+        <li>🤖 GPT-4, Claude, etc.</li>
+        <li>📤 PDF & EPUB Export</li>
+        <li>✏️ Manual Page Editing</li>
+        <li>🖍️ Custom Backgrounds</li>
+        <li>🎨 Custom Formatting</li>
+        <li>🔑 Use Your Own API Key</li>
+        <li>🎁 Amazon KDP Training</li>
+      </ul>
+      <a href="/signup" class="mt-6 inline-block bg-{{ plan.color }}-500 text-white px-5 py-2 rounded hover:bg-{{ plan.color }}-600 transition">Choose {{ plan.name }}</a>
     </div>
     {% endfor %}
   </div>
 </section>
+
 
 <!-- 💬 TESTIMONIALS -->
 <section id="testimonials" class="py-24 bg-white px-4">
