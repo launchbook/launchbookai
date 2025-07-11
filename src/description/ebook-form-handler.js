@@ -1033,3 +1033,39 @@ const CREDIT_COSTS = {
   generate_cover: 300,
   generate_from_url: 800,
 };
+// ✅ Multilingual UI: set lang attribute for HTML tag
+const langToggle = document.getElementById("lang-toggle");
+if (langToggle) {
+  langToggle.addEventListener("change", () => {
+    const selectedLang = langToggle.value;
+    document.documentElement.lang = selectedLang;
+  });
+}
+const ebookLangDropdown = document.getElementById("language");
+
+if (ebookLangDropdown && langToggle) {
+  // Sync UI lang switch with selected eBook language
+  ebookLangDropdown.addEventListener("change", () => {
+    const langValue = mapToISOCode(ebookLangDropdown.value);
+    if (langValue) {
+      langToggle.value = langValue;
+      document.documentElement.lang = langValue;
+    }
+  });
+}
+
+function mapToISOCode(language) {
+  const map = {
+    "English": "en",
+    "Hindi": "hi",
+    "Spanish": "es",
+    "French": "fr",
+    "German": "de",
+    "Arabic": "ar",
+    "Portuguese": "pt",
+    "Indonesian": "id",
+    "Bengali": "bn",
+    "Chinese": "zh",
+  };
+  return map[language];
+}
