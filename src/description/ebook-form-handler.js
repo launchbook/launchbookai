@@ -117,7 +117,12 @@ async function checkCredits(userId, costEstimate) {
 
 // ✅ Deduct credits and log usage (Supabase)
 async function logUsage(userId, email, actionType, details = {}) {
-  const cost = CREDIT_COSTS[actionType] || 0;
+  let cost = CREDIT_COSTS[actionType] || 0;
+
+  // 🧠 Handle dynamic cost for URL-based generation
+  if (actionType === "generate_from_url" && details.dynamic_cost) {
+    cost = details.dynamic_cost;
+  }
 
   const { error: logError } = await supabase.from("user_usage_logs").insert({
     user_id: userId,
@@ -132,7 +137,7 @@ async function logUsage(userId, email, actionType, details = {}) {
   // ✅ Increment credit counter
   const { error: updateError } = await supabase.rpc("increment_credits_used", {
     p_user_id: userId,
-    p_increment: cost
+    p_increment: cost,
   });
 
   if (updateError) console.error("❌ Failed to update credits used:", updateError.message);
@@ -419,19 +424,21 @@ if (source_url) {
   document.getElementById("success-message").classList.remove("hidden");
   submitBtn.innerText = "✅ Done!";
   
-  await logUsage(currentUser.id,currentUser.email,source_url ? "generate_from_url" : (payload.output_format === "epub" ? "generate_epub" : "generate_pdf"),
+ await logUsage(
+  currentUser.id,
+  currentUser.email,
+  source_url ? "generate_from_url" : (payload.output_format === "epub" ? "generate_epub" : "generate_pdf"),
   {
     pages: payload.total_pages,
     format: payload.output_format,
     with_images: payload.with_images,
     from_url: !!source_url,
-    source_url
+    source_url,
+    dynamic_cost: costEstimate  // ✅ this is what you pass!
   }
 );
 
-
 refreshUserCredits(); // refresh UI credits
-
 
   document.getElementById("regenerate-pdf").classList.remove("hidden");
   
