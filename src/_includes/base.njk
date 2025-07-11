@@ -30,12 +30,13 @@
   <a href="#pricing" class="text-gray-600 hover:text-blue-600 transition">Pricing</a>
   <a href="/login" class="text-gray-600 hover:text-blue-600 transition">Sign In</a>
   <a href="/signup" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition">Get Started</a>
-  <!-- 🌙 Dark Mode Toggle Button -->
-  <button id="darkToggle" class="ml-4 text-xl hover:text-blue-600 transition" title="Toggle dark mode">
-    🌙
-  </button>
-</nav>
 
+  <button id="darkToggle" class="ml-4 text-xl hover:text-blue-600 transition" title="Toggle dark mode">
+  <svg id="darkIcon" xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+    <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" />
+  </svg>
+</button>
+</nav>
     </div>
   </header>
 
@@ -97,27 +98,27 @@
   // ✅ Dark mode toggle logic
   const toggleBtn = document.getElementById('darkToggle');
   const html = document.documentElement;
+  const icon = document.getElementById('darkIcon');
 
-  // Initial load: check localStorage
-  if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+  // Initial state
+  const isDark = localStorage.theme === 'dark' || (
+    !('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches
+  );
+  if (isDark) {
     html.classList.add('dark');
-    toggleBtn.textContent = '☀️';
+    icon.setAttribute('d', 'M12 3v1m0 16v1m8.66-11.66l-.71.71M4.05 19.95l-.71-.71M21 12h-1M4 12H3m16.66 4.95l-.71-.71M4.05 4.05l-.71.71M16 12a4 4 0 11-8 0 4 4 0 018 0z');
   } else {
     html.classList.remove('dark');
-    toggleBtn.textContent = '🌙';
+    icon.setAttribute('d', 'M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z');
   }
 
-  // Toggle on click
   toggleBtn.addEventListener('click', () => {
-    if (html.classList.contains('dark')) {
-      html.classList.remove('dark');
-      localStorage.theme = 'light';
-      toggleBtn.textContent = '🌙';
-    } else {
-      html.classList.add('dark');
-      localStorage.theme = 'dark';
-      toggleBtn.textContent = '☀️';
-    }
+    const isNowDark = html.classList.toggle('dark');
+    localStorage.theme = isNowDark ? 'dark' : 'light';
+    icon.setAttribute('d', isNowDark
+      ? 'M12 3v1m0 16v1m8.66-11.66l-.71.71M4.05 19.95l-.71-.71M21 12h-1M4 12H3m16.66 4.95l-.71-.71M4.05 4.05l-.71.71M16 12a4 4 0 11-8 0 4 4 0 018 0z'
+      : 'M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z'
+    );
   });
 </script>
 
