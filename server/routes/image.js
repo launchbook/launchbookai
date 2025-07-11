@@ -1,6 +1,8 @@
 const express = require('express');
 const { supabase } = require('../lib/supabase');
 const { validateActivePlan } = require('../lib/plan');
+const { CREDIT_COSTS } = require('../lib/credits');
+
 const router = express.Router();
 
 const MAX_IMAGE_SIZE_MB = 10;
@@ -16,6 +18,25 @@ function extractImageData(base64String) {
   return { ext, buffer };
 }
 
+// ✅ Shared log + credit helper
+const logAndDeductCredits = async (user_id, action, credits) => {
+  await supabase.from('user_usage_logs').insert([
+    {
+      user_id,
+      action,
+      credits_used: credits,
+      created_at: new Date().toISOString()
+    }
+  ]);
+
+  const { error: deductError } = await supabase.rpc('increment_credits_used', {
+    p_user_id: user_id,
+    p_increment: credits
+  });
+
+  if (deductError) throw new Error('Credit deduction failed');
+};
+
 // ✅ POST /upload-ai-image
 router.post('/upload-ai-image', async (req, res) => {
   const { user_id, base64Image } = req.body;
@@ -30,8 +51,21 @@ router.post('/upload-ai-image', async (req, res) => {
   }
 
   try {
+    const creditCost = CREDIT_COSTS.upload_image;
+
+    // ✅ Check credit availability before proceeding
+    const { data: planRow } = await supabase
+      .from('users_plan')
+      .select('credits_used, credits_limit')
+      .eq('user_id', user_id)
+      .single();
+
+    if (!planRow || (planRow.credits_used + creditCost > planRow.credits_limit)) {
+      return res.status(402).json({ error: 'Insufficient credits to upload image' });
+    }
+
     // ✅ DAILY LIMIT CHECK: Max 20 uploads per user/day
-    const today = new Date().toISOString().split('T')[0]; // e.g., "2025-07-10"
+    const today = new Date().toISOString().split('T')[0];
     const { count } = await supabase
       .from('user_usage_logs')
       .select('*', { count: 'exact', head: true })
@@ -70,15 +104,8 @@ router.post('/upload-ai-image', async (req, res) => {
       .from('user_files')
       .getPublicUrl(path);
 
-    // ✅ Credit logging (deduct 100 credits)
-    await supabase.from('user_usage_logs').insert([
-      {
-        user_id,
-        action: 'upload-ai-image',
-        credits_used: 100,
-        created_at: new Date().toISOString()
-      }
-    ]);
+    // ✅ Log and deduct credits
+    await logAndDeductCredits(user_id, 'upload-ai-image', creditCost);
 
     return res.json({
       success: true,
