@@ -1,1 +1,26 @@
+# Ignore backend folders
+/server
+/lib
+/routes
+
+# Ignore backend files
+server.js
+.env
+.env.local
+credits.js
+validateplan.js
+epub.js
+
+# Ignore upload and output files
+/uploads
+*.pdf
+*.epub
+
+# Ignore node_modules
+node_modules
+
+# Optional: Ignore anything else not used by frontend
+functions/
+api/
+scripts/
 
