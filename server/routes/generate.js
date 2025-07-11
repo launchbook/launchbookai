@@ -87,13 +87,24 @@ router.post('/generate-pdf', async (req, res) => {
   const estimatedWordCount = parsedTotalPages * 300;
 
   const estimated_credits = estimateCreditCost({
-    wordCount: estimatedWordCount,
-    imageCount: parsedImageCount,
-    withCover: hasCover,
-    isRegeneration: false
-  });
+  wordCount: estimatedWordCount,
+  imageCount: parsedImageCount,
+  withCover: hasCover,
+  isRegeneration: false
+});
 
-  console.log('🔢 Credits Estimated:', estimated_credits);
+// ✅ Check if user has enough credits BEFORE generating
+const { data: planRow } = await supabase
+  .from('users_plan')
+  .select('credits_used, credits_limit')
+  .eq('user_id', user_id)
+  .single();
+
+if (!planRow || (planRow.credits_used + estimated_credits > planRow.credits_limit)) {
+  return res.status(402).json({ error: 'Insufficient credits to generate eBook' });
+}
+
+console.log('🔢 Credits Estimated:', estimated_credits);
 
   try {
     const safeTitle = (title || 'Untitled').trim();
@@ -202,6 +213,17 @@ router.post('/generate-from-url', async (req, res) => {
   wordCount: estimatedWordCount,
   imageCount
 });
+    
+// ✅ Check if user has enough credits BEFORE generating
+const { data: planRow } = await supabase
+  .from('users_plan')
+  .select('credits_used, credits_limit')
+  .eq('user_id', user_id)
+  .single();
+
+if (!planRow || (planRow.credits_used + estimated_credits > planRow.credits_limit)) {
+  return res.status(402).json({ error: 'Insufficient credits to generate from URL' });
+}
 
 
     let fileBuffer, fileName;
@@ -235,7 +257,7 @@ router.post('/generate-from-url', async (req, res) => {
       created_at: new Date().toISOString()
     }]);
 
-    await logAndDeductCredits(user_id, 'generate-from-url', estimated_credits);
+      await logAndDeductCredits(user_id, 'generate_from_url', estimated_credits);
 
     // ✅ Send email notification
     const transporter = nodemailer.createTransport({
