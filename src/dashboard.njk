@@ -19,16 +19,21 @@
   </div>
 </div>
 
-<div id="user-credits-container" 
+    <div id="user-credits-container" 
      class="cursor-pointer text-sm text-gray-800 hover:text-blue-600 underline"
      title="Click to view plan details →"
      onclick="showMyPlanModal()">
-  <p class="text-gray-600 mb-4">Available credits: 
-    <span id="user-credits" class="font-medium text-green-700">Loading...</span>
-  </p>
-</div>
+      <p class="text-gray-600 mb-4">Available credits: 
+    <span id="user-credits" class="font-medium text-green-700">Loading...</span> </p>
+    </div>
 
-<button onclick="showMyPlanModal()" class="text-sm text-blue-600 underline">📋 View My Plan</button>
+     <!-- ✅ Add Dev/Test-only Top-Up Button -->
+     {% if currentUser and currentUser.email == "youremail@example.com" %}
+     <button id="top-up-btn" class="text-blue-600 underline mb-4">🔋 Add 50 Credits</button>
+     {% endif %}
+
+     <!-- Existing Plan Modal Trigger -->
+    <button onclick="showMyPlanModal()" class="text-sm text-blue-600 underline">📋 View My Plan</button>
 
    <!-- Modal -->
    <div id="my-plan-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center">
