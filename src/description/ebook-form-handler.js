@@ -286,8 +286,10 @@ document.addEventListener("DOMContentLoaded", () => {
     ];
     idsToToggle.forEach(id => {
       const el = document.getElementById(id);
-      if (el) el.disabled = disabled;
-    });
+     if (el) {
+  el.disabled = disabled;
+  el.classList.toggle("opacity-50", disabled);
+   });
   });
 });
 
@@ -324,7 +326,8 @@ form.addEventListener("submit", async (e) => {
   const costEstimate = estimateCreditCost({ wordCount, imageCount, withCover, isRegeneration: false });
 
   // ✅ Dynamic credit check
-  if (!(await checkCredits(currentUser.id, costEstimate))) {
+  const action = source_url ? "generate_from_url" : (payload.output_format === "epub" ? "generate_epub" : "generate_pdf");
+if (!(await checkCredits(currentUser.id, CREDIT_COSTS[action] || costEstimate))) {
     submitBtn.disabled = false;
     submitBtn.innerText = "🚀 Generate eBook";
     progressBar.classList.add("hidden");
