@@ -3,6 +3,7 @@ const nodemailer = require('nodemailer');
 const { validateActivePlan } = require('../lib/plan');
 const { supabase } = require('../lib/supabase');
 const { getEmailTemplate } = require('../lib/emailTemplates');
+const { CREDIT_COSTS } = require('../lib/credits');
 
 const router = express.Router();
 
@@ -76,7 +77,7 @@ router.post('/send-ebook-email', async (req, res) => {
         await transporter.sendMail({
           from: `"LaunchBook AI" <${process.env.EMAIL_USER}>`,
           to: email,
-          bcc: 'founder@yourdomain.com', // 🔁 You can update this later
+          bcc: 'founder@yourdomain.com',
           subject: template.subject,
           html: template.html(title + fileSizeInfo, download_url) + openTrackerPixel
         });
@@ -85,14 +86,14 @@ router.post('/send-ebook-email', async (req, res) => {
       } catch (err) {
         lastError = err;
         console.warn(`Retry ${i + 1} failed:`, err.message);
-        await new Promise(r => setTimeout(r, 1000)); // 1s delay
+        await new Promise(r => setTimeout(r, 1000));
       }
     }
 
     if (!success) throw lastError;
 
-    // ✅ Log + deduct 30 credits
-    await logAndDeductCredits(user_id, 'send-ebook-email', 30, {
+    // ✅ Log + deduct credits using global constant
+    await logAndDeductCredits(user_id, 'send-ebook-email', CREDIT_COSTS.send_email, {
       email,
       status: 'success',
       title,
@@ -107,7 +108,7 @@ router.post('/send-ebook-email', async (req, res) => {
   }
 });
 
-// ✅ Open Tracker Logging Route (📊 logs `language`)
+// ✅ Open Tracker Logging Route
 router.get('/track-open', async (req, res) => {
   const { user_id, email, language = 'English' } = req.query;
 
@@ -126,11 +127,7 @@ router.get('/track-open', async (req, res) => {
     console.warn('📭 Failed to log open event:', e.message);
   }
 
-  // Return a 1x1 transparent gif
-  const imgBuffer = Buffer.from(
-    'R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==',
-    'base64'
-  );
+  const imgBuffer = Buffer.from('R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==', 'base64');
   res.writeHead(200, {
     'Content-Type': 'image/gif',
     'Content-Length': imgBuffer.length
@@ -139,4 +136,3 @@ router.get('/track-open', async (req, res) => {
 });
 
 module.exports = router;
-
