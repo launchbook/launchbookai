@@ -68,5 +68,21 @@
   });
 </script>
 
+<!-- ✅ Lottie Animation Script -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.10.2/lottie.min.js"></script>
+<script>
+  const container = document.getElementById('lottie-hero');
+  if (container) {
+    container.style.display = 'block';
+    lottie.loadAnimation({
+      container,
+      renderer: 'svg',
+      loop: true,
+      autoplay: true,
+      path: 'https://assets9.lottiefiles.com/packages/lf20_c7VkSt0n1W.json'
+    });
+  }
+</script>
+
 </body>
 </html>
