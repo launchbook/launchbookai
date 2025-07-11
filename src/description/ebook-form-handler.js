@@ -19,7 +19,7 @@ function estimateCreditCost({
 }) {
   const base = Math.ceil(wordCount / 200) * 40; // 40 credits per 200 words
   const imageCost = imageCount * 120;
-  const coverCost = withCover ? 300 : 0;
+  const coverCost = withCover ? 150 : 0;
   const regenPenalty = 0; // ❌ Removed based on your decision
 
   const total = base + imageCost + coverCost + regenPenalty;
@@ -31,7 +31,7 @@ function showCreditEstimate({ wordCount, imageCount, withCover, isRegeneration }
   document.getElementById("credit-estimate-msg").textContent = `Estimated credits: ${estimated}`;
 }
 function estimateCoverImageCost({ style = "default" }) {
-  return 300; // Flat for now
+  return 150; // Flat for now
 }
 
 function estimateURLConversionCost({ wordCount = 0, imageCount = 0 }) {
