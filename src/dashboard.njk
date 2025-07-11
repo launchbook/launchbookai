@@ -74,14 +74,15 @@
 
     <!-- ... rest of your form continues below unchanged -->
 
-
         <!-- Core Info -->
         <input type="text" id="title" name="title" placeholder="eBook Title" class="border px-4 py-2 rounded" required />
         <input type="text" id="topic" name="topic" placeholder="Topic or Subject" class="border px-4 py-2 rounded" />
         <textarea id="description" name="description" placeholder="Describe your eBook content or goal..." rows="3" class="border px-4 py-2 rounded"></textarea>
         <div id="word-count-label" class="text-sm text-gray-500 mt-1"></div>
         <input type="text" id="author_name" name="author_name" placeholder="Author Name" class="border px-4 py-2 rounded" />
-  
+
+      <button type="button" id="save-formatting" class="mt-2 bg-blue-600 text-white px-4 py-2 rounded">💾 Save Formatting Preset</button>
+
         <!-- Basic Settings -->
         <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
           <select id="audience" name="audience" class="border px-4 py-2 rounded" required>
