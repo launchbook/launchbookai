@@ -1,9 +1,6 @@
----
-layout: base.njk
-title: Dashboard
----
-
-{% block content %}  
+{% extends "base.njk" %}
+  
+  {% block content %}
   <section class="max-w-3xl mx-auto p-6 mt-10 bg-white rounded shadow">
     <div class="flex justify-between items-center mb-6">
       <h2 class="text-2xl font-bold text-gray-800">👋 Welcome Back</h2>
@@ -160,7 +157,7 @@ title: Dashboard
   </label>
   <select id="imageCount" name="imageCount" required
     class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
-    ${[...Array(16).keys()].map(i => `<option value="${i}">${i}</option>`).join('')}
+    ${[...Array(16).keys()].map(i => <option value="${i}">${i}</option>).join('')}
     </select>
      </div>
 
@@ -326,6 +323,7 @@ title: Dashboard
   </div>
 </section>
 
+  
   <script type="module" src="/description/ebook-form-handler.js"></script>
   
-{% endblock %}
+  {% endblock %}
