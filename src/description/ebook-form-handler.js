@@ -956,6 +956,13 @@ document.addEventListener("DOMContentLoaded", () => {
   const descriptionInput = document.getElementById("description");
   const imageSelect = document.getElementById("image-count");
   const coverCheckbox = document.getElementById("include-cover");
+  const wordCountLabel = document.getElementById("word-count-label");
+  const updateWordCount = () => {
+  const count = descriptionInput.value.trim().split(/\s+/).length;
+  if (wordCountLabel) wordCountLabel.textContent = `📝 Words: ${count}`;
+};
+ descriptionInput.addEventListener("input", updateWordCount);
+ updateWordCount();
 
   const updateEstimate = () => {
     const text = descriptionInput.value;
