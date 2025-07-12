@@ -4,10 +4,28 @@
 <button id="clear_api_btn" class="hidden">❌</button>
 
 <!-- 📋 Main eBook Info -->
-<input id="titleInput" placeholder="Title" class="input-class">
-<input id="topicInput" placeholder="Topic" class="input-class">
-<textarea id="descInput" placeholder="Description" class="input-class"></textarea>
-<input id="coverPromptInput" placeholder="Cover Prompt" class="input-class">
+<input id="titleInput" placeholder="Title" class="input-class" />
+<input id="topicInput" placeholder="Topic" class="input-class" />
+<input id="coverPromptInput" placeholder="Cover Prompt" class="input-class" />
+
+<!-- ✏️ Description & AI Guidance -->
+<textarea id="descInput" placeholder="What is this eBook about?" class="input-class"></textarea>
+<textarea id="ai_instructions" placeholder="Extra instructions for AI (e.g. include table, keep tone friendly)" class="input-class"></textarea>
+
+<!-- 🔗 Affiliate Link Setup -->
+<div class="mt-4 space-y-2" id="affiliateOptions">
+  <label class="block text-sm font-semibold text-gray-700">📌 Add Affiliate CTA</label>
+  <label class="text-sm flex items-center gap-2">
+    <input type="checkbox" id="include_affiliate_links" class="mr-1" />
+    Enable Affiliate CTA in eBook
+  </label>
+
+  <div id="affiliateLinkFields" class="hidden space-y-2 mt-2">
+    <input id="affiliate_link_url" type="url" class="input-class" placeholder="Affiliate link (e.g. https://...)" />
+    <input id="affiliate_cta_label" type="text" class="input-class" placeholder="CTA Button Label (e.g. Buy Now)" />
+    <input id="affiliate_keywords" type="text" class="input-class" placeholder="Trigger keywords (comma-separated)" />
+  </div>
+</div>
 
 <!-- 🔘 Output Format -->
 <label><input type="radio" name="output_format" value="pdf" checked> PDF</label>
