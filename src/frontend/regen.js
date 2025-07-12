@@ -51,8 +51,13 @@ window.initRegenHandlers = async function () {
   });
 };
 
-// ♻️ Cover Regeneration Logic
+// ♻️ Cover Regeneration
 async function regenerateCover() {
+  const cost = CREDIT_COSTS.regen_pdf;
+
+  const allowed = await checkCredits(currentUser.id, cost);
+  if (!allowed) return;
+
   showSpinner();
   try {
     const res = await fetch(`${BASE_URL}/regenerate-cover-image`, {
@@ -66,14 +71,25 @@ async function regenerateCover() {
 
     document.getElementById("cover_preview").src = result.cover_url;
     showToast("✅ Cover image regenerated");
+
+    await logUsage(currentUser.id, currentUser.email, "regen_pdf", {
+      type: "cover"
+    });
+
+    loadUserCredits(); // refresh badge
   } catch (err) {
     alert("❌ " + err.message);
   }
   hideSpinner();
 }
 
-// ♻️ Image Regeneration Logic
+// ♻️ Image Regeneration
 async function regenerateImage(imageId) {
+  const cost = CREDIT_COSTS.regen_image;
+
+  const allowed = await checkCredits(currentUser.id, cost);
+  if (!allowed) return;
+
   showSpinner();
   try {
     const res = await fetch(`${BASE_URL}/regenerate-image`, {
@@ -89,14 +105,25 @@ async function regenerateImage(imageId) {
     if (img) img.src = result.image_url;
 
     showToast("✅ Image regenerated");
+
+    await logUsage(currentUser.id, currentUser.email, "regen_image", {
+      image_id: imageId
+    });
+
+    loadUserCredits(); // refresh badge
   } catch (err) {
     alert("❌ " + err.message);
   }
   hideSpinner();
 }
 
-// ♻️ Text Block Regeneration Logic
+// ♻️ Text Block Regeneration
 async function regenerateText(blockId) {
+  const cost = CREDIT_COSTS.regen_pdf;
+
+  const allowed = await checkCredits(currentUser.id, cost);
+  if (!allowed) return;
+
   showSpinner();
   try {
     const res = await fetch(`${BASE_URL}/regenerate-text-block`, {
@@ -112,6 +139,12 @@ async function regenerateText(blockId) {
     if (block) block.innerHTML = result.new_html;
 
     showToast("✅ Text block regenerated");
+
+    await logUsage(currentUser.id, currentUser.email, "regen_pdf", {
+      block_id: blockId
+    });
+
+    loadUserCredits(); // refresh badge
   } catch (err) {
     alert("❌ " + err.message);
   }
