@@ -14,6 +14,16 @@ window.initGenerator = async function () {
   setupAPIKeyLogic();
   setupGenerateHandler();
   setupStickySaveButton();
+// ✅ Auto Apply Audience Formatting on audience change
+document.getElementById("audience")?.addEventListener("change", applyAudienceFormatting);
+
+// ✅ Watch template change (so we can disable formatting)
+setInterval(() => {
+  const isTemplateApplied = !!window.selectedTemplateClass;
+  document.querySelectorAll("#font_type, #font_size, #line_spacing, #text_alignment").forEach(el => {
+    el.disabled = isTemplateApplied;
+  });
+}, 500);
 
   // ✅ Toggle affiliate link input
   document.getElementById("include_affiliate_links")?.addEventListener("change", (e) => {
