@@ -2,30 +2,29 @@
 
 // ✅ This module handles: URL + AI generation, formatting presets, API key, sticky preview, and download/save
 
-import { loadPresetFromSupabase } from "./credit.js";
-import { setupTemplatePicker } from "./prebuildTemplate.js";
-import { updateCoverPreview } from "./cover.js";
+// ✅ CommonJS-compatible frontend logic (no `import`/`export`)
 
 let useOwnAPIKey = false;
 let verifiedAPIKey = null;
 let generatedContent = null;
+let currentUser = null;
 
 // 🌟 Init generator UI + handlers
-export async function initGenerator() {
+window.initGenerator = async function () {
   await loadFormattingPreset();
-  setupTemplatePicker();
+  if (typeof setupTemplatePicker === 'function') setupTemplatePicker();
+  if (typeof updateCoverPreview === 'function') updateCoverPreview();
   setupAPIKeyLogic();
   setupGenerateHandler();
   setupStickySaveButton();
-  updateCoverPreview(); // preload cover
-}
+};
 
 // 🧠 Load latest formatting preset (if available)
 async function loadFormattingPreset() {
   const { data } = await supabase
     .from("generated_files")
     .select("*")
-    .eq("user_id", currentUser.id)
+    .eq("user_id", currentUser?.id)
     .order("created_at", { ascending: false })
     .limit(1)
     .single();
@@ -43,16 +42,17 @@ async function loadFormattingPreset() {
   document.getElementById("text_alignment").value = data.text_alignment;
 }
 
-// 🔑 Handle API Key input + UI
+// 🔑 API Key Verification
 function setupAPIKeyLogic() {
   const apiInput = document.getElementById("openai_api_key");
   const apiStatus = document.getElementById("api_status");
   const apiClear = document.getElementById("clear_api_btn");
 
   apiInput.addEventListener("input", () => {
-    if (apiInput.value.trim().startsWith("sk-")) {
+    const key = apiInput.value.trim();
+    if (key.startsWith("sk-")) {
       useOwnAPIKey = true;
-      verifiedAPIKey = apiInput.value.trim();
+      verifiedAPIKey = key;
       apiStatus.innerHTML = "<span class='text-green-500'>✅ Verified</span>";
       apiClear.classList.remove("hidden");
     } else {
@@ -72,7 +72,7 @@ function setupAPIKeyLogic() {
   });
 }
 
-// 🚀 Handle Generate Button
+// 🚀 Main Generate Handler
 function setupGenerateHandler() {
   document.getElementById("generateBtn").addEventListener("click", async () => {
     const url = document.getElementById("source_url").value.trim();
@@ -128,14 +128,14 @@ function collectFormatting() {
   };
 }
 
-// 📖 Render preview area
+// 📖 Render output
 function renderPreview(result) {
   const container = document.getElementById("ebook_preview_area");
   container.innerHTML = result.html_preview;
   document.getElementById("saveBtn").classList.remove("hidden");
 }
 
-// 💾 Sticky Save Button
+// 💾 Save + Download handler
 function setupStickySaveButton() {
   document.getElementById("saveBtn").addEventListener("click", async () => {
     if (!generatedContent) return;
@@ -161,7 +161,7 @@ function setupStickySaveButton() {
   });
 }
 
-// 🔄 Spinner helpers
+// 🔄 Spinner handlers
 function showSpinner() {
   document.getElementById("generateBtn").disabled = true;
   document.getElementById("spinner").classList.remove("hidden");
