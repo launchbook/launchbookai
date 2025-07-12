@@ -1,38 +1,48 @@
+// Root: server.js
+
 const express = require('express');
 const dotenv = require('dotenv');
-const rateLimit = require('express-rate-limit'); // ✅ Rate limiting module
+const rateLimit = require('express-rate-limit');
+const rateLimiter = require('./Server/middleware/rateLimit'); // 🔒 Custom limiter for sensitive routes
 
 // ✅ Load environment variables
 dotenv.config();
 
-// ✅ Create express app
+// ✅ Create Express app
 const app = express();
 app.use(express.json());
 
-// ✅ Global rate limiter (30 requests/min per IP)
-const limiter = rateLimit({
+// ✅ Global fallback rate limiter (30 req/min/IP)
+const globalLimiter = rateLimit({
   windowMs: 60 * 1000, // 1 minute
-  max: 30, // Max 30 requests per minute
+  max: 30,
   standardHeaders: true,
   legacyHeaders: false,
-  message: 'Too many requests. Please slow down.',
+  message: '🚫 Too many requests. Please slow down.',
 });
-app.use(limiter); // ✅ Apply limiter to all routes
+app.use(globalLimiter);
 
-// ✅ Route imports
-const generateRoutes = require('./server/routes/generate');
-const regenerateRoutes = require('./server/routes/regenerate');
-const coverRoutes = require('./server/routes/cover');
-const emailRoutes = require('./server/routes/email');
-const imageRoutes = require('./server/routes/image');
+// ✅ Import routes
+const generateRoutes = require('./Server/routes/generate');
+const regenerateRoutes = require('./Server/routes/regenerate');
+const coverRoutes = require('./Server/routes/cover');
+const emailRoutes = require('./Server/routes/email');
+const imageRoutes = require('./Server/routes/image');
 
-// ✅ Mount all routes
-app.use('/', generateRoutes);
-app.use('/', regenerateRoutes);
-app.use('/', coverRoutes);
-app.use('/', emailRoutes);
-app.use('/', imageRoutes);
+// ✅ Mount routes with custom limiter on sensitive ones
+app.use('/generate', rateLimiter, generateRoutes);
+app.use('/regenerate-cover-image', rateLimiter, regenerateRoutes);
+app.use('/regenerate-image', rateLimiter, regenerateRoutes);
+app.use('/regenerate-text-block', rateLimiter, regenerateRoutes);
+app.use('/send-ebook-email', rateLimiter, emailRoutes);
+app.use('/generate-cover', rateLimiter, coverRoutes);
+app.use('/ai-image', rateLimiter, imageRoutes);
 
-// ✅ Start server
+// ✅ Catch-All Route (Optional)
+// app.use('*', (req, res) => res.status(404).json({ error: 'Not Found' }));
+
+// ✅ Start Server
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
+app.listen(PORT, () => {
+  console.log(`🚀 LaunchBook AI backend running on http://localhost:${PORT}`);
+});
