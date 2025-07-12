@@ -1,9 +1,5 @@
 // launchbookai/src/frontend/generate.js
 
-// ✅ This module handles: URL + AI generation, formatting presets, API key, sticky preview, and download/save
-
-// ✅ CommonJS-compatible frontend logic (no `import`/`export`)
-
 let useOwnAPIKey = false;
 let verifiedAPIKey = null;
 let generatedContent = null;
@@ -11,6 +7,7 @@ let currentUser = null;
 
 // 🌟 Init generator UI + handlers
 window.initGenerator = async function () {
+  await loadUserCredits(); // ✅ show badge
   await loadFormattingPreset();
   if (typeof setupTemplatePicker === 'function') setupTemplatePicker();
   if (typeof updateCoverPreview === 'function') updateCoverPreview();
@@ -19,17 +16,11 @@ window.initGenerator = async function () {
   setupStickySaveButton();
 };
 
-// 🧠 Load latest formatting preset (if available)
+// 🧠 Load formatting preset
 async function loadFormattingPreset() {
-  const { data } = await supabase
-    .from("generated_files")
-    .select("*")
-    .eq("user_id", currentUser?.id)
-    .order("created_at", { ascending: false })
-    .limit(1)
-    .single();
-
+  const data = await loadPresetFromSupabase();
   if (!data) return;
+
   document.getElementById("font_type").value = data.font_type;
   document.getElementById("font_size").value = data.font_size;
   document.getElementById("line_spacing").value = data.line_spacing;
@@ -42,7 +33,7 @@ async function loadFormattingPreset() {
   document.getElementById("text_alignment").value = data.text_alignment;
 }
 
-// 🔑 API Key Verification
+// 🔑 API Key logic
 function setupAPIKeyLogic() {
   const apiInput = document.getElementById("openai_api_key");
   const apiStatus = document.getElementById("api_status");
@@ -53,7 +44,7 @@ function setupAPIKeyLogic() {
     if (key.startsWith("sk-")) {
       useOwnAPIKey = true;
       verifiedAPIKey = key;
-      window.userApiKey = key; // ✅ now accessible globally
+      window.userApiKey = key;
       apiStatus.innerHTML = "<span class='text-green-500'>✅ Verified</span>";
       apiClear.classList.remove("hidden");
     } else {
@@ -75,28 +66,39 @@ function setupAPIKeyLogic() {
   });
 }
 
-  apiClear.addEventListener("click", () => {
-    apiInput.value = "";
-    apiStatus.innerHTML = "";
-    useOwnAPIKey = false;
-    verifiedAPIKey = null;
-    apiClear.classList.add("hidden");
-  });
-}
-
-// 🚀 Main Generate Handler
+// 🚀 Handle Generate
 function setupGenerateHandler() {
   document.getElementById("generateBtn").addEventListener("click", async () => {
     const url = document.getElementById("source_url").value.trim();
-    const inputType = document.querySelector("input[name='input_type']:checked").value;
+    const inputType = document.querySelector("input[name='input_type']:checked")?.value || "url";
+    const imageCount = parseInt(document.getElementById("image_count").value) || 0;
+    const withCover = !!document.getElementById("cover_preview")?.src;
+
+    const wordCount = parseInt(document.getElementById("word_count")?.value || "8000"); // fallback
+    const format = document.querySelector("input[name='output_format']:checked").value;
+
+    const dynamicCost = estimateCreditCost({
+      wordCount,
+      imageCount,
+      withCover,
+      isRegeneration: false
+    });
+
+    // ⛔ Credit Check
+    const { data: session } = await supabase.auth.getSession();
+    if (!session?.user) return window.location.href = "/login";
+    currentUser = session.user;
+
+    const creditOK = await checkCredits(currentUser.id, dynamicCost);
+    if (!creditOK) return;
 
     const payload = {
       url,
       inputType,
       formatting: collectFormatting(),
       cover_url: document.getElementById("cover_preview").src,
-      output_format: document.querySelector("input[name='output_format']:checked").value,
-      image_count: parseInt(document.getElementById("image_count").value),
+      output_format: format,
+      image_count: imageCount,
       useOwnAPIKey,
       apiKey: verifiedAPIKey,
     };
@@ -115,7 +117,17 @@ function setupGenerateHandler() {
 
       generatedContent = result;
       renderPreview(result);
+
+      // ✅ Log Usage
+      await logUsage(currentUser.id, currentUser.email, "generate_from_url", {
+        dynamic_cost: dynamicCost,
+        word_count: wordCount,
+        image_count: imageCount,
+        format,
+      });
+
       showToast("✅ eBook Generated Successfully");
+      loadUserCredits(); // refresh badge
     } catch (err) {
       alert("❌ " + err.message);
     }
@@ -124,7 +136,7 @@ function setupGenerateHandler() {
   });
 }
 
-// 🧾 Collect formatting values
+// ✍️ Collect formatting
 function collectFormatting() {
   return {
     font_type: document.getElementById("font_type").value,
@@ -140,14 +152,14 @@ function collectFormatting() {
   };
 }
 
-// 📖 Render output
+// 📖 Render to preview area
 function renderPreview(result) {
   const container = document.getElementById("ebook_preview_area");
   container.innerHTML = result.html_preview;
-  document.getElementById("saveBtn").classList.remove("hidden");
+  document.getElementById("saveBtn")?.classList.remove("hidden");
 }
 
-// 💾 Save + Download handler
+// 💾 Save + Download
 function setupStickySaveButton() {
   document.getElementById("saveBtn").addEventListener("click", async () => {
     if (!generatedContent) return;
@@ -159,6 +171,7 @@ function setupStickySaveButton() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(generatedContent),
       });
+
       const result = await res.json();
       if (result.download_url) {
         window.open(result.download_url, "_blank");
@@ -173,16 +186,17 @@ function setupStickySaveButton() {
   });
 }
 
-// 🔄 Spinner handlers
+// 🔄 Spinner
 function showSpinner() {
   document.getElementById("generateBtn").disabled = true;
-  document.getElementById("spinner").classList.remove("hidden");
+  document.getElementById("spinner")?.classList.remove("hidden");
 }
 function hideSpinner() {
   document.getElementById("generateBtn").disabled = false;
-  document.getElementById("spinner").classList.add("hidden");
+  document.getElementById("spinner")?.classList.add("hidden");
 }
 
+// ✅ Toast
 function showToast(msg) {
   const t = document.createElement("div");
   t.className = "fixed top-5 right-5 bg-green-600 text-white px-4 py-2 rounded shadow z-50";
