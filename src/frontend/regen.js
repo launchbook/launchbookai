@@ -1,16 +1,33 @@
-// launchbookai/src/frontend/regen.js
-
-// ✅ This module handles: Regeneration of cover, content section, or images
-
-import { showSpinner, hideSpinner, showToast } from "./utils.js";
+// ✅ This module handles: Regeneration of cover, content section, or images (CommonJS version)
 
 let currentUser = null;
 const BASE_URL = location.hostname === 'localhost'
   ? 'http://localhost:3000'
   : 'https://ebook-pdf-generator.onrender.com';
 
-export async function initRegenHandlers() {
-  // Cover Image Regen Button
+// 🔄 Spinner & Toast from window.utils
+function showSpinner() {
+  document.getElementById("spinner")?.classList.remove("hidden");
+}
+function hideSpinner() {
+  document.getElementById("spinner")?.classList.add("hidden");
+}
+function showToast(msg) {
+  const t = document.createElement("div");
+  t.className = "fixed top-5 right-5 bg-green-600 text-white px-4 py-2 rounded shadow z-50";
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 3000);
+}
+
+// ✅ Main initializer
+window.initRegenHandlers = async function () {
+  // Ensure currentUser is fetched
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) return window.location.href = "/login";
+  currentUser = session.user;
+
+  // Cover Regen Button
   document.querySelectorAll(".regen-cover-btn").forEach(btn => {
     btn.addEventListener("click", () => regenerateCover());
   });
@@ -23,14 +40,14 @@ export async function initRegenHandlers() {
     });
   });
 
-  // Text Section Regen Button
+  // Text Block Regen Button
   document.querySelectorAll(".regen-text-btn").forEach(btn => {
     btn.addEventListener("click", (e) => {
       const blockId = e.target.dataset.blockId;
       regenerateText(blockId);
     });
   });
-}
+};
 
 // 🔁 Regenerate Cover
 async function regenerateCover() {
@@ -75,7 +92,7 @@ async function regenerateImage(imageId) {
   hideSpinner();
 }
 
-// 🔁 Regenerate Individual Text Block
+// 🔁 Regenerate Text Block
 async function regenerateText(blockId) {
   showSpinner();
   try {
@@ -96,4 +113,3 @@ async function regenerateText(blockId) {
   }
   hideSpinner();
 }
-
