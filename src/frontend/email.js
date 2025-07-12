@@ -1,4 +1,4 @@
-// ✅ Email Sending Module – CommonJS Version with Credit Check + User API Key Support
+// ✅ Email Sending Module – CommonJS Version with Credit Check + Logging
 
 let currentUser = null;
 const BASE_URL = location.hostname === "localhost"
@@ -22,13 +22,17 @@ async function sendEmailToUser() {
   const email = document.getElementById("recipientEmail").value.trim();
   const customMsg = document.getElementById("emailMessage").value.trim();
   const downloadUrl = window.generatedContent?.download_url;
-
   const apiKey = window.userApiKey || null;
 
   if (!email || !downloadUrl) {
     alert("❌ Please provide a valid email and generate the eBook first.");
     return;
   }
+
+  const cost = CREDIT_COSTS.send_email;
+
+  const allowed = await checkCredits(currentUser.id, cost);
+  if (!allowed) return;
 
   showSpinner();
 
@@ -50,6 +54,13 @@ async function sendEmailToUser() {
     if (!res.ok) throw new Error(result.error || "Sending failed");
 
     showToast("✅ eBook emailed successfully");
+
+    await logUsage(currentUser.id, currentUser.email, "send_email", {
+      recipient: email,
+      used_api_key: !!apiKey
+    });
+
+    loadUserCredits(); // refresh badge
   } catch (err) {
     alert("❌ " + err.message);
   }
