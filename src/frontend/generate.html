@@ -31,6 +31,15 @@
 <!-- Credits -->
 <span id="creditBadge"></span>
 
+<!-- Example Image with Regen -->
+<img data-image-id="img123" src="..." />
+<button class="regen-img-btn" data-image-id="img123">♻️ Regenerate</button>
+
+<!-- Example Text Block -->
+<div data-block-id="block456">Some paragraph...</div>
+<button class="regen-text-btn" data-block-id="block456">♻️ Regenerate</button>
+
+
 <script>
   window.addEventListener("DOMContentLoaded", () => {
     if (typeof initGenerator === "function") initGenerator();
