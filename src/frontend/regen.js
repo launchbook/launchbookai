@@ -1,3 +1,4 @@
+// launchbookai/src/frontend/regen.js
 // ✅ This module handles: Regeneration of cover, content section, or images (CommonJS version)
 
 let currentUser = null;
@@ -5,12 +6,14 @@ const BASE_URL = location.hostname === 'localhost'
   ? 'http://localhost:3000'
   : 'https://ebook-pdf-generator.onrender.com';
 
-// 🔄 Spinner & Toast from window.utils
+// ✅ Utility - Spinner & Toast
 function showSpinner() {
-  document.getElementById("spinner")?.classList.remove("hidden");
+  const sp = document.getElementById("spinner");
+  if (sp) sp.classList.remove("hidden");
 }
 function hideSpinner() {
-  document.getElementById("spinner")?.classList.add("hidden");
+  const sp = document.getElementById("spinner");
+  if (sp) sp.classList.add("hidden");
 }
 function showToast(msg) {
   const t = document.createElement("div");
@@ -20,19 +23,18 @@ function showToast(msg) {
   setTimeout(() => t.remove(), 3000);
 }
 
-// ✅ Main initializer
+// ✅ Public Init Method (exposed globally)
 window.initRegenHandlers = async function () {
-  // Ensure currentUser is fetched
   const { data: { session } } = await supabase.auth.getSession();
   if (!session) return window.location.href = "/login";
   currentUser = session.user;
 
-  // Cover Regen Button
+  // ♻️ Cover Regen
   document.querySelectorAll(".regen-cover-btn").forEach(btn => {
     btn.addEventListener("click", () => regenerateCover());
   });
 
-  // Image Regen Button
+  // ♻️ Image Regen
   document.querySelectorAll(".regen-img-btn").forEach(btn => {
     btn.addEventListener("click", (e) => {
       const imgId = e.target.dataset.imageId;
@@ -40,7 +42,7 @@ window.initRegenHandlers = async function () {
     });
   });
 
-  // Text Block Regen Button
+  // ♻️ Text Block Regen
   document.querySelectorAll(".regen-text-btn").forEach(btn => {
     btn.addEventListener("click", (e) => {
       const blockId = e.target.dataset.blockId;
@@ -49,7 +51,7 @@ window.initRegenHandlers = async function () {
   });
 };
 
-// 🔁 Regenerate Cover
+// ♻️ Cover Regeneration Logic
 async function regenerateCover() {
   showSpinner();
   try {
@@ -70,7 +72,7 @@ async function regenerateCover() {
   hideSpinner();
 }
 
-// 🔁 Regenerate Individual Image
+// ♻️ Image Regeneration Logic
 async function regenerateImage(imageId) {
   showSpinner();
   try {
@@ -84,7 +86,8 @@ async function regenerateImage(imageId) {
     if (!res.ok) throw new Error(result.error || "Failed to regenerate image");
 
     const img = document.querySelector(`[data-image-id='${imageId}']`);
-    img.src = result.image_url;
+    if (img) img.src = result.image_url;
+
     showToast("✅ Image regenerated");
   } catch (err) {
     alert("❌ " + err.message);
@@ -92,7 +95,7 @@ async function regenerateImage(imageId) {
   hideSpinner();
 }
 
-// 🔁 Regenerate Text Block
+// ♻️ Text Block Regeneration Logic
 async function regenerateText(blockId) {
   showSpinner();
   try {
@@ -106,7 +109,8 @@ async function regenerateText(blockId) {
     if (!res.ok) throw new Error(result.error || "Failed to regenerate text");
 
     const block = document.querySelector(`[data-block-id='${blockId}']`);
-    block.innerHTML = result.new_html;
+    if (block) block.innerHTML = result.new_html;
+
     showToast("✅ Text block regenerated");
   } catch (err) {
     alert("❌ " + err.message);
