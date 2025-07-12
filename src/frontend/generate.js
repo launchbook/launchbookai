@@ -1,141 +1,180 @@
-// File: src/frontend/generate.js
+// launchbookai/src/frontend/generate.js
 
-// ✅ GLOBAL STATE
-let currentUser = null;
-let userApiKey = null;
+// ✅ This module handles: URL + AI generation, formatting presets, API key, sticky preview, and download/save
 
-// ✅ DOM Elements
-const generateBtn = document.getElementById("generateBtn");
-const downloadBtn = document.getElementById("downloadBtn");
-const coverPreview = document.getElementById("coverPreview");
-const templateSelectBtn = document.getElementById("templateSelectBtn");
-const saveFormattingBtn = document.getElementById("saveFormattingBtn");
-const contentPreviewArea = document.getElementById("contentPreview");
-const creditBadge = document.getElementById("creditBadge");
-const spinner = document.getElementById("spinner");
-const apiKeyInput = document.getElementById("userApiKeyInput");
-const apiKeyStatus = document.getElementById("apiKeyStatus");
-const removeApiKeyBtn = document.getElementById("removeApiKeyBtn");
+import { loadPresetFromSupabase } from "./credit.js";
+import { setupTemplatePicker } from "./prebuildTemplate.js";
+import { updateCoverPreview } from "./cover.js";
 
-// ✅ INIT Supabase
-const supabase = window.supabase;
+let useOwnAPIKey = false;
+let verifiedAPIKey = null;
+let generatedContent = null;
 
-// ✅ AUTH + CREDITS
-async function getUser() {
-  const { data: { session } } = await supabase.auth.getSession();
-  if (!session) return window.location.href = "/login";
-  currentUser = session.user;
+// 🌟 Init generator UI + handlers
+export async function initGenerator() {
+  await loadFormattingPreset();
+  setupTemplatePicker();
+  setupAPIKeyLogic();
+  setupGenerateHandler();
+  setupStickySaveButton();
+  updateCoverPreview(); // preload cover
+}
 
-  const { data: plan } = await supabase
-    .from("users_plan")
-    .select("credit_limit, credits_used")
+// 🧠 Load latest formatting preset (if available)
+async function loadFormattingPreset() {
+  const { data } = await supabase
+    .from("generated_files")
+    .select("*")
     .eq("user_id", currentUser.id)
+    .order("created_at", { ascending: false })
+    .limit(1)
     .single();
 
-  const remaining = plan.credit_limit - plan.credits_used;
-  creditBadge.textContent = `🔋 ${remaining} credits left`;
+  if (!data) return;
+  document.getElementById("font_type").value = data.font_type;
+  document.getElementById("font_size").value = data.font_size;
+  document.getElementById("line_spacing").value = data.line_spacing;
+  document.getElementById("paragraph_spacing").value = data.paragraph_spacing;
+  document.getElementById("margin_top").value = data.margin_top;
+  document.getElementById("margin_right").value = data.margin_right;
+  document.getElementById("margin_bottom").value = data.margin_bottom;
+  document.getElementById("margin_left").value = data.margin_left;
+  document.getElementById("page_size").value = data.page_size;
+  document.getElementById("text_alignment").value = data.text_alignment;
 }
 
-// ✅ VERIFY USER'S API KEY
-function verifyUserApiKey(key) {
-  if (!key.startsWith("sk-")) return false;
-  // Future: hit OpenAI endpoint to test auth
-  return true;
-}
+// 🔑 Handle API Key input + UI
+function setupAPIKeyLogic() {
+  const apiInput = document.getElementById("openai_api_key");
+  const apiStatus = document.getElementById("api_status");
+  const apiClear = document.getElementById("clear_api_btn");
 
-function handleApiKeyChange() {
-  const key = apiKeyInput.value.trim();
-  if (verifyUserApiKey(key)) {
-    userApiKey = key;
-    apiKeyStatus.innerHTML = "<span class='text-green-500 text-sm'>✅ Verified</span>";
-    removeApiKeyBtn.classList.remove("hidden");
-  } else {
-    apiKeyStatus.innerHTML = "<span class='text-red-500 text-sm'>❌ Invalid Key</span>";
-    userApiKey = null;
-    removeApiKeyBtn.classList.add("hidden");
-  }
-}
+  apiInput.addEventListener("input", () => {
+    if (apiInput.value.trim().startsWith("sk-")) {
+      useOwnAPIKey = true;
+      verifiedAPIKey = apiInput.value.trim();
+      apiStatus.innerHTML = "<span class='text-green-500'>✅ Verified</span>";
+      apiClear.classList.remove("hidden");
+    } else {
+      useOwnAPIKey = false;
+      verifiedAPIKey = null;
+      apiStatus.innerHTML = "<span class='text-red-500'>❌ Invalid Key</span>";
+      apiClear.classList.add("hidden");
+    }
+  });
 
-removeApiKeyBtn.addEventListener("click", () => {
-  apiKeyInput.value = "";
-  userApiKey = null;
-  apiKeyStatus.textContent = "";
-  removeApiKeyBtn.classList.add("hidden");
-});
-
-// ✅ SAVE FORMATTING TO SUPABASE
-async function saveFormattingToSupabase(data) {
-  await supabase.from("generated_files").insert({
-    user_id: currentUser.id,
-    ...data
+  apiClear.addEventListener("click", () => {
+    apiInput.value = "";
+    apiStatus.innerHTML = "";
+    useOwnAPIKey = false;
+    verifiedAPIKey = null;
+    apiClear.classList.add("hidden");
   });
 }
 
-// ✅ GENERATE EBOOK (Stub)
-async function handleGenerate() {
-  spinner.classList.remove("hidden");
-  contentPreviewArea.innerHTML = "";
+// 🚀 Handle Generate Button
+function setupGenerateHandler() {
+  document.getElementById("generateBtn").addEventListener("click", async () => {
+    const url = document.getElementById("source_url").value.trim();
+    const inputType = document.querySelector("input[name='input_type']:checked").value;
 
-  const format = document.querySelector("input[name='output_format']:checked").value;
-  const title = document.getElementById("titleInput").value;
-  const topic = document.getElementById("topicInput").value;
-  const language = document.getElementById("languageSelect").value;
-  const description = document.getElementById("descInput").value;
-  const coverPrompt = document.getElementById("coverPromptInput").value;
+    const payload = {
+      url,
+      inputType,
+      formatting: collectFormatting(),
+      cover_url: document.getElementById("cover_preview").src,
+      output_format: document.querySelector("input[name='output_format']:checked").value,
+      image_count: parseInt(document.getElementById("image_count").value),
+      useOwnAPIKey,
+      apiKey: verifiedAPIKey,
+    };
 
-  // ✅ Call backend with user API or default key
-  const res = await fetch("/generate-ebook", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({
-      format,
-      title,
-      topic,
-      language,
-      description,
-      cover_prompt: coverPrompt,
-      user_api_key: userApiKey,
-      user_id: currentUser.id,
-    })
+    showSpinner();
+
+    try {
+      const res = await fetch(`${BASE_URL}/generate`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      const result = await res.json();
+      if (!res.ok) throw new Error(result.error || "Failed");
+
+      generatedContent = result;
+      renderPreview(result);
+      showToast("✅ eBook Generated Successfully");
+    } catch (err) {
+      alert("❌ " + err.message);
+    }
+
+    hideSpinner();
   });
-
-  const result = await res.json();
-  if (!res.ok) {
-    alert("Error generating eBook: " + result.error);
-    spinner.classList.add("hidden");
-    return;
-  }
-
-  // ✅ Render content + enable download
-  contentPreviewArea.innerHTML = result.preview_html;
-  coverPreview.src = result.cover_url;
-  downloadBtn.href = result.download_url;
-  downloadBtn.classList.remove("opacity-50", "pointer-events-none");
-  spinner.classList.add("hidden");
 }
 
-// ✅ EVENTS
-apiKeyInput.addEventListener("input", handleApiKeyChange);
-generateBtn.addEventListener("click", handleGenerate);
-saveFormattingBtn.addEventListener("click", () => {
-  const font = document.getElementById("fontSelect").value;
-  const size = document.getElementById("fontSize").value;
-  const spacing = document.getElementById("lineSpacing").value;
-  const alignment = document.getElementById("textAlign").value;
+// 🧾 Collect formatting values
+function collectFormatting() {
+  return {
+    font_type: document.getElementById("font_type").value,
+    font_size: document.getElementById("font_size").value,
+    line_spacing: document.getElementById("line_spacing").value,
+    paragraph_spacing: document.getElementById("paragraph_spacing").value,
+    margin_top: document.getElementById("margin_top").value,
+    margin_right: document.getElementById("margin_right").value,
+    margin_bottom: document.getElementById("margin_bottom").value,
+    margin_left: document.getElementById("margin_left").value,
+    page_size: document.getElementById("page_size").value,
+    text_alignment: document.getElementById("text_alignment").value,
+  };
+}
 
-  saveFormattingToSupabase({
-    font_type: font,
-    font_size: size,
-    line_spacing: spacing,
-    text_alignment: alignment,
+// 📖 Render preview area
+function renderPreview(result) {
+  const container = document.getElementById("ebook_preview_area");
+  container.innerHTML = result.html_preview;
+  document.getElementById("saveBtn").classList.remove("hidden");
+}
+
+// 💾 Sticky Save Button
+function setupStickySaveButton() {
+  document.getElementById("saveBtn").addEventListener("click", async () => {
+    if (!generatedContent) return;
+    showSpinner();
+
+    try {
+      const res = await fetch(`${BASE_URL}/save-file`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(generatedContent),
+      });
+      const result = await res.json();
+      if (result.download_url) {
+        window.open(result.download_url, "_blank");
+      } else {
+        throw new Error("Download URL missing");
+      }
+    } catch (err) {
+      alert("❌ " + err.message);
+    }
+
+    hideSpinner();
   });
-  alert("✅ Formatting saved!");
-});
+}
 
-// ✅ INIT
-window.addEventListener("DOMContentLoaded", async () => {
-  await getUser();
-});
+// 🔄 Spinner helpers
+function showSpinner() {
+  document.getElementById("generateBtn").disabled = true;
+  document.getElementById("spinner").classList.remove("hidden");
+}
+function hideSpinner() {
+  document.getElementById("generateBtn").disabled = false;
+  document.getElementById("spinner").classList.add("hidden");
+}
 
+function showToast(msg) {
+  const t = document.createElement("div");
+  t.className = "fixed top-5 right-5 bg-green-600 text-white px-4 py-2 rounded shadow z-50";
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 3000);
+}
