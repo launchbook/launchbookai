@@ -53,15 +53,27 @@ function setupAPIKeyLogic() {
     if (key.startsWith("sk-")) {
       useOwnAPIKey = true;
       verifiedAPIKey = key;
+      window.userApiKey = key; // ✅ now accessible globally
       apiStatus.innerHTML = "<span class='text-green-500'>✅ Verified</span>";
       apiClear.classList.remove("hidden");
     } else {
       useOwnAPIKey = false;
       verifiedAPIKey = null;
+      window.userApiKey = null;
       apiStatus.innerHTML = "<span class='text-red-500'>❌ Invalid Key</span>";
       apiClear.classList.add("hidden");
     }
   });
+
+  apiClear.addEventListener("click", () => {
+    apiInput.value = "";
+    apiStatus.innerHTML = "";
+    useOwnAPIKey = false;
+    verifiedAPIKey = null;
+    window.userApiKey = null;
+    apiClear.classList.add("hidden");
+  });
+}
 
   apiClear.addEventListener("click", () => {
     apiInput.value = "";
