@@ -189,7 +189,7 @@ async function loadLogs() {
 }
 
 async function loadPresets() {
-  const { data } = await supabase.from("user_presets").select("*").eq("user_id", currentUser.id).single();
+  const { data } = await supabase.from("generated_files").select("*").eq("user_id", currentUser.id).single();
   const container = document.getElementById("tab-presets");
   if (!data) {
     container.innerHTML = `<p class='text-gray-500'>No formatting preset saved.</p>`;
