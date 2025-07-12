@@ -1,4 +1,3 @@
-// ✅ Final Merged and Optimized generate.js
 let useOwnAPIKey = false;
 let verifiedAPIKey = null;
 let generatedContent = null;
@@ -14,16 +13,17 @@ window.initGenerator = async function () {
   setupAPIKeyLogic();
   setupGenerateHandler();
   setupStickySaveButton();
-// ✅ Auto Apply Audience Formatting on audience change
-document.getElementById("audience")?.addEventListener("change", applyAudienceFormatting);
 
-// ✅ Watch template change (so we can disable formatting)
-setInterval(() => {
-  const isTemplateApplied = !!window.selectedTemplateClass;
-  document.querySelectorAll("#font_type, #font_size, #line_spacing, #text_alignment").forEach(el => {
-    el.disabled = isTemplateApplied;
-  });
-}, 500);
+  // ✅ Auto Apply Audience Formatting on audience change
+  document.getElementById("audience")?.addEventListener("change", applyAudienceFormatting);
+
+  // ✅ Watch template change (disable formatting)
+  setInterval(() => {
+    const isTemplateApplied = !!window.selectedTemplateClass;
+    document.querySelectorAll("#font_type, #font_size, #line_spacing, #text_alignment").forEach(el => {
+      el.disabled = isTemplateApplied;
+    });
+  }, 500);
 
   // ✅ Toggle affiliate link input
   document.getElementById("include_affiliate_links")?.addEventListener("change", (e) => {
@@ -32,7 +32,6 @@ setInterval(() => {
   });
 };
 
-// ✅ Load formatting preset
 async function loadFormattingPreset() {
   const data = await loadPresetFromSupabase();
   if (!data) return;
@@ -48,7 +47,6 @@ async function loadFormattingPreset() {
   document.getElementById("text_alignment").value = data.text_alignment;
 }
 
-// ✅ API Key handler
 function setupAPIKeyLogic() {
   const apiInput = document.getElementById("openai_api_key");
   const apiStatus = document.getElementById("api_status");
@@ -81,7 +79,6 @@ function setupAPIKeyLogic() {
   });
 }
 
-// ✅ Generate button logic
 function setupGenerateHandler() {
   document.getElementById("generateBtn").addEventListener("click", async () => {
     const url = document.getElementById("source_url").value.trim();
@@ -104,29 +101,28 @@ function setupGenerateHandler() {
     const creditOK = await checkCredits(currentUser.id, dynamicCost);
     if (!creditOK) return;
 
-    // ✅ Construct payload
     const payload = {
-      url,
-      inputType,
+      user_id: currentUser.id,
+      title,
+      source_url: url,
+      topic: document.getElementById("topicInput").value || "",
+      description: document.getElementById("descInput").value || "",
+      ai_instructions: document.getElementById("ai_instructions").value || "",
+      cover_url: document.getElementById("cover_preview").src,
+      coverPrompt: document.getElementById("coverPromptInput").value,
       output_format: format,
+      inputType,
       image_count: imageCount,
       useOwnAPIKey,
       apiKey: verifiedAPIKey,
-      cover_url: document.getElementById("cover_preview").src,
       formatting: collectFormatting(),
       template_class: window.selectedTemplateClass || "",
-      title,
-      topic: document.getElementById("topicInput").value,
-      coverPrompt: document.getElementById("coverPromptInput").value,
-      description: document.getElementById("descInput").value,
-      ai_instructions: document.getElementById("ai_instructions").value,
-      language: document.getElementById("language").value || "English",
       audience: document.getElementById("audience").value,
       tone: document.getElementById("tone").value,
       purpose: document.getElementById("purpose").value,
+      language: document.getElementById("language").value || "English",
     };
 
-    // ✅ Affiliate logic
     if (document.getElementById("include_affiliate_links")?.checked) {
       const link = document.getElementById("affiliate_link_url").value.trim();
       const label = document.getElementById("affiliate_cta_label").value.trim();
@@ -157,12 +153,17 @@ function setupGenerateHandler() {
       generatedContent = result;
       renderPreview(result);
 
-      await logUsage(currentUser.id, currentUser.email, "generate_from_url", {
-        dynamic_cost: dynamicCost,
-        word_count: wordCount,
-        image_count: imageCount,
+      await logUsage(currentUser.id, currentUser.email, url ? "generate_from_url" : (format === "epub" ? "generate_epub" : "generate_pdf"), {
+        pages: result.total_pages,
         format,
+        with_images: !!imageCount,
+        from_url: !!url,
+        source_url: url,
+        dynamic_cost: dynamicCost,
       });
+
+      document.getElementById("regenerate-pdf")?.classList.remove("hidden");
+      if (payload.cover_url) document.getElementById("regenerate-image")?.classList.remove("hidden");
 
       showToast("✅ eBook Generated Successfully");
       loadUserCredits();
@@ -267,7 +268,6 @@ function showSpinner() {
   document.getElementById("generateBtn").disabled = true;
   document.getElementById("spinner")?.classList.remove("hidden");
 }
-
 function hideSpinner() {
   document.getElementById("generateBtn").disabled = false;
   document.getElementById("spinner")?.classList.add("hidden");
