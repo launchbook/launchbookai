@@ -1,28 +1,30 @@
-// ✅ Prebuilt Template Handler – CommonJS Version
+// ✅ Prebuilt Template Picker – CommonJS-Compatible
 
 const templates = [
   {
     id: "template-classic",
     name: "Classic",
     preview: "/templates/classic-preview.png",
-    cssClass: "template-classic"
+    cssClass: "template-classic",
   },
   {
     id: "template-modern",
     name: "Modern",
     preview: "/templates/modern-preview.png",
-    cssClass: "template-modern"
+    cssClass: "template-modern",
   },
   {
     id: "template-elegant",
     name: "Elegant",
     preview: "/templates/elegant-preview.png",
-    cssClass: "template-elegant"
+    cssClass: "template-elegant",
   }
 ];
 
-// Inject HTML for template picker modal
+// 🧱 Inject the Modal HTML only once
 function renderTemplateModal() {
+  if (document.getElementById("templateModal")) return;
+
   const modal = document.createElement("div");
   modal.id = "templateModal";
   modal.className = "fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 hidden";
@@ -48,22 +50,24 @@ function renderTemplateModal() {
   document.body.appendChild(modal);
 }
 
-// Template logic to track selection
+// ✅ Publicly exposed function (use in <script> HTML directly)
 window.setupTemplatePicker = function () {
-  if (document.getElementById("templateModal")) return; // already rendered
   renderTemplateModal();
 
   let selectedTemplate = null;
 
-  document.getElementById("templateSelectBtn").addEventListener("click", () => {
+  const openBtn = document.getElementById("templateSelectBtn");
+  if (!openBtn) return;
+
+  openBtn.addEventListener("click", () => {
     document.getElementById("templateModal").classList.remove("hidden");
   });
 
-  document.querySelectorAll("[data-template-id]").forEach(el => {
-    el.addEventListener("click", () => {
-      selectedTemplate = el.dataset.templateId;
-      document.querySelectorAll("[data-template-id]").forEach(card => {
-        card.setAttribute("data-selected", card.dataset.templateId === selectedTemplate);
+  document.querySelectorAll("[data-template-id]").forEach(card => {
+    card.addEventListener("click", () => {
+      selectedTemplate = card.dataset.templateId;
+      document.querySelectorAll("[data-template-id]").forEach(c => {
+        c.setAttribute("data-selected", c.dataset.templateId === selectedTemplate);
       });
     });
   });
@@ -75,22 +79,21 @@ window.setupTemplatePicker = function () {
   });
 };
 
-// Actually apply the template to the preview
+// ✅ Applies selected template CSS to preview container
 function applyTemplate(templateId) {
   const container = document.getElementById("ebook_preview_area");
   if (!container) return;
 
-  // Remove previous template classes
   container.classList.remove(...templates.map(t => t.cssClass));
 
   const selected = templates.find(t => t.id === templateId);
   if (selected) {
     container.classList.add(selected.cssClass);
-    showToast(`✅ ${selected.name} layout applied`);
+    showToast(`✅ ${selected.name} template applied`);
   }
 }
 
-// Optional: add showToast if not globally defined
+// 🔔 Fallback toast if not globally defined
 function showToast(msg) {
   const t = document.createElement("div");
   t.className = "fixed top-5 right-5 bg-green-600 text-white px-4 py-2 rounded shadow z-50";
