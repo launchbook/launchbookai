@@ -280,3 +280,37 @@ function showToast(msg) {
   document.body.appendChild(t);
   setTimeout(() => t.remove(), 3000);
 }
+
+function applyAudienceFormatting() {
+  const autoApply = document.getElementById("autoFormatByAudience")?.checked;
+  const audience = document.getElementById("audience")?.value;
+
+  if (!autoApply || window.selectedTemplateClass) return;
+
+  const fontMap = {
+    "Kids":           { font: "Comic Sans",     size: "14pt", spacing: "2",   align: "center" },
+    "Teens":          { font: "Inter",          size: "13pt", spacing: "1.8", align: "left" },
+    "Students":       { font: "Merriweather",   size: "13pt", spacing: "1.6", align: "justify" },
+    "Parents":        { font: "Georgia",        size: "14pt", spacing: "1.6", align: "left" },
+    "Teachers":       { font: "Merriweather",   size: "14pt", spacing: "1.5", align: "left" },
+    "Professionals":  { font: "Inter",          size: "12pt", spacing: "1.5", align: "justify" },
+    "Entrepreneurs":  { font: "Poppins",        size: "13pt", spacing: "1.6", align: "justify" },
+    "Freelancers":    { font: "Open Sans",      size: "13pt", spacing: "1.6", align: "justify" },
+    "Experts":        { font: "Lora",           size: "13pt", spacing: "1.7", align: "justify" },
+    "General Public": { font: "Roboto",         size: "13pt", spacing: "1.5", align: "left" },
+    "Hobbyists":      { font: "Quicksand",      size: "14pt", spacing: "1.8", align: "center" },
+    "Lifelong Learners": { font: "Merriweather", size: "14pt", spacing: "1.7", align: "justify" },
+  };
+
+  const preset = fontMap[audience] || {
+    font: "Merriweather",
+    size: "12pt",
+    spacing: "1.5",
+    align: "justify",
+  };
+
+  document.getElementById("font_type").value = preset.font;
+  document.getElementById("font_size").value = preset.size;
+  document.getElementById("line_spacing").value = preset.spacing;
+  document.getElementById("text_alignment").value = preset.align;
+}
