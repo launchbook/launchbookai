@@ -3,7 +3,7 @@
 
 let currentCoverURL = "";
 
-// Utility to update the visible cover preview + related UI buttons
+// ✅ Update cover preview image in UI
 function updateCoverPreview(url) {
   const preview = document.getElementById("coverPreview");
   const deleteBtn = document.getElementById("deleteCoverBtn");
@@ -19,8 +19,8 @@ function updateCoverPreview(url) {
   uploadLabel.classList.add("hidden");
 }
 
-// 📤 Upload own image as cover
-export function handleCoverUpload() {
+// 📤 Upload user's own image
+function handleCoverUpload() {
   const input = document.getElementById("uploadCoverInput");
   input.addEventListener("change", async (e) => {
     const file = e.target.files[0];
@@ -33,8 +33,8 @@ export function handleCoverUpload() {
   });
 }
 
-// ♻️ Regenerate AI cover image
-export async function regenerateCoverImage(prompt, userApiKey = "") {
+// ♻️ Regenerate cover via API
+async function regenerateCoverImage(prompt, userApiKey = "") {
   const btn = document.getElementById("regenerateCoverBtn");
   const spinner = document.getElementById("spinner");
   btn.disabled = true;
@@ -63,12 +63,12 @@ export async function regenerateCoverImage(prompt, userApiKey = "") {
 }
 
 // ❌ Delete uploaded/generated cover
-export function deleteCoverImage() {
+function deleteCoverImage() {
   const preview = document.getElementById("coverPreview");
   const deleteBtn = document.getElementById("deleteCoverBtn");
   const regenerateBtn = document.getElementById("regenerateCoverBtn");
   const uploadLabel = document.getElementById("uploadCoverLabel");
-  
+
   currentCoverURL = "";
   preview.src = "";
   preview.classList.add("hidden");
@@ -77,8 +77,16 @@ export function deleteCoverImage() {
   uploadLabel.classList.remove("hidden");
 }
 
-// Returns the current selected/previewed cover URL
-export function getCoverURL() {
+// 🔄 Get the selected cover URL
+function getCoverURL() {
   return currentCoverURL;
 }
+
+// 🌐 Expose functions to global window object
+window.updateCoverPreview = updateCoverPreview;
+window.handleCoverUpload = handleCoverUpload;
+window.regenerateCoverImage = regenerateCoverImage;
+window.deleteCoverImage = deleteCoverImage;
+window.getCoverURL = getCoverURL;
+
 
