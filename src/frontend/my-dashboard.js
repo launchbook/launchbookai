@@ -6,7 +6,9 @@ const BASE_URL = location.hostname === 'localhost'
   ? 'http://localhost:3000'
   : 'https://ebook-pdf-generator.onrender.com';
 
-import { supabase } from '/supabaseClient.js';
+<!-- ✅ Supabase CDN -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script> window.supabase = supabase.createClient('https://YOUR-PROJECT-ID.supabase.co','public-anon-key');</script>
 
 const tabs = document.querySelectorAll(".tab-btn");
 const panes = document.querySelectorAll(".tab-pane");
