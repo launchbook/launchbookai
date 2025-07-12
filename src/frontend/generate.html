@@ -1,9 +1,9 @@
-<!-- 🔑 API Key Section -->
+<!-- 🔑 API Key Input -->
 <input id="openai_api_key" placeholder="Enter your OpenAI API Key" class="input-class">
 <span id="api_status"></span>
 <button id="clear_api_btn" class="hidden">❌</button>
 
-<!-- 📋 Main Input Fields -->
+<!-- 📋 Main eBook Info -->
 <input id="titleInput" placeholder="Title" class="input-class">
 <input id="topicInput" placeholder="Topic" class="input-class">
 <textarea id="descInput" placeholder="Description" class="input-class"></textarea>
@@ -11,45 +11,28 @@
 <select id="languageSelect">
   <option value="en">English</option>
   <option value="hi">Hindi</option>
-  <!-- Add more languages -->
 </select>
 
-<!-- 🔘 Format Selection -->
+<!-- 🔘 Format -->
 <label><input type="radio" name="output_format" value="pdf" checked> PDF</label>
 <label><input type="radio" name="output_format" value="epub"> EPUB</label>
 
-<!-- 🎨 Formatting Options -->
+<!-- 🎨 Formatting -->
 <select id="font_type">
   <option value="Merriweather">Merriweather</option>
   <option value="Inter">Inter</option>
-  <!-- Add more fonts -->
 </select>
-<select id="font_size">
-  <option value="12pt">12pt</option>
-  <option value="14pt">14pt</option>
-</select>
-<select id="line_spacing">
-  <option value="1.5">1.5</option>
-  <option value="2">2</option>
-</select>
-<select id="paragraph_spacing">
-  <option value="12px">12px</option>
-  <option value="18px">18px</option>
-</select>
+<select id="font_size"><option value="12pt">12pt</option><option value="14pt">14pt</option></select>
+<select id="line_spacing"><option value="1.5">1.5</option><option value="2">2</option></select>
+<select id="paragraph_spacing"><option value="12px">12px</option><option value="18px">18px</option></select>
 <input id="margin_top" value="1in">
 <input id="margin_right" value="1in">
 <input id="margin_bottom" value="1in">
 <input id="margin_left" value="1in">
-<select id="page_size">
-  <option value="A4">A4</option>
-  <option value="Letter">Letter</option>
-</select>
-<select id="text_alignment">
-  <option value="justify">Justify</option>
-  <option value="left">Left</option>
-</select>
+<select id="page_size"><option value="A4">A4</option><option value="Letter">Letter</option></select>
+<select id="text_alignment"><option value="justify">Justify</option><option value="left">Left</option></select>
 
-<!-- 🖼️ Cover Image Preview -->
+<!-- 🖼️ Cover Section -->
 <img id="cover_preview" class="hidden w-full max-w-md mx-auto mb-2">
 <button id="deleteCoverBtn" class="hidden">❌ Delete Cover</button>
 <button id="regenerateCoverBtn" class="hidden">♻️ Regenerate Cover</button>
@@ -64,37 +47,39 @@
   <option value="10">10 Images</option>
 </select>
 
-<!-- 🔘 Input Type -->
+<!-- 🔘 Content Source Type -->
 <label><input type="radio" name="input_type" value="url" checked> URL to eBook</label>
 <label><input type="radio" name="input_type" value="ai"> Generate via AI</label>
 <input id="source_url" placeholder="Paste Article URL here" class="input-class">
 
-<!-- 🔘 Buttons -->
-<button id="generateBtn" class="bg-blue-600 text-white px-4 py-2 rounded">🚀 Generate</button>
+<!-- 🧮 Credit Estimate + Actions -->
+<div id="credit-estimate-msg" class="mt-2 text-sm text-gray-600"></div>
+<button id="generateBtn" class="bg-blue-600 text-white px-4 py-2 rounded mt-3">🚀 Generate</button>
 <button id="saveFormattingBtn" class="bg-gray-600 text-white px-4 py-2 rounded">💾 Save Formatting</button>
 <a id="saveBtn" class="bg-green-600 text-white px-4 py-2 rounded hidden">⬇️ Save / Download</a>
 <button id="templateSelectBtn" class="bg-gray-100 text-sm border rounded px-3 py-1 hover:bg-gray-200">🎨 Choose Design Template</button>
 
-<!-- 📬 Email eBook Section -->
+<!-- 📬 Email Sending -->
 <input id="recipientEmail" type="email" placeholder="Enter email" class="input-class">
 <textarea id="emailMessage" placeholder="Add optional note..." class="input-class"></textarea>
 <button id="sendEmailBtn" class="bg-blue-600 text-white px-4 py-2 rounded">📩 Send eBook</button>
 
-<!-- 🔄 Spinner + Credit Badge -->
+<!-- 🔄 Status + Credits -->
 <div id="spinner" class="hidden text-center text-sm mt-4">🔄 Generating...</div>
 <span id="creditBadge" class="block mt-2 text-sm text-gray-600"></span>
 
-<!-- 📖 Preview -->
+<!-- 📖 Preview Area -->
 <div id="ebook_preview_area" class="overflow-y-auto max-h-[600px] mt-6 border p-4 rounded"></div>
 
-<!-- 🔁 Regen Examples (for testing UI - actual blocks will be dynamic) -->
+<!-- 🔁 Dynamic Regen Examples -->
 <img data-image-id="img123" src="..." />
 <button class="regen-img-btn" data-image-id="img123">♻️ Regenerate</button>
 <div data-block-id="block456">Some paragraph...</div>
 <button class="regen-text-btn" data-block-id="block456">♻️ Regenerate</button>
 
-<!-- ✅ Scripts -->
+<!-- ✅ Final Scripts -->
 <script src="/frontend/utils.js"></script>
+<script src="/frontend/credit.js"></script>
 <script src="/frontend/generate.js"></script>
 <script src="/frontend/cover.js"></script>
 <script src="/frontend/regen.js"></script>
