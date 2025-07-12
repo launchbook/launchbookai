@@ -1,14 +1,9 @@
 // launchbookai/src/frontend/my-dashboard.js
-// ✅ Final User Dashboard with Spinners, Search, Filters, Download Buttons, Auth Avatar
 
 let currentUser = null;
 const BASE_URL = location.hostname === 'localhost'
   ? 'http://localhost:3000'
   : 'https://ebook-pdf-generator.onrender.com';
-
-<!-- ✅ Supabase CDN -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script> window.supabase = supabase.createClient('https://YOUR-PROJECT-ID.supabase.co','public-anon-key');</script>
 
 const tabs = document.querySelectorAll(".tab-btn");
 const panes = document.querySelectorAll(".tab-pane");
@@ -24,7 +19,7 @@ async function getUser() {
   const { data: { session } } = await supabase.auth.getSession();
   if (!session) return window.location.href = "/login";
   currentUser = session.user;
-  document.getElementById("user-name").textContent = currentUser.email.split("@")[0];
+  document.getElementById("avatarName").textContent = currentUser.email.split("@")[0];
 }
 
 async function loadSummary() {
@@ -53,13 +48,48 @@ async function loadSummary() {
   `;
 }
 
-async function loadEbooks() {
-  const { data } = await supabase.from("ebooks").select("*").eq("user_id", currentUser.id).order("created_at", { ascending: false });
-  const container = document.getElementById("tab-ebooks");
+// 🔁 Pagination + Filter State
+let currentPage = 1;
+const pageSize = 10;
+let lastSearch = "";
+let lastFormat = "";
+let lastFrom = "";
+let lastTo = "";
+
+async function loadEbooks(page = 1) {
+  document.getElementById("loading").classList.remove("hidden"); // ✅ Show spinner
+
+  const title = document.getElementById("searchTitle").value.trim();
+  const format = document.getElementById("filterFormat").value;
+  const from = document.getElementById("filterFrom").value;
+  const to = document.getElementById("filterTo").value;
+
+  const query = supabase.from("ebooks")
+    .select("*", { count: 'exact' })
+    .eq("user_id", currentUser.id)
+    .eq("deleted", false);
+
+  if (title) query.ilike("title", `%${title}%`);
+  if (format) query.eq("output_format", format);
+  if (from) query.gte("created_at", from);
+  if (to) query.lte("created_at", to);
+
+  query.order("created_at", { ascending: false });
+  query.range((page - 1) * pageSize, page * pageSize - 1);
+
+  const { data, count } = await query;
+
+  document.getElementById("loading").classList.add("hidden"); // ✅ Hide spinner
+
+  const container = document.getElementById("ebook-table-container");
+  const paginator = document.getElementById("ebook-pagination");
+
   if (!data || data.length === 0) {
     container.innerHTML = `<p class='text-gray-500'>No eBooks found.</p>`;
+    paginator.classList.add("hidden");
     return;
   }
+
   container.innerHTML = `<table class='w-full text-sm'><thead><tr><th>Title</th><th>Pages</th><th>Date</th><th>Format</th><th>Credits</th><th>Action</th></tr></thead><tbody>
     ${data.map(e => {
       const date = new Date(e.created_at).toLocaleDateString();
@@ -80,9 +110,19 @@ async function loadEbooks() {
     btn.addEventListener("click", async () => {
       if (!confirm("Are you sure you want to delete this eBook?")) return;
       await supabase.from("ebooks").update({ deleted: true }).eq("id", btn.dataset.id);
-      loadEbooks();
+      loadEbooks(currentPage);
     });
   });
+
+  // 📄 Pagination UI
+  const totalPages = Math.ceil(count / pageSize);
+  currentPage = page;
+  paginator.classList.remove("hidden");
+  document.getElementById("pageInfo").textContent = `Page ${page} of ${totalPages}`;
+  document.getElementById("prevPage").disabled = page === 1;
+  document.getElementById("nextPage").disabled = page === totalPages;
+
+  highlightFilters(); // ✅ Highlight filters when loaded
 }
 
 async function loadCovers() {
@@ -113,16 +153,14 @@ async function loadCovers() {
       </div>`).join("")}
     </div>`;
 
-  // Attach delete handlers
   document.querySelectorAll(".delete-cover").forEach(btn => {
     btn.addEventListener("click", async () => {
       if (!confirm("Delete this cover from your history?")) return;
       await supabase.from("cover_history").update({ deleted: true }).eq("id", btn.dataset.id);
-      loadCovers(); // Reload covers
+      loadCovers();
     });
   });
 }
-
 
 async function loadLogs() {
   const { data } = await supabase.from("user_usage_logs").select("*").eq("user_id", currentUser.id).order("created_at", { ascending: false });
@@ -166,6 +204,18 @@ async function loadPresets() {
     <p><strong>Alignment:</strong> ${data.text_alignment}</p>
   </div>`;
 }
+function highlightFilters() {
+  const search = document.getElementById("searchTitle").value;
+  const format = document.getElementById("filterFormat").value;
+  const from = document.getElementById("filterFrom").value;
+  const to = document.getElementById("filterTo").value;
+
+  const isActive = search || format || from || to;
+
+  document.getElementById("applyFilters").classList.toggle("bg-blue-700", isActive);
+  document.getElementById("applyFilters").classList.toggle("bg-blue-600", !isActive);
+  document.getElementById("applyFilters").classList.toggle("ring-2", isActive);
+}
 
 window.addEventListener("DOMContentLoaded", async () => {
   await getUser();
@@ -179,4 +229,20 @@ window.addEventListener("DOMContentLoaded", async () => {
   tabs.forEach(tab => {
     tab.addEventListener("click", () => switchTab(tab.dataset.tab));
   });
+
+document.getElementById("applyFilters").addEventListener("click", () => {
+  loadEbooks(1);
+  highlightFilters();
+});
+
+document.getElementById("resetFilters").addEventListener("click", () => {
+  document.getElementById("searchTitle").value = "";
+  document.getElementById("filterFormat").value = "";
+  document.getElementById("filterFrom").value = "";
+  document.getElementById("filterTo").value = "";
+  loadEbooks(1);
+  highlightFilters();
+});
+  document.getElementById("prevPage").addEventListener("click", () => loadEbooks(currentPage - 1));
+  document.getElementById("nextPage").addEventListener("click", () => loadEbooks(currentPage + 1));
 });
