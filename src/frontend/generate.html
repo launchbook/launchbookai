@@ -1,0 +1,32 @@
+<!-- API Key -->
+<input id="userApiKeyInput" placeholder="Enter your OpenAI API Key">
+<span id="apiKeyStatus"></span>
+<button id="removeApiKeyBtn" class="hidden">❌</button>
+
+<!-- Main Controls -->
+<input id="titleInput">
+<input id="topicInput">
+<textarea id="descInput"></textarea>
+<input id="coverPromptInput">
+<select id="languageSelect">...</select>
+<input type="radio" name="output_format" value="pdf" checked>
+<input type="radio" name="output_format" value="epub">
+
+<!-- Formatting Options -->
+<select id="fontSelect">...</select>
+<select id="fontSize">...</select>
+<select id="lineSpacing">...</select>
+<select id="textAlign">...</select>
+
+<!-- Buttons -->
+<button id="generateBtn">🚀 Generate</button>
+<button id="saveFormattingBtn">💾 Save Formatting</button>
+<a id="downloadBtn" class="opacity-50 pointer-events-none">⬇️ Download</a>
+
+<!-- Previews -->
+<img id="coverPreview">
+<div id="contentPreview" class="overflow-y-auto max-h-[600px]"></div>
+<div id="spinner" class="hidden">🔄 Generating...</div>
+
+<!-- Credits -->
+<span id="creditBadge"></span>
