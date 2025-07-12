@@ -86,23 +86,43 @@ async function loadEbooks() {
 }
 
 async function loadCovers() {
-  const { data } = await supabase.from("cover_history").select("*").eq("user_id", currentUser.id).order("created_at", { ascending: false });
+  const { data } = await supabase
+    .from("cover_history")
+    .select("*")
+    .eq("user_id", currentUser.id)
+    .eq("deleted", false)
+    .order("created_at", { ascending: false });
+
   const container = document.getElementById("tab-covers");
   if (!data || data.length === 0) {
     container.innerHTML = `<p class='text-gray-500'>No covers found.</p>`;
     return;
   }
+
   container.innerHTML = `<div class='grid grid-cols-2 sm:grid-cols-4 gap-4'>
     ${data.map(c => `
-      <div class='relative border rounded shadow'>
+      <div class='relative border rounded shadow group'>
         <img src='${c.cover_url}' class='w-full h-32 object-cover rounded-t'>
-        <div class='p-2 text-sm'>
-          <span class='text-xs bg-gray-200 px-2 py-1 rounded'>${c.type.toUpperCase()}</span>
-          <a class='float-right text-blue-600 underline' href='${c.cover_url}' target='_blank' download>🔽</a>
+        <div class='p-2 text-sm flex justify-between items-center'>
+          <span class='text-xs bg-gray-200 dark:bg-gray-700 px-2 py-1 rounded'>${c.type.toUpperCase()}</span>
+          <div class='flex gap-2 opacity-0 group-hover:opacity-100 transition'>
+            <a href='${c.cover_url}' download target='_blank' class='text-blue-600 hover:underline'>🔽</a>
+            <button class='text-red-600 delete-cover' data-id='${c.id}'>🗑</button>
+          </div>
         </div>
-      </div>`).join("\n")}
+      </div>`).join("")}
     </div>`;
+
+  // Attach delete handlers
+  document.querySelectorAll(".delete-cover").forEach(btn => {
+    btn.addEventListener("click", async () => {
+      if (!confirm("Delete this cover from your history?")) return;
+      await supabase.from("cover_history").update({ deleted: true }).eq("id", btn.dataset.id);
+      loadCovers(); // Reload covers
+    });
+  });
 }
+
 
 async function loadLogs() {
   const { data } = await supabase.from("user_usage_logs").select("*").eq("user_id", currentUser.id).order("created_at", { ascending: false });
