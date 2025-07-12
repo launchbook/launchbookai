@@ -1,26 +1,31 @@
-// launchbookai/src/frontend/generate.js
-
+// ✅ Final Merged and Optimized generate.js
 let useOwnAPIKey = false;
 let verifiedAPIKey = null;
 let generatedContent = null;
 let currentUser = null;
+let blocks = [];
 
-// 🌟 Init generator UI + handlers
+// ✅ Init generator UI + handlers
 window.initGenerator = async function () {
-  await loadUserCredits(); // ✅ show badge
+  await loadUserCredits();
   await loadFormattingPreset();
   if (typeof setupTemplatePicker === 'function') setupTemplatePicker();
   if (typeof updateCoverPreview === 'function') updateCoverPreview();
   setupAPIKeyLogic();
   setupGenerateHandler();
   setupStickySaveButton();
+
+  // ✅ Toggle affiliate link input
+  document.getElementById("include_affiliate_links")?.addEventListener("change", (e) => {
+    const fields = document.getElementById("affiliateLinkFields");
+    fields.classList.toggle("hidden", !e.target.checked);
+  });
 };
 
-// 🧠 Load formatting preset
+// ✅ Load formatting preset
 async function loadFormattingPreset() {
   const data = await loadPresetFromSupabase();
   if (!data) return;
-
   document.getElementById("font_type").value = data.font_type;
   document.getElementById("font_size").value = data.font_size;
   document.getElementById("line_spacing").value = data.line_spacing;
@@ -33,7 +38,7 @@ async function loadFormattingPreset() {
   document.getElementById("text_alignment").value = data.text_alignment;
 }
 
-// 🔑 API Key logic
+// ✅ API Key handler
 function setupAPIKeyLogic() {
   const apiInput = document.getElementById("openai_api_key");
   const apiStatus = document.getElementById("api_status");
@@ -66,25 +71,22 @@ function setupAPIKeyLogic() {
   });
 }
 
-// 🚀 Handle Generate
+// ✅ Generate button logic
 function setupGenerateHandler() {
   document.getElementById("generateBtn").addEventListener("click", async () => {
     const url = document.getElementById("source_url").value.trim();
     const inputType = document.querySelector("input[name='input_type']:checked")?.value || "url";
-    const imageCount = parseInt(document.getElementById("image_count").value) || 0;
-    const withCover = !!document.getElementById("cover_preview")?.src;
-
-    const wordCount = parseInt(document.getElementById("word_count")?.value || "8000"); // fallback
+    const title = document.getElementById("titleInput").value.trim();
     const format = document.querySelector("input[name='output_format']:checked").value;
 
-    const dynamicCost = estimateCreditCost({
-      wordCount,
-      imageCount,
-      withCover,
-      isRegeneration: false
-    });
+    if (!title) return alert("❌ Title is required");
+    if (inputType === "url" && !url) return alert("❌ URL is required for URL to eBook");
 
-    // ⛔ Credit Check
+    const imageCount = parseInt(document.getElementById("image_count").value) || 0;
+    const withCover = !!document.getElementById("cover_preview")?.src;
+    const wordCount = parseInt(document.getElementById("word_count")?.value || "8000");
+    const dynamicCost = estimateCreditCost({ wordCount, imageCount, withCover, isRegeneration: false });
+
     const { data: session } = await supabase.auth.getSession();
     if (!session?.user) return window.location.href = "/login";
     currentUser = session.user;
@@ -92,16 +94,43 @@ function setupGenerateHandler() {
     const creditOK = await checkCredits(currentUser.id, dynamicCost);
     if (!creditOK) return;
 
+    // ✅ Construct payload
     const payload = {
       url,
       inputType,
-      formatting: collectFormatting(),
-      cover_url: document.getElementById("cover_preview").src,
       output_format: format,
       image_count: imageCount,
       useOwnAPIKey,
       apiKey: verifiedAPIKey,
+      cover_url: document.getElementById("cover_preview").src,
+      formatting: collectFormatting(),
+      template_class: window.selectedTemplateClass || "",
+      title,
+      topic: document.getElementById("topicInput").value,
+      coverPrompt: document.getElementById("coverPromptInput").value,
+      description: document.getElementById("descInput").value,
+      ai_instructions: document.getElementById("ai_instructions").value,
+      language: document.getElementById("language").value || "English",
+      audience: document.getElementById("audience").value,
+      tone: document.getElementById("tone").value,
+      purpose: document.getElementById("purpose").value,
     };
+
+    // ✅ Affiliate logic
+    if (document.getElementById("include_affiliate_links")?.checked) {
+      const link = document.getElementById("affiliate_link_url").value.trim();
+      const label = document.getElementById("affiliate_cta_label").value.trim();
+      const keywords = document.getElementById("affiliate_keywords").value.trim();
+
+      if (!link.startsWith("http")) return alert("❌ Invalid affiliate link");
+
+      payload.affiliate = {
+        enabled: true,
+        url: link,
+        label: label || "Buy Now",
+        keywords: keywords.split(",").map(k => k.trim()).filter(Boolean)
+      };
+    }
 
     showSpinner();
 
@@ -118,7 +147,6 @@ function setupGenerateHandler() {
       generatedContent = result;
       renderPreview(result);
 
-      // ✅ Log Usage
       await logUsage(currentUser.id, currentUser.email, "generate_from_url", {
         dynamic_cost: dynamicCost,
         word_count: wordCount,
@@ -127,7 +155,7 @@ function setupGenerateHandler() {
       });
 
       showToast("✅ eBook Generated Successfully");
-      loadUserCredits(); // refresh badge
+      loadUserCredits();
     } catch (err) {
       alert("❌ " + err.message);
     }
@@ -136,7 +164,6 @@ function setupGenerateHandler() {
   });
 }
 
-// ✍️ Collect formatting
 function collectFormatting() {
   return {
     font_type: document.getElementById("font_type").value,
@@ -152,14 +179,54 @@ function collectFormatting() {
   };
 }
 
-// 📖 Render to preview area
 function renderPreview(result) {
   const container = document.getElementById("ebook_preview_area");
-  container.innerHTML = result.html_preview;
+  container.innerHTML = "";
+
+  blocks = result.blocks || [];
+  blocks.forEach(block => {
+    const section = renderSection(block);
+    container.appendChild(section);
+  });
+
   document.getElementById("saveBtn")?.classList.remove("hidden");
 }
 
-// 💾 Save + Download
+function renderSection(block) {
+  const container = document.createElement("div");
+  container.className = "block mb-6";
+
+  switch (block.type) {
+    case "heading":
+      container.innerHTML = `<h2 class="text-2xl font-bold mb-2 editable" contenteditable="true">${block.text}</h2>`;
+      break;
+    case "subheading":
+      container.innerHTML = `<h3 class="text-xl font-semibold mb-2 editable" contenteditable="true">${block.text}</h3>`;
+      break;
+    case "paragraph":
+      container.innerHTML = `<p class="text-base mb-2 editable" contenteditable="true">${block.text}</p>`;
+      break;
+    case "image":
+      container.innerHTML = `<div class="relative group w-full max-w-xl mx-auto">
+        <img src="${block.url}" class="w-full h-auto rounded shadow" />
+        <button class="regen-img-btn absolute top-2 right-2 hidden group-hover:block text-sm bg-white px-2 py-1 rounded shadow text-blue-600" data-image-id="${block.id}">♻️ Regenerate</button>
+      </div>`;
+      break;
+    case "cta":
+      container.innerHTML = `<div class="template-cta text-center my-6 p-4 border rounded bg-blue-50 shadow-sm">
+        <label class="block text-sm text-gray-700 mb-1">🔗 CTA Label</label>
+        <input class="cta-label-input w-full px-3 py-2 border rounded mb-2 text-center font-semibold text-lg" value="${block.label || "Buy Now"}" />
+        <label class="block text-sm text-gray-700 mb-1">🔗 CTA Link</label>
+        <input class="cta-url-input w-full px-3 py-2 border rounded text-sm" value="${block.url || "https://"}" />
+      </div>`;
+      break;
+    default:
+      container.innerHTML = `<div class="text-gray-500 text-sm">Unknown block type: ${block.type}</div>`;
+  }
+
+  return container;
+}
+
 function setupStickySaveButton() {
   document.getElementById("saveBtn").addEventListener("click", async () => {
     if (!generatedContent) return;
@@ -186,92 +253,20 @@ function setupStickySaveButton() {
   });
 }
 
-// 🔄 Spinner
 function showSpinner() {
   document.getElementById("generateBtn").disabled = true;
   document.getElementById("spinner")?.classList.remove("hidden");
 }
+
 function hideSpinner() {
   document.getElementById("generateBtn").disabled = false;
   document.getElementById("spinner")?.classList.add("hidden");
 }
 
-// ✅ Toast
 function showToast(msg) {
   const t = document.createElement("div");
   t.className = "fixed top-5 right-5 bg-green-600 text-white px-4 py-2 rounded shadow z-50";
   t.textContent = msg;
   document.body.appendChild(t);
   setTimeout(() => t.remove(), 3000);
-}
-
-// ✅ Render a dynamic block (text, image, heading, cta)
-function renderSection(block) {
-  const container = document.createElement("div");
-  container.className = "block mb-6";
-
-  switch (block.type) {
-    case "heading":
-      container.innerHTML = `
-        <h2 class="text-2xl font-bold mb-2 editable" contenteditable="true">${block.text}</h2>
-      `;
-      break;
-
-    case "subheading":
-      container.innerHTML = `
-        <h3 class="text-xl font-semibold mb-2 editable" contenteditable="true">${block.text}</h3>
-      `;
-      break;
-
-    case "paragraph":
-      container.innerHTML = `
-        <p class="text-base mb-2 editable" contenteditable="true">${block.text}</p>
-      `;
-      break;
-
-    case "image":
-      container.innerHTML = `
-        <div class="relative group w-full max-w-xl mx-auto">
-          <img src="${block.url}" class="w-full h-auto rounded shadow" />
-          <button class="regen-img-btn absolute top-2 right-2 hidden group-hover:block text-sm bg-white px-2 py-1 rounded shadow text-blue-600" data-image-id="${block.id}">♻️ Regenerate</button>
-        </div>
-      `;
-      break;
-
-    case "cta":
-      container.innerHTML = `
-        <div class="template-cta text-center my-6 p-4 border rounded bg-blue-50 shadow-sm">
-          <label class="block text-sm text-gray-700 mb-1">🔗 CTA Label</label>
-          <input class="cta-label-input w-full px-3 py-2 border rounded mb-2 text-center font-semibold text-lg" value="${block.label || "Buy Now"}" />
-
-          <label class="block text-sm text-gray-700 mb-1">🔗 CTA Link</label>
-          <input class="cta-url-input w-full px-3 py-2 border rounded text-sm" value="${block.url || "https://"}" />
-        </div>
-      `;
-      break;
-
-    default:
-      container.innerHTML = `<div class="text-gray-500 text-sm">Unknown block type: ${block.type}</div>`;
-  }
-
-  return container;
-}
-function renderPreview(result) {
-  const container = document.getElementById("ebook_preview_area");
-  container.innerHTML = ""; // Clear previous
-
-  result.blocks.forEach(block => {
-    const section = renderSection(block);
-    container.appendChild(section);
-  });
-
-  // ✅ Show save/download button
-  document.getElementById("saveBtn").classList.remove("hidden");
-}
-if (document.getElementById("include_affiliate_links")?.checked) {
-  blocks.push({
-    type: "cta",
-    label: "Buy Now",
-    url: "https://your-link.com"
-  });
 }
