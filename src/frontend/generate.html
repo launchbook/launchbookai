@@ -36,3 +36,10 @@
     if (typeof initGenerator === "function") initGenerator();
   });
 </script>
+
+<script src="/frontend/regen.js"></script>
+<script>
+  window.addEventListener("DOMContentLoaded", () => {
+    if (typeof initRegenHandlers === "function") initRegenHandlers();
+  });
+</script>
