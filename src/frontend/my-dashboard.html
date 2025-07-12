@@ -55,20 +55,21 @@
       <p class="mt-2 text-sm text-gray-500">Loading data...</p>
     </div>
 
- <!-- 🧩 Tab Panes -->
-<div id="tab-ebooks" class="tab-pane hidden">
-  <!-- 🔍 Search & Filter Bar -->
-  <div class="flex flex-wrap gap-4 items-center mb-4">
-    <input id="searchTitle" type="text" placeholder="🔎 Search title..." class="w-full sm:w-48 px-3 py-2 rounded border dark:bg-gray-800 dark:border-gray-600" />
-    <select id="filterFormat" class="px-3 py-2 rounded border dark:bg-gray-800 dark:border-gray-600">
-      <option value="">All Formats</option>
-      <option value="pdf">PDF</option>
-      <option value="epub">EPUB</option>
-    </select>
-    <input id="filterFrom" type="date" class="px-3 py-2 rounded border dark:bg-gray-800 dark:border-gray-600" />
-    <input id="filterTo" type="date" class="px-3 py-2 rounded border dark:bg-gray-800 dark:border-gray-600" />
-    <button id="applyFilters" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Apply</button>
-  </div>
+<!-- 🔍 Search & Filter Bar -->
+<div class="flex flex-wrap gap-4 items-center mb-4">
+  <input id="searchTitle" type="text" placeholder="🔎 Search title..." class="w-full sm:w-48 px-3 py-2 rounded border dark:bg-gray-800 dark:border-gray-600" />
+  <select id="filterFormat" class="px-3 py-2 rounded border dark:bg-gray-800 dark:border-gray-600">
+    <option value="">All Formats</option>
+    <option value="pdf">PDF</option>
+    <option value="epub">EPUB</option>
+  </select>
+  <input id="filterFrom" type="date" class="px-3 py-2 rounded border dark:bg-gray-800 dark:border-gray-600" />
+  <input id="filterTo" type="date" class="px-3 py-2 rounded border dark:bg-gray-800 dark:border-gray-600" />
+
+  <!-- ✅ Apply + Reset Buttons -->
+  <button id="applyFilters" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Apply</button>
+  <button id="resetFilters" class="text-sm text-gray-500 underline">Reset</button>
+</div>
 
   <!-- 📄 Paginate -->
   <div id="ebook-pagination" class="flex justify-between items-center mt-4 hidden">
