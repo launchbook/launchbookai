@@ -1,4 +1,4 @@
-// ✅ Email Sending Module – CommonJS Version
+// ✅ Email Sending Module – CommonJS Version with Credit Check + User API Key Support
 
 let currentUser = null;
 const BASE_URL = location.hostname === "localhost"
@@ -23,6 +23,8 @@ async function sendEmailToUser() {
   const customMsg = document.getElementById("emailMessage").value.trim();
   const downloadUrl = window.generatedContent?.download_url;
 
+  const apiKey = window.userApiKey || null;
+
   if (!email || !downloadUrl) {
     alert("❌ Please provide a valid email and generate the eBook first.");
     return;
@@ -37,8 +39,10 @@ async function sendEmailToUser() {
       body: JSON.stringify({
         user_id: currentUser.id,
         email,
+        message: customMsg,
         download_url: downloadUrl,
-        message: customMsg
+        useOwnAPIKey: !!apiKey,
+        apiKey
       }),
     });
 
@@ -67,4 +71,3 @@ function showToast(msg) {
   document.body.appendChild(t);
   setTimeout(() => t.remove(), 3000);
 }
-
