@@ -79,7 +79,7 @@ async function loadEbooks() {
   document.querySelectorAll(".delete-ebook").forEach(btn => {
     btn.addEventListener("click", async () => {
       if (!confirm("Are you sure you want to delete this eBook?")) return;
-      await supabase.from("ebooks").delete().eq("id", btn.dataset.id);
+      await supabase.from("ebooks").update({ deleted: true }).eq("id", btn.dataset.id);
       loadEbooks();
     });
   });
