@@ -1,42 +1,37 @@
 <!DOCTYPE html>
-<html lang="en" class="dark"> <!-- for now, static testing -->
+<html lang="en" class="dark">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>{{ title or 'LaunchBook AI' }}</title>
   <link rel="icon" href="/favicon.ico" />
-<!-- AOS Animation Library -->
-<link href="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.css" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/style.css" />
-  <style>
-    body { font-family: 'Inter', sans-serif; }
-  </style>
-<script src="https://cdn.tailwindcss.com"></script>
-<script> tailwind.config = { darkMode: 'class', theme: { extend: {}, }, }
-</script>
-
+  <style>body { font-family: 'Inter', sans-serif; }</style>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = { darkMode: 'class', theme: { extend: {} } };
+  </script>
 </head>
 
 <body class="transition-colors duration-300 bg-gray-50 text-gray-900 dark:bg-gray-900 dark:text-gray-100 flex flex-col min-h-screen">
 
   <!-- 🔝 Header -->
-  <header class="bg-white shadow-sm sticky top-0 z-50">
+  <header class="bg-white dark:bg-gray-800 shadow-sm sticky top-0 z-50">
     <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
-<a href="/" class="text-2xl font-bold text-blue-600 hover:opacity-80 no-underline transition">LaunchBook AI</a>
-      <nav class="hidden md:flex items-center space-x-6 text-sm font-medium">
-  <a href="#how-it-works" class="text-gray-600 hover:text-blue-600 transition">How It Works</a>
-  <a href="#tools" class="text-gray-600 hover:text-blue-600 transition">Tools</a>
-  <a href="#pricing" class="text-gray-600 hover:text-blue-600 transition">Pricing</a>
-  <a href="/login" class="text-gray-600 hover:text-blue-600 transition">Sign In</a>
-  <a href="/signup" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition">Get Started</a>
-
-  <button id="darkToggle" class="ml-4 text-xl hover:text-blue-600 transition" title="Toggle dark mode">
-  <svg id="darkIcon" xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-    <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" />
-  </svg>
-</button>
-</nav>
+      <a href="/" class="text-2xl font-bold text-blue-600 dark:text-blue-400 hover:opacity-80 no-underline transition">LaunchBook AI</a>
+      <nav id="main-nav" class="hidden md:flex items-center space-x-6 text-sm font-medium">
+        <a href="#how-it-works" class="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition">How It Works</a>
+        <a href="#tools" class="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition">Tools</a>
+        <a href="#pricing" class="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition">Pricing</a>
+        <!-- Dynamic Links Injected by JS -->
+        <button id="darkToggle" class="ml-4 text-xl hover:text-blue-600 dark:hover:text-blue-400 transition" title="Toggle dark mode">
+          <svg id="darkIcon" xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" />
+          </svg>
+        </button>
+      </nav>
     </div>
   </header>
 
@@ -57,71 +52,80 @@
     </div>
   </footer>
 
-  <!-- 👤 User Auth Simulation -->
+  <!-- 🔌 Scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.js"></script>
+  <script>AOS.init({ once: true, duration: 800, easing: 'ease-out' });</script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.10.2/lottie.min.js"></script>
   <script>
-    const userLoggedIn = false;
-    if (userLoggedIn) {
-      document.getElementById("nav-user").style.display = "flex";
-      document.getElementById("nav-guest").style.display = "none";
-      document.getElementById("user-name").innerText = "👤 Welcome, Ashish";
-    }
-    function signOut() {
-      alert("Sign-out logic will be here.");
+    const container = document.getElementById('lottie-hero');
+    if (container) {
+      container.style.display = 'block';
+      lottie.loadAnimation({
+        container,
+        renderer: 'svg',
+        loop: true,
+        autoplay: true,
+        path: 'https://assets9.lottiefiles.com/packages/lf20_c7VkSt0n1W.json'
+      });
     }
   </script>
-<script src="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.js"></script>
-<script>
-  AOS.init({
-    once: true,
-    duration: 800,
-    easing: 'ease-out',
-  });
-</script>
 
-<!-- ✅ Lottie Animation Script -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.10.2/lottie.min.js"></script>
-<script>
-  const container = document.getElementById('lottie-hero');
-  if (container) {
-    container.style.display = 'block';
-    lottie.loadAnimation({
-      container,
-      renderer: 'svg',
-      loop: true,
-      autoplay: true,
-      path: 'https://assets9.lottiefiles.com/packages/lf20_c7VkSt0n1W.json'
-    });
-  }
-</script>
+  <!-- 🌙 Dark Mode Toggle -->
+  <script>
+    const toggleBtn = document.getElementById('darkToggle');
+    const html = document.documentElement;
+    const icon = document.getElementById('darkIcon');
 
-<script>
-  // ✅ Dark mode toggle logic
-  const toggleBtn = document.getElementById('darkToggle');
-  const html = document.documentElement;
-  const icon = document.getElementById('darkIcon');
-
-  // Initial state
-  const isDark = localStorage.theme === 'dark' || (
-    !('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches
-  );
-  if (isDark) {
-    html.classList.add('dark');
-    icon.setAttribute('d', 'M12 3v1m0 16v1m8.66-11.66l-.71.71M4.05 19.95l-.71-.71M21 12h-1M4 12H3m16.66 4.95l-.71-.71M4.05 4.05l-.71.71M16 12a4 4 0 11-8 0 4 4 0 018 0z');
-  } else {
-    html.classList.remove('dark');
-    icon.setAttribute('d', 'M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z');
-  }
-
-  toggleBtn.addEventListener('click', () => {
-    const isNowDark = html.classList.toggle('dark');
-    localStorage.theme = isNowDark ? 'dark' : 'light';
-    icon.setAttribute('d', isNowDark
-      ? 'M12 3v1m0 16v1m8.66-11.66l-.71.71M4.05 19.95l-.71-.71M21 12h-1M4 12H3m16.66 4.95l-.71-.71M4.05 4.05l-.71.71M16 12a4 4 0 11-8 0 4 4 0 018 0z'
-      : 'M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z'
+    const isDark = localStorage.theme === 'dark' || (
+      !('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches
     );
-  });
-</script>
+    if (isDark) {
+      html.classList.add('dark');
+      icon.setAttribute('d', 'M12 3v1m0 16v1m8.66-11.66l-.71.71M4.05 19.95l-.71-.71M21 12h-1M4 12H3m16.66 4.95l-.71-.71M4.05 4.05l-.71.71M16 12a4 4 0 11-8 0 4 4 0 018 0z');
+    } else {
+      html.classList.remove('dark');
+      icon.setAttribute('d', 'M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z');
+    }
 
+    toggleBtn?.addEventListener('click', () => {
+      const isNowDark = html.classList.toggle('dark');
+      localStorage.theme = isNowDark ? 'dark' : 'light';
+      icon.setAttribute('d', isNowDark
+        ? 'M12 3v1m0 16v1m8.66-11.66l-.71.71M4.05 19.95l-.71-.71M21 12h-1M4 12H3m16.66 4.95l-.71-.71M4.05 4.05l-.71.71M16 12a4 4 0 11-8 0 4 4 0 018 0z'
+        : 'M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z');
+    });
+  </script>
+
+  <!-- ✅ Dynamic Auth Links -->
+  <script type="module">
+    import { supabase } from '/supabaseClient.js';
+    const nav = document.getElementById("main-nav");
+
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (!nav) return;
+      if (user) {
+        const dash = document.createElement("a");
+        dash.href = "/src/frontend/my-dashboard.html";
+        dash.textContent = "📊 My Dashboard";
+        dash.className = "text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition";
+        nav.appendChild(dash);
+      } else {
+        const signIn = document.createElement("a");
+        signIn.href = "/login";
+        signIn.textContent = "Sign In";
+        signIn.className = "text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition";
+
+        const signUp = document.createElement("a");
+        signUp.href = "/signup";
+        signUp.textContent = "Get Started";
+        signUp.className = "bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition";
+
+        nav.appendChild(signIn);
+        nav.appendChild(signUp);
+      }
+    });
+  </script>
 
 </body>
 </html>
