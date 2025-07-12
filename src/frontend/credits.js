@@ -1,12 +1,10 @@
 // launchbookai/src/frontend/credit.js
 
-// ✅ This module handles: User credit balance fetch + formatting preset saving
-
 let currentUser = null;
-export let remainingCredits = 0;
+let remainingCredits = 0;
 
 // ✅ Load user and credit info
-export async function loadUserCredits() {
+async function loadUserCredits() {
   const { data: { session } } = await supabase.auth.getSession();
   if (!session) return window.location.href = "/login";
   currentUser = session.user;
@@ -26,7 +24,7 @@ export async function loadUserCredits() {
 }
 
 // ✅ Save Formatting to Supabase
-export async function savePresetToSupabase(presetData) {
+async function savePresetToSupabase(presetData) {
   if (!currentUser) return;
 
   await supabase.from("generated_files").insert({
@@ -37,8 +35,8 @@ export async function savePresetToSupabase(presetData) {
   alert("✅ Formatting saved!");
 }
 
-// ✅ Load Preset (used in generate.js)
-export async function loadPresetFromSupabase() {
+// ✅ Load Preset
+async function loadPresetFromSupabase() {
   if (!currentUser) return null;
 
   const { data } = await supabase
@@ -52,3 +50,7 @@ export async function loadPresetFromSupabase() {
   return data || null;
 }
 
+// 🌍 Attach all to global `window` so frontend can use them
+window.loadUserCredits = loadUserCredits;
+window.savePresetToSupabase = savePresetToSupabase;
+window.loadPresetFromSupabase = loadPresetFromSupabase;
