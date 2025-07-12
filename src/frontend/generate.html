@@ -52,3 +52,10 @@
     if (typeof initRegenHandlers === "function") initRegenHandlers();
   });
 </script>
+
+<script src="/frontend/prebuildTemplate.js"></script>
+<script>
+  window.addEventListener("DOMContentLoaded", () => {
+    if (typeof setupTemplatePicker === "function") setupTemplatePicker();
+  });
+</script>
