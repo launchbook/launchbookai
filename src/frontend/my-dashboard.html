@@ -72,5 +72,15 @@
       avatarMenu.classList.toggle("hidden");
     });
   </script>
+
+  <!-- 📊 Dashboard Script -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+  window.supabase = supabase.createClient(
+    'https://YOUR-PROJECT-ID.supabase.co',
+    'public-anon-key'
+  );
+</script>
+  
 </body>
 </html>
