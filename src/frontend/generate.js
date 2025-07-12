@@ -314,3 +314,57 @@ function applyAudienceFormatting() {
   document.getElementById("line_spacing").value = preset.spacing;
   document.getElementById("text_alignment").value = preset.align;
 }
+
+// ✅ Reset current eBook input fields
+window.createAnother = () => {
+  if (!confirm("⚠️ Start a new eBook? All current fields will be cleared.")) return;
+
+  const resetIds = [
+    "titleInput", "topicInput", "coverPromptInput", "descInput", "ai_instructions",
+    "affiliate_link_url", "affiliate_cta_label", "affiliate_keywords",
+    "recipientEmail", "emailMessage", "source_url", "word_count"
+  ];
+
+  resetIds.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = "";
+  });
+
+  // Reset dropdowns
+  const dropdowns = [
+    "language", "audience", "tone", "purpose",
+    "font_type", "font_size", "line_spacing", "paragraph_spacing",
+    "page_size", "text_alignment", "image_count"
+  ];
+
+  dropdowns.forEach(id => {
+    const el = document.getElementById(id);
+    if (el && el.tagName === "SELECT") el.selectedIndex = 0;
+  });
+
+  // Reset checkboxes
+  document.getElementById("include_affiliate_links").checked = false;
+  document.getElementById("affiliateLinkFields")?.classList.add("hidden");
+  document.getElementById("autoFormatByAudience")?.checked = false;
+
+  // Reset image preview
+  const coverPreview = document.getElementById("cover_preview");
+  if (coverPreview) {
+    coverPreview.src = "";
+    coverPreview.classList.add("hidden");
+  }
+  document.getElementById("uploadCoverInput").value = "";
+  document.getElementById("deleteCoverBtn")?.classList.add("hidden");
+  document.getElementById("regenerateCoverBtn")?.classList.add("hidden");
+
+  // Reset preview area
+  document.getElementById("ebook_preview_area").innerHTML = "";
+
+  // Reset download button
+  document.getElementById("saveBtn")?.classList.add("hidden");
+
+  // Reset selected template
+  window.selectedTemplateClass = null;
+
+  showToast("📚 New eBook started");
+};
