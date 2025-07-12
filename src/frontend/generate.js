@@ -204,3 +204,74 @@ function showToast(msg) {
   document.body.appendChild(t);
   setTimeout(() => t.remove(), 3000);
 }
+
+// ✅ Render a dynamic block (text, image, heading, cta)
+function renderSection(block) {
+  const container = document.createElement("div");
+  container.className = "block mb-6";
+
+  switch (block.type) {
+    case "heading":
+      container.innerHTML = `
+        <h2 class="text-2xl font-bold mb-2 editable" contenteditable="true">${block.text}</h2>
+      `;
+      break;
+
+    case "subheading":
+      container.innerHTML = `
+        <h3 class="text-xl font-semibold mb-2 editable" contenteditable="true">${block.text}</h3>
+      `;
+      break;
+
+    case "paragraph":
+      container.innerHTML = `
+        <p class="text-base mb-2 editable" contenteditable="true">${block.text}</p>
+      `;
+      break;
+
+    case "image":
+      container.innerHTML = `
+        <div class="relative group w-full max-w-xl mx-auto">
+          <img src="${block.url}" class="w-full h-auto rounded shadow" />
+          <button class="regen-img-btn absolute top-2 right-2 hidden group-hover:block text-sm bg-white px-2 py-1 rounded shadow text-blue-600" data-image-id="${block.id}">♻️ Regenerate</button>
+        </div>
+      `;
+      break;
+
+    case "cta":
+      container.innerHTML = `
+        <div class="template-cta text-center my-6 p-4 border rounded bg-blue-50 shadow-sm">
+          <label class="block text-sm text-gray-700 mb-1">🔗 CTA Label</label>
+          <input class="cta-label-input w-full px-3 py-2 border rounded mb-2 text-center font-semibold text-lg" value="${block.label || "Buy Now"}" />
+
+          <label class="block text-sm text-gray-700 mb-1">🔗 CTA Link</label>
+          <input class="cta-url-input w-full px-3 py-2 border rounded text-sm" value="${block.url || "https://"}" />
+        </div>
+      `;
+      break;
+
+    default:
+      container.innerHTML = `<div class="text-gray-500 text-sm">Unknown block type: ${block.type}</div>`;
+  }
+
+  return container;
+}
+function renderPreview(result) {
+  const container = document.getElementById("ebook_preview_area");
+  container.innerHTML = ""; // Clear previous
+
+  result.blocks.forEach(block => {
+    const section = renderSection(block);
+    container.appendChild(section);
+  });
+
+  // ✅ Show save/download button
+  document.getElementById("saveBtn").classList.remove("hidden");
+}
+if (document.getElementById("include_affiliate_links")?.checked) {
+  blocks.push({
+    type: "cta",
+    label: "Buy Now",
+    url: "https://your-link.com"
+  });
+}
