@@ -1,83 +1,112 @@
-<!-- API Key -->
-<input id="userApiKeyInput" placeholder="Enter your OpenAI API Key">
-<span id="apiKeyStatus"></span>
-<button id="removeApiKeyBtn" class="hidden">❌</button>
+<!-- 🔑 API Key Section -->
+<input id="openai_api_key" placeholder="Enter your OpenAI API Key" class="input-class">
+<span id="api_status"></span>
+<button id="clear_api_btn" class="hidden">❌</button>
 
-<!-- Main Controls -->
-<input id="titleInput">
-<input id="topicInput">
-<textarea id="descInput"></textarea>
-<input id="coverPromptInput">
-<select id="languageSelect">...</select>
-<input type="radio" name="output_format" value="pdf" checked>
-<input type="radio" name="output_format" value="epub">
+<!-- 📋 Main Input Fields -->
+<input id="titleInput" placeholder="Title" class="input-class">
+<input id="topicInput" placeholder="Topic" class="input-class">
+<textarea id="descInput" placeholder="Description" class="input-class"></textarea>
+<input id="coverPromptInput" placeholder="Cover Prompt" class="input-class">
+<select id="languageSelect">
+  <option value="en">English</option>
+  <option value="hi">Hindi</option>
+  <!-- Add more languages -->
+</select>
 
-<!-- Formatting Options -->
-<select id="fontSelect">...</select>
-<select id="fontSize">...</select>
-<select id="lineSpacing">...</select>
-<select id="textAlign">...</select>
+<!-- 🔘 Format Selection -->
+<label><input type="radio" name="output_format" value="pdf" checked> PDF</label>
+<label><input type="radio" name="output_format" value="epub"> EPUB</label>
 
-<!-- Buttons -->
-<button id="generateBtn">🚀 Generate</button>
-<button id="saveFormattingBtn">💾 Save Formatting</button>
-<a id="downloadBtn" class="opacity-50 pointer-events-none">⬇️ Download</a>
+<!-- 🎨 Formatting Options -->
+<select id="font_type">
+  <option value="Merriweather">Merriweather</option>
+  <option value="Inter">Inter</option>
+  <!-- Add more fonts -->
+</select>
+<select id="font_size">
+  <option value="12pt">12pt</option>
+  <option value="14pt">14pt</option>
+</select>
+<select id="line_spacing">
+  <option value="1.5">1.5</option>
+  <option value="2">2</option>
+</select>
+<select id="paragraph_spacing">
+  <option value="12px">12px</option>
+  <option value="18px">18px</option>
+</select>
+<input id="margin_top" value="1in">
+<input id="margin_right" value="1in">
+<input id="margin_bottom" value="1in">
+<input id="margin_left" value="1in">
+<select id="page_size">
+  <option value="A4">A4</option>
+  <option value="Letter">Letter</option>
+</select>
+<select id="text_alignment">
+  <option value="justify">Justify</option>
+  <option value="left">Left</option>
+</select>
 
-<!-- Previews -->
-<img id="coverPreview">
-<div id="ebook_preview_area" class="overflow-y-auto max-h-[600px]"></div>
-<div id="spinner" class="hidden">🔄 Generating...</div>
+<!-- 🖼️ Cover Image Preview -->
+<img id="cover_preview" class="hidden w-full max-w-md mx-auto mb-2">
+<button id="deleteCoverBtn" class="hidden">❌ Delete Cover</button>
+<button id="regenerateCoverBtn" class="hidden">♻️ Regenerate Cover</button>
+<label id="uploadCoverLabel" for="uploadCoverInput" class="cursor-pointer">📤 Upload Cover</label>
+<input type="file" id="uploadCoverInput" accept="image/*" class="hidden">
 
-<!-- Credits -->
-<span id="creditBadge"></span>
+<!-- 📸 Image Count -->
+<select id="image_count">
+  <option value="0">No Images</option>
+  <option value="2">2 Images</option>
+  <option value="5">5 Images</option>
+  <option value="10">10 Images</option>
+</select>
 
-<!-- Example Image with Regen -->
+<!-- 🔘 Input Type -->
+<label><input type="radio" name="input_type" value="url" checked> URL to eBook</label>
+<label><input type="radio" name="input_type" value="ai"> Generate via AI</label>
+<input id="source_url" placeholder="Paste Article URL here" class="input-class">
+
+<!-- 🔘 Buttons -->
+<button id="generateBtn" class="bg-blue-600 text-white px-4 py-2 rounded">🚀 Generate</button>
+<button id="saveFormattingBtn" class="bg-gray-600 text-white px-4 py-2 rounded">💾 Save Formatting</button>
+<a id="saveBtn" class="bg-green-600 text-white px-4 py-2 rounded hidden">⬇️ Save / Download</a>
+<button id="templateSelectBtn" class="bg-gray-100 text-sm border rounded px-3 py-1 hover:bg-gray-200">🎨 Choose Design Template</button>
+
+<!-- 📬 Email eBook Section -->
+<input id="recipientEmail" type="email" placeholder="Enter email" class="input-class">
+<textarea id="emailMessage" placeholder="Add optional note..." class="input-class"></textarea>
+<button id="sendEmailBtn" class="bg-blue-600 text-white px-4 py-2 rounded">📩 Send eBook</button>
+
+<!-- 🔄 Spinner + Credit Badge -->
+<div id="spinner" class="hidden text-center text-sm mt-4">🔄 Generating...</div>
+<span id="creditBadge" class="block mt-2 text-sm text-gray-600"></span>
+
+<!-- 📖 Preview -->
+<div id="ebook_preview_area" class="overflow-y-auto max-h-[600px] mt-6 border p-4 rounded"></div>
+
+<!-- 🔁 Regen Examples (for testing UI - actual blocks will be dynamic) -->
 <img data-image-id="img123" src="..." />
 <button class="regen-img-btn" data-image-id="img123">♻️ Regenerate</button>
-
-<!-- Example Text Block -->
 <div data-block-id="block456">Some paragraph...</div>
 <button class="regen-text-btn" data-block-id="block456">♻️ Regenerate</button>
 
-<button id="templateSelectBtn" class="bg-gray-100 text-sm border rounded px-3 py-1 hover:bg-gray-200">
-  🎨 Choose Design Template
-</button>
-
-<input type="email" id="recipientEmail" placeholder="Enter email to send" class="input-class">
-<textarea id="emailMessage" placeholder="Optional message" class="input-class"></textarea>
-<button id="sendEmailBtn" class="bg-blue-600 text-white px-4 py-2 rounded">📩 Send eBook</button>
-
-
+<!-- ✅ Scripts -->
 <script src="/frontend/utils.js"></script>
-
+<script src="/frontend/generate.js"></script>
+<script src="/frontend/cover.js"></script>
+<script src="/frontend/regen.js"></script>
+<script src="/frontend/prebuildTemplate.js"></script>
+<script src="/frontend/email.js"></script>
 <script src="/frontend/security.js"></script>
 
-
 <script>
-  window.addEventListener("DOMContentLoaded", () => {
+  window.addEventListener("DOMContentLoaded", async () => {
     if (typeof initGenerator === "function") initGenerator();
-  });
-</script>
-
-<script src="/frontend/regen.js"></script>
-<script>
-  window.addEventListener("DOMContentLoaded", () => {
     if (typeof initRegenHandlers === "function") initRegenHandlers();
-  });
-</script>
-
-<script src="/frontend/prebuildTemplate.js"></script>
-<script>
-  window.addEventListener("DOMContentLoaded", () => {
     if (typeof setupTemplatePicker === "function") setupTemplatePicker();
-  });
-</script>
-
-<script src="/frontend/email.js"></script>
-<script>
-  window.addEventListener("DOMContentLoaded", () => {
     if (typeof initEmailSender === "function") initEmailSender();
   });
 </script>
-
-
