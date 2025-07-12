@@ -8,20 +8,18 @@
 <input id="topicInput" placeholder="Topic" class="input-class">
 <textarea id="descInput" placeholder="Description" class="input-class"></textarea>
 <input id="coverPromptInput" placeholder="Cover Prompt" class="input-class">
+
 <select id="languageSelect">
   <option value="en">English</option>
   <option value="hi">Hindi</option>
 </select>
 
-<!-- 🔘 Format -->
+<!-- 🔘 Output Format -->
 <label><input type="radio" name="output_format" value="pdf" checked> PDF</label>
 <label><input type="radio" name="output_format" value="epub"> EPUB</label>
 
-<!-- 🎨 Formatting -->
-<select id="font_type">
-  <option value="Merriweather">Merriweather</option>
-  <option value="Inter">Inter</option>
-</select>
+<!-- 🎨 Formatting Options -->
+<select id="font_type"><option value="Merriweather">Merriweather</option><option value="Inter">Inter</option></select>
 <select id="font_size"><option value="12pt">12pt</option><option value="14pt">14pt</option></select>
 <select id="line_spacing"><option value="1.5">1.5</option><option value="2">2</option></select>
 <select id="paragraph_spacing"><option value="12px">12px</option><option value="18px">18px</option></select>
@@ -52,11 +50,10 @@
 <label><input type="radio" name="input_type" value="ai"> Generate via AI</label>
 <input id="source_url" placeholder="Paste Article URL here" class="input-class">
 
-<!-- 🧮 Credit Estimate + Actions -->
-<div id="credit-estimate-msg" class="mt-2 text-sm text-gray-600"></div>
+<!-- 🧮 Credit Estimate + Action Buttons -->
+<div id="credit-estimate-msg" class="mt-2 text-sm text-gray-600 italic"></div>
 <button id="generateBtn" class="bg-blue-600 text-white px-4 py-2 rounded mt-3">🚀 Generate</button>
 <button id="saveFormattingBtn" class="bg-gray-600 text-white px-4 py-2 rounded">💾 Save Formatting</button>
-<a id="saveBtn" class="bg-green-600 text-white px-4 py-2 rounded hidden">⬇️ Save / Download</a>
 <button id="templateSelectBtn" class="bg-gray-100 text-sm border rounded px-3 py-1 hover:bg-gray-200">🎨 Choose Design Template</button>
 
 <!-- 📬 Email Sending -->
@@ -64,14 +61,22 @@
 <textarea id="emailMessage" placeholder="Add optional note..." class="input-class"></textarea>
 <button id="sendEmailBtn" class="bg-blue-600 text-white px-4 py-2 rounded">📩 Send eBook</button>
 
-<!-- 🔄 Status + Credits -->
+<!-- 🧾 Sticky Footer (Download + Credit Badge) -->
+<div class="sticky bottom-0 bg-white shadow-inner p-3 flex gap-4 justify-between items-center border-t mt-6 z-10">
+  <a id="saveBtn" class="bg-green-600 text-white px-4 py-2 rounded hidden">⬇️ Save / Download</a>
+  <span id="creditBadge" class="text-sm text-gray-600 ml-auto"></span>
+</div>
+
+<!-- 🔄 Spinner -->
 <div id="spinner" class="hidden text-center text-sm mt-4">🔄 Generating...</div>
-<span id="creditBadge" class="block mt-2 text-sm text-gray-600"></span>
 
 <!-- 📖 Preview Area -->
 <div id="ebook_preview_area" class="overflow-y-auto max-h-[600px] mt-6 border p-4 rounded"></div>
 
-<!-- 🔁 Dynamic Regen Examples -->
+<!-- 🧩 Template Preview Placeholder (Optional) -->
+<div id="template-preview-area" class="grid grid-cols-2 gap-4 mt-4"></div>
+
+<!-- ♻️ Example Regens (Static Example Only) -->
 <img data-image-id="img123" src="..." />
 <button class="regen-img-btn" data-image-id="img123">♻️ Regenerate</button>
 <div data-block-id="block456">Some paragraph...</div>
