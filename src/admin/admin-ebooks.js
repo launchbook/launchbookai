@@ -20,7 +20,7 @@ window.AdminModules["ebooks"] = {
       }
 
       container.innerHTML = `
-        <div class="mb-4">
+        <div class="mb-4 flex flex-col md:flex-row md:items-center gap-3">
           <input id="ebookSearchInput" type="text" placeholder="🔍 Search by title or user ID..." class="w-full md:w-96 px-4 py-2 border rounded dark:bg-gray-800 dark:border-gray-600" />
         </div>
 
@@ -33,7 +33,9 @@ window.AdminModules["ebooks"] = {
                 <th class="p-2">Format</th>
                 <th class="p-2">Pages</th>
                 <th class="p-2">Images</th>
+                <th class="p-2">Credits</th>
                 <th class="p-2">Created</th>
+                <th class="p-2">Download</th>
                 <th class="p-2">Actions</th>
               </tr>
             </thead>
@@ -45,7 +47,13 @@ window.AdminModules["ebooks"] = {
                   <td class="p-2 text-center">${ebook.format || "—"}</td>
                   <td class="p-2 text-center">${ebook.page_count ?? "—"}</td>
                   <td class="p-2 text-center">${ebook.image_count ?? "—"}</td>
+                  <td class="p-2 text-center">${ebook.credits_used ?? "—"}</td>
                   <td class="p-2 text-xs">${new Date(ebook.created_at).toLocaleString()}</td>
+                  <td class="p-2 text-center">
+                    ${ebook.download_url
+                      ? `<a href="${ebook.download_url}" target="_blank" class="text-blue-600 hover:underline">⬇️ View</a>`
+                      : "—"}
+                  </td>
                   <td class="p-2 text-center">
                     <button class="text-red-600 hover:underline delete-ebook-btn">🗑️ Delete</button>
                   </td>
@@ -85,4 +93,3 @@ window.AdminModules["ebooks"] = {
     }
   }
 };
-
