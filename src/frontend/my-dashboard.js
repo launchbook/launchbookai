@@ -15,11 +15,39 @@ function switchTab(tab) {
   document.querySelector(`[data-tab='${tab}']`).classList.add("border-blue-600", "text-blue-600");
 }
 
-async function getUser() {
+// ✅ Global user getter (used in generate.js or cover.js)
+window.getCurrentUser = async function () {
   const { data: { session } } = await supabase.auth.getSession();
-  if (!session) return window.location.href = "/login";
-  currentUser = session.user;
-  document.getElementById("avatarName").textContent = currentUser.email.split("@")[0];
+  return session?.user || null;
+};
+
+// ✅ Global credits logger (used in generate.js or email.js)
+window.logCredits = async function ({ user_id, credits_used, action_type, metadata }) {
+  await supabase.from("user_usage_logs").insert([{
+    user_id,
+    credits_used,
+    action_type,
+    metadata,
+  }]);
+};
+
+// ✅ Global spinner helpers (used across modules)
+window.showSpinner = function (msg = "Processing...") {
+  const loading = document.getElementById("loading");
+  loading.classList.remove("hidden");
+  loading.querySelector("p").textContent = msg;
+};
+
+window.hideSpinner = function () {
+  const loading = document.getElementById("loading");
+  loading.classList.add("hidden");
+};
+
+async function getUser() {
+  const user = await window.getCurrentUser();
+  if (!user) return window.location.href = "/login";
+  currentUser = user;
+  document.getElementById("avatarName").textContent = user.email.split("@")[0];
 }
 
 async function loadSummary() {
@@ -51,13 +79,9 @@ async function loadSummary() {
 // 🔁 Pagination + Filter State
 let currentPage = 1;
 const pageSize = 10;
-let lastSearch = "";
-let lastFormat = "";
-let lastFrom = "";
-let lastTo = "";
 
 async function loadEbooks(page = 1) {
-  document.getElementById("loading").classList.remove("hidden"); // ✅ Show spinner
+  showSpinner("Loading eBooks...");
 
   const title = document.getElementById("searchTitle").value.trim();
   const format = document.getElementById("filterFormat").value;
@@ -79,7 +103,7 @@ async function loadEbooks(page = 1) {
 
   const { data, count } = await query;
 
-  document.getElementById("loading").classList.add("hidden"); // ✅ Hide spinner
+  hideSpinner();
 
   const container = document.getElementById("ebook-table-container");
   const paginator = document.getElementById("ebook-pagination");
@@ -111,10 +135,11 @@ async function loadEbooks(page = 1) {
       if (!confirm("Are you sure you want to delete this eBook?")) return;
       await supabase.from("ebooks").update({ deleted: true }).eq("id", btn.dataset.id);
       loadEbooks(currentPage);
+      showToast("eBook deleted", "success");
     });
   });
 
-  // 📄 Pagination UI
+  // Pagination UI
   const totalPages = Math.ceil(count / pageSize);
   currentPage = page;
   paginator.classList.remove("hidden");
@@ -122,7 +147,7 @@ async function loadEbooks(page = 1) {
   document.getElementById("prevPage").disabled = page === 1;
   document.getElementById("nextPage").disabled = page === totalPages;
 
-  highlightFilters(); // ✅ Highlight filters when loaded
+  highlightFilters();
 }
 
 async function loadCovers() {
@@ -158,6 +183,7 @@ async function loadCovers() {
       if (!confirm("Delete this cover from your history?")) return;
       await supabase.from("cover_history").update({ deleted: true }).eq("id", btn.dataset.id);
       loadCovers();
+      showToast("Cover deleted", "success");
     });
   });
 }
@@ -204,19 +230,20 @@ async function loadPresets() {
     <p><strong>Alignment:</strong> ${data.text_alignment}</p>
   </div>`;
 }
+
 function highlightFilters() {
   const search = document.getElementById("searchTitle").value;
   const format = document.getElementById("filterFormat").value;
   const from = document.getElementById("filterFrom").value;
   const to = document.getElementById("filterTo").value;
-
   const isActive = search || format || from || to;
-
-  document.getElementById("applyFilters").classList.toggle("bg-blue-700", isActive);
-  document.getElementById("applyFilters").classList.toggle("bg-blue-600", !isActive);
-  document.getElementById("applyFilters").classList.toggle("ring-2", isActive);
+  const applyBtn = document.getElementById("applyFilters");
+  applyBtn.classList.toggle("bg-blue-700", isActive);
+  applyBtn.classList.toggle("bg-blue-600", !isActive);
+  applyBtn.classList.toggle("ring-2", isActive);
 }
 
+// 🔃 Main Init
 window.addEventListener("DOMContentLoaded", async () => {
   await getUser();
   await loadSummary();
@@ -230,19 +257,20 @@ window.addEventListener("DOMContentLoaded", async () => {
     tab.addEventListener("click", () => switchTab(tab.dataset.tab));
   });
 
-document.getElementById("applyFilters").addEventListener("click", () => {
-  loadEbooks(1);
-  highlightFilters();
-});
+  document.getElementById("applyFilters").addEventListener("click", () => {
+    loadEbooks(1);
+    highlightFilters();
+  });
 
-document.getElementById("resetFilters").addEventListener("click", () => {
-  document.getElementById("searchTitle").value = "";
-  document.getElementById("filterFormat").value = "";
-  document.getElementById("filterFrom").value = "";
-  document.getElementById("filterTo").value = "";
-  loadEbooks(1);
-  highlightFilters();
-});
+  document.getElementById("resetFilters").addEventListener("click", () => {
+    document.getElementById("searchTitle").value = "";
+    document.getElementById("filterFormat").value = "";
+    document.getElementById("filterFrom").value = "";
+    document.getElementById("filterTo").value = "";
+    loadEbooks(1);
+    highlightFilters();
+  });
+
   document.getElementById("prevPage").addEventListener("click", () => loadEbooks(currentPage - 1));
   document.getElementById("nextPage").addEventListener("click", () => loadEbooks(currentPage + 1));
 });
