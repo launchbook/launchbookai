@@ -3,44 +3,35 @@
 {% block title %}👑 Admin Dashboard – LaunchBook AI{% endblock %}
 
 {% block content %}
-<section class="max-w-7xl mx-auto px-4 py-8">
-  <h1 class="text-3xl font-bold mb-6">👑 Admin Dashboard</h1>
+<div class="flex min-h-screen">
+  <!-- 🔧 Sidebar -->
+  <aside class="w-64 bg-gray-100 dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 p-4">
+    <h2 class="text-lg font-bold mb-6 text-gray-700 dark:text-gray-200">Admin Panel</h2>
+    <nav class="flex flex-col space-y-2 text-sm">
+      <button class="admin-tab-btn text-left px-4 py-2 rounded hover:bg-blue-100 dark:hover:bg-gray-700 transition" data-tab="users">👥 Users</button>
+      <button class="admin-tab-btn text-left px-4 py-2 rounded hover:bg-blue-100 dark:hover:bg-gray-700 transition" data-tab="ebooks">📚 eBooks</button>
+      <button class="admin-tab-btn text-left px-4 py-2 rounded hover:bg-blue-100 dark:hover:bg-gray-700 transition" data-tab="covers">🎨 Covers</button>
+      <button class="admin-tab-btn text-left px-4 py-2 rounded hover:bg-blue-100 dark:hover:bg-gray-700 transition" data-tab="credits">💳 Credits</button>
+      <button class="admin-tab-btn text-left px-4 py-2 rounded hover:bg-blue-100 dark:hover:bg-gray-700 transition" data-tab="logs">📄 Logs</button>
+      <button class="admin-tab-btn text-left px-4 py-2 rounded hover:bg-blue-100 dark:hover:bg-gray-700 transition" data-tab="metrics">📊 Metrics</button>
+      <button class="admin-tab-btn text-left px-4 py-2 rounded hover:bg-blue-100 dark:hover:bg-gray-700 transition" data-tab="settings">⚙️ Settings</button>
+    </nav>
+  </aside>
 
-  <!-- 📊 Top Metrics Summary -->
-  <div id="admin-metrics" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-10">
-    <!-- Filled dynamically -->
-  </div>
-
-  <!-- 🧭 Navigation Tabs -->
-  <div class="flex space-x-4 border-b mb-6 overflow-x-auto">
-    <button class="admin-tab-btn py-2 px-4 font-medium border-b-2 border-transparent" data-tab="users">👥 Users</button>
-    <button class="admin-tab-btn py-2 px-4 font-medium border-b-2 border-transparent" data-tab="ebooks">📚 eBooks</button>
-    <button class="admin-tab-btn py-2 px-4 font-medium border-b-2 border-transparent" data-tab="covers">🎨 Covers</button>
-    <button class="admin-tab-btn py-2 px-4 font-medium border-b-2 border-transparent" data-tab="credits">💳 Credits</button>
-    <button class="admin-tab-btn py-2 px-4 font-medium border-b-2 border-transparent" data-tab="logs">📜 Logs</button>
-    <button class="admin-tab-btn py-2 px-4 font-medium border-b-2 border-transparent" data-tab="settings">⚙️ Settings</button>
-  </div>
-
-  <!-- 🔍 Search Bar -->
-  <div id="admin-search-area" class="mb-4">
-    <!-- Optional: inject filters dynamically based on active tab -->
-  </div>
-
-  <!-- 📋 Active Tab Content -->
-  <div id="admin-tab-content">
-    <!-- Populated via JS modules -->
-  </div>
-</section>
+  <!-- 📦 Content Area -->
+  <main class="flex-1 p-6 overflow-y-auto">
+    <!-- Tab Containers -->
+    <div id="tab-users" class="admin-tab-content"></div>
+    <div id="tab-ebooks" class="admin-tab-content hidden"></div>
+    <div id="tab-covers" class="admin-tab-content hidden"></div>
+    <div id="tab-credits" class="admin-tab-content hidden"></div>
+    <div id="tab-logs" class="admin-tab-content hidden"></div>
+    <div id="tab-metrics" class="admin-tab-content hidden"></div>
+    <div id="tab-settings" class="admin-tab-content hidden"></div>
+  </main>
+</div>
 {% endblock %}
 
 {% block scripts %}
-<script type="module" src="/src/admin/admin.js"></script>
-<script type="module" src="/src/admin/admin-users.js"></script>
-<script type="module" src="/src/admin/admin-ebooks.js"></script>
-<script type="module" src="/src/admin/admin-covers.js"></script>
-<script type="module" src="/src/admin/admin-credits.js"></script>
-<script type="module" src="/src/admin/admin-logs.js"></script>
-<script type="module" src="/src/admin/admin-metrics.js"></script>
-<script type="module" src="/src/admin/admin-settings.js"></script>
+<script src="/src/admin/admin.js"></script>
 {% endblock %}
-
