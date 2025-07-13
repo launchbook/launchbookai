@@ -1,219 +1,198 @@
-<!-- 🔑 API Key Input -->
-<input id="openai_api_key" placeholder="Enter your OpenAI API Key" class="input-class">
-<span id="api_status"></span>
-<button id="clear_api_btn" class="hidden">❌</button>
+{% extends "base.njk" %}
 
-<!-- 📋 Main eBook Info -->
-<input id="titleInput" placeholder="Title" class="input-class" />
-<input id="topicInput" placeholder="Topic" class="input-class" />
-<input id="coverPromptInput" placeholder="Cover Prompt" class="input-class" />
+{% block title %}🚀 Generate eBook – LaunchBook AI{% endblock %}
 
-<!-- ✏️ Description & AI Guidance -->
-<textarea id="descInput" placeholder="What is this eBook about?" class="input-class"></textarea>
-<textarea id="ai_instructions" placeholder="Extra instructions for AI (e.g. include table, keep tone friendly)" class="input-class"></textarea>
+{% block content %}
+<div class="max-w-5xl mx-auto px-4 py-10 space-y-6">
 
-<!-- 🔗 Affiliate Link Setup -->
-<div class="mt-4 space-y-2" id="affiliateOptions">
-  <label class="block text-sm font-semibold text-gray-700">📌 Add Affiliate CTA</label>
-  <label class="text-sm flex items-center gap-2">
-    <input type="checkbox" id="include_affiliate_links" class="mr-1" />
-    Enable Affiliate CTA in eBook
+  <!-- 🔑 API Key Input -->
+  <div class="flex items-center gap-2">
+    <input id="openai_api_key" placeholder="Enter your OpenAI API Key" class="input-class">
+    <span id="api_status"></span>
+    <button id="clear_api_btn" class="hidden">❌</button>
+  </div>
+
+  <!-- 📋 Main eBook Info -->
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <input id="titleInput" placeholder="Title" class="input-class" />
+    <input id="topicInput" placeholder="Topic" class="input-class" />
+    <input id="coverPromptInput" placeholder="Cover Prompt" class="input-class" />
+  </div>
+
+  <!-- ✏️ Description & AI Instructions -->
+  <textarea id="descInput" placeholder="What is this eBook about?" class="input-class w-full"></textarea>
+  <textarea id="ai_instructions" placeholder="Extra instructions for AI" class="input-class w-full"></textarea>
+
+  <!-- 🔗 Affiliate Section -->
+  <div id="affiliateOptions" class="mt-4 space-y-2">
+    <label class="block text-sm font-semibold">📌 Add Affiliate CTA</label>
+    <label class="text-sm flex items-center gap-2">
+      <input type="checkbox" id="include_affiliate_links" class="mr-1" />
+      Enable Affiliate CTA in eBook
+    </label>
+    <div id="affiliateLinkFields" class="hidden space-y-2 mt-2">
+      <input id="affiliate_link_url" type="url" class="input-class" placeholder="Affiliate link (https://...)" />
+      <input id="affiliate_cta_label" type="text" class="input-class" placeholder="CTA Button Label" />
+      <input id="affiliate_keywords" type="text" class="input-class" placeholder="Trigger keywords" />
+    </div>
+  </div>
+
+  <!-- 🔘 Output Format & Language -->
+  <div class="flex flex-wrap gap-4 items-center">
+    <label><input type="radio" name="output_format" value="pdf" checked> PDF</label>
+    <label><input type="radio" name="output_format" value="epub"> EPUB</label>
+    <select id="language" name="language" class="border px-4 py-2 rounded" required>
+      <option value="">Select Language</option>
+      <option value="English">English</option>
+      <option value="Hindi">Hindi</option>
+      <option value="Spanish">Spanish</option>
+      <option value="French">French</option>
+      <option value="German">German</option>
+      <option value="Arabic">Arabic</option>
+      <option value="Portuguese">Portuguese</option>
+      <option value="Indonesian">Indonesian</option>
+      <option value="Bengali">Bengali</option>
+      <option value="Chinese">Chinese</option>
+    </select>
+  </div>
+
+  <!-- 🎯 Audience / Tone / Purpose -->
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+    <select id="audience" class="input-class" required>
+      <option value="">Select Audience</option>
+      <option>Kids</option><option>Teens</option><option>Students</option><option>Parents</option>
+      <option>Teachers</option><option>Professionals</option><option>Entrepreneurs</option>
+      <option>Freelancers</option><option>Experts</option><option>General Public</option>
+      <option>Hobbyists</option><option>Lifelong Learners</option>
+    </select>
+
+    <select id="tone" class="input-class" required>
+      <option value="">Select Tone</option>
+      <option>Friendly</option><option>Professional</option><option>Conversational</option>
+      <option>Persuasive</option><option>Inspirational</option><option>Humorous</option>
+      <option>Casual</option><option>Educational</option><option>Empathetic</option><option>Authoritative</option>
+    </select>
+
+    <select id="purpose" class="input-class" required>
+      <option value="">Select Purpose</option>
+      <option>Informative</option><option>Educational / Tutorial</option><option>Promotional / Affiliate</option>
+      <option>Storytelling</option><option>Lead Generation</option><option>Thought Leadership</option>
+      <option>Problem-Solving Guide</option><option>Awareness Building</option><option>Entertainment</option>
+    </select>
+  </div>
+
+  <!-- 💡 Auto Format Checkbox -->
+  <label class="flex items-center text-sm gap-2">
+    <input type="checkbox" id="autoFormatByAudience"> ✅ Auto Apply Default Formatting for Audience
   </label>
 
-  <div id="affiliateLinkFields" class="hidden space-y-2 mt-2">
-    <input id="affiliate_link_url" type="url" class="input-class" placeholder="Affiliate link (e.g. https://...)" />
-    <input id="affiliate_cta_label" type="text" class="input-class" placeholder="CTA Button Label (e.g. Buy Now)" />
-    <input id="affiliate_keywords" type="text" class="input-class" placeholder="Trigger keywords (comma-separated)" />
+  <!-- 🎨 Formatting Options -->
+  <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+    <select id="font_type"><option>Merriweather</option><option>Inter</option></select>
+    <select id="font_size"><option>12pt</option><option>14pt</option></select>
+    <select id="line_spacing"><option>1.5</option><option>2</option></select>
+    <select id="paragraph_spacing"><option>12px</option><option>18px</option></select>
+    <input id="margin_top" value="1in" class="input-class" />
+    <input id="margin_right" value="1in" class="input-class" />
+    <input id="margin_bottom" value="1in" class="input-class" />
+    <input id="margin_left" value="1in" class="input-class" />
+    <select id="page_size"><option>A4</option><option>Letter</option></select>
+    <select id="text_alignment"><option>justify</option><option>left</option></select>
+  </div>
+
+  <!-- 🖼️ Cover Image Options -->
+  <div class="text-center">
+    <img id="cover_preview" class="hidden w-full max-w-md mx-auto mb-2">
+    <div class="flex justify-center gap-3">
+      <button id="deleteCoverBtn" class="hidden">❌ Delete</button>
+      <button id="regenerateCoverBtn" class="hidden">♻️ Regenerate</button>
+      <label id="uploadCoverLabel" for="uploadCoverInput" class="cursor-pointer">📤 Upload</label>
+    </div>
+    <input type="file" id="uploadCoverInput" accept="image/*" class="hidden">
+  </div>
+
+  <!-- 🖼️ Image Count -->
+  <select id="image_count" class="input-class">
+    <option value="0">No Images</option>
+    <option value="2">2 Images</option>
+    <option value="5">5 Images</option>
+    <option value="10">10 Images</option>
+  </select>
+
+  <!-- 🌐 Input Type -->
+  <label><input type="radio" name="input_type" value="url" checked> URL to eBook</label>
+  <label><input type="radio" name="input_type" value="ai"> Generate via AI</label>
+  <input id="source_url" class="input-class" placeholder="Paste Article URL here" />
+
+  <!-- 🧮 Estimate + Buttons -->
+  <div id="credit-estimate-msg" class="text-sm italic text-gray-600 mt-2"></div>
+  <div class="flex flex-wrap gap-4 mt-3">
+    <button id="generateBtn" class="bg-blue-600 text-white px-4 py-2 rounded">🚀 Generate</button>
+    <button id="saveFormattingBtn" class="bg-gray-600 text-white px-4 py-2 rounded">💾 Save Formatting</button>
+    <button id="templateSelectBtn" class="bg-gray-100 border text-sm px-3 py-2 rounded hover:bg-gray-200">🎨 Choose Design Template</button>
+    <button onclick="createAnother()" class="bg-red-600 text-white px-4 py-2 rounded">📚 Create Another</button>
+  </div>
+
+  <!-- 📬 Email Section -->
+  <div class="mt-6 space-y-2">
+    <input id="recipientEmail" type="email" placeholder="Enter email" class="input-class">
+    <textarea id="emailMessage" placeholder="Add optional note..." class="input-class"></textarea>
+    <button id="sendEmailBtn" class="bg-blue-600 text-white px-4 py-2 rounded">📩 Send eBook</button>
+  </div>
+
+  <!-- 📖 Preview -->
+  <div id="ebook_preview_area" class="overflow-y-auto max-h-[600px] mt-6 border p-4 rounded"></div>
+
+  <!-- 🔄 Spinner -->
+  <div id="spinner" class="text-sm text-center mt-4 hidden">🔄 Generating...</div>
+
+  <!-- 🧾 Sticky Footer -->
+  <div class="sticky bottom-0 bg-white border-t shadow-inner p-3 flex justify-between items-center mt-6 z-10">
+    <a id="saveBtn" class="bg-green-600 text-white px-4 py-2 rounded hidden">⬇️ Save / Download</a>
+    <span id="creditBadge" class="text-sm text-gray-600 ml-auto"></span>
   </div>
 </div>
 
-<!-- 🔘 Output Format -->
-<label><input type="radio" name="output_format" value="pdf" checked> PDF</label>
-<label><input type="radio" name="output_format" value="epub"> EPUB</label>
-
-
-<!-- 🔘 language -->
-<select id="language" name="language" class="border px-4 py-2 rounded" required>
-  <option value="">Select Language</option>
-  <option value="English">English</option>
-  <option value="Hindi">Hindi</option>
-  <option value="Spanish">Spanish</option>
-  <option value="French">French</option>
-  <option value="German">German</option>
-  <option value="Arabic">Arabic</option>
-  <option value="Portuguese">Portuguese</option>
-  <option value="Indonesian">Indonesian</option>
-  <option value="Bengali">Bengali</option>
-  <option value="Chinese">Chinese</option>
-</select>
-
-<!-- 🎯 Audience -->
-<div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-<select id="audience" name="audience" class="border px-4 py-2 rounded" required>
-  <option value="">Select Audience</option>
-  <option>Kids</option>
-  <option>Teens</option>
-  <option>Students</option>
-  <option>Parents</option>
-  <option>Teachers</option>
-  <option>Professionals</option>
-  <option>Entrepreneurs</option>
-  <option>Freelancers</option>
-  <option>Experts</option>
-  <option>General Public</option>
-  <option>Hobbyists</option>
-  <option>Lifelong Learners</option>
-</select>
-
-  <label class="flex items-center text-sm gap-2 mt-2">
-  <input type="checkbox" id="autoFormatByAudience"> ✅ Auto Apply Default Formatting for Audience</label>
-
-<!-- 💬 Tone -->
-<select id="tone" name="tone" class="border px-4 py-2 rounded" required>
-  <option value="">Select Tone</option>
-  <option>Friendly</option>
-  <option>Professional</option>
-  <option>Conversational</option>
-  <option>Persuasive</option>
-  <option>Inspirational</option>
-  <option>Humorous</option>
-  <option>Casual</option>
-  <option>Educational</option>
-  <option>Empathetic</option>
-  <option>Authoritative</option>
-  <option>Story-based</option>
-</select>
-
-<!-- 🎯 Purpose -->
-<select id="purpose" name="purpose" class="border px-4 py-2 rounded" required>
-  <option value="">Select Purpose</option>
-  <option>Informative</option>
-  <option>Educational / Tutorial</option>
-  <option>Promotional / Affiliate</option>
-  <option>Storytelling</option>
-  <option>Lead Generation</option>
-  <option>Thought Leadership</option>
-  <option>Problem-Solving Guide</option>
-  <option>Awareness Building</option>
-  <option>Entertainment</option>
-</select>
-</div>
-
-
-<!-- 🎨 Formatting Options -->
-<select id="font_type"><option value="Merriweather">Merriweather</option><option value="Inter">Inter</option></select>
-<select id="font_size"><option value="12pt">12pt</option><option value="14pt">14pt</option></select>
-<select id="line_spacing"><option value="1.5">1.5</option><option value="2">2</option></select>
-<select id="paragraph_spacing"><option value="12px">12px</option><option value="18px">18px</option></select>
-<input id="margin_top" value="1in">
-<input id="margin_right" value="1in">
-<input id="margin_bottom" value="1in">
-<input id="margin_left" value="1in">
-<select id="page_size"><option value="A4">A4</option><option value="Letter">Letter</option></select>
-<select id="text_alignment"><option value="justify">Justify</option><option value="left">Left</option></select>
-
-<!-- 🖼️ Cover Section -->
-<img id="cover_preview" class="hidden w-full max-w-md mx-auto mb-2">
-<button id="deleteCoverBtn" class="hidden">❌ Delete Cover</button>
-<button id="regenerateCoverBtn" class="hidden">♻️ Regenerate Cover</button>
-<label id="uploadCoverLabel" for="uploadCoverInput" class="cursor-pointer">📤 Upload Cover</label>
-<input type="file" id="uploadCoverInput" accept="image/*" class="hidden">
-
-<!-- 📸 Image Count -->
-<select id="image_count">
-  <option value="0">No Images</option>
-  <option value="2">2 Images</option>
-  <option value="5">5 Images</option>
-  <option value="10">10 Images</option>
-</select>
-
-<!-- 🔘 Content Source Type -->
-<label><input type="radio" name="input_type" value="url" checked> URL to eBook</label>
-<label><input type="radio" name="input_type" value="ai"> Generate via AI</label>
-<input id="source_url" placeholder="Paste Article URL here" class="input-class">
-
-<!-- 🧮 Credit Estimate + Action Buttons -->
-<div id="credit-estimate-msg" class="mt-2 text-sm text-gray-600 italic"></div>
-<button id="generateBtn" class="bg-blue-600 text-white px-4 py-2 rounded mt-3">🚀 Generate</button>
-<button id="saveFormattingBtn" class="bg-gray-600 text-white px-4 py-2 rounded">💾 Save Formatting</button>
-<button id="templateSelectBtn" class="bg-gray-100 text-sm border rounded px-3 py-1 hover:bg-gray-200">🎨 Choose Design Template</button>
-<button onclick="createAnother()" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded mt-4">📚 Create Another eBook</button>
-
-
-<!-- 📬 Email Sending -->
-<input id="recipientEmail" type="email" placeholder="Enter email" class="input-class">
-<textarea id="emailMessage" placeholder="Add optional note..." class="input-class"></textarea>
-<button id="sendEmailBtn" class="bg-blue-600 text-white px-4 py-2 rounded">📩 Send eBook</button>
-
-<!-- 🧾 Sticky Footer (Download + Credit Badge) -->
-<div class="sticky bottom-0 bg-white shadow-inner p-3 flex gap-4 justify-between items-center border-t mt-6 z-10">
-  <a id="saveBtn" class="bg-green-600 text-white px-4 py-2 rounded hidden">⬇️ Save / Download</a>
-  <span id="creditBadge" class="text-sm text-gray-600 ml-auto"></span>
-</div>
-
-<!-- 🔄 Spinner -->
-<div id="spinner" class="hidden text-center text-sm mt-4">🔄 Generating...</div>
-
-<!-- 📖 Preview Area -->
-<div id="ebook_preview_area" class="overflow-y-auto max-h-[600px] mt-6 border p-4 rounded"></div>
-
-<!-- 🧩 Template Preview Placeholder (Optional) -->
-<div id="template-preview-area" class="grid grid-cols-2 gap-4 mt-4"></div>
-
-<!-- ♻️ Example Regens (Static Example Only) -->
-<img data-image-id="img123" src="..." />
-<button class="regen-img-btn" data-image-id="img123">♻️ Regenerate</button>
-<div data-block-id="block456">Some paragraph...</div>
-<button class="regen-text-btn" data-block-id="block456">♻️ Regenerate</button>
-
-<!-- 🎨 Template Picker Modal -->
+<!-- 🎨 Modal -->
 <div id="templateModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
   <div class="bg-white p-6 rounded-lg shadow-lg w-full max-w-5xl">
     <div class="flex justify-between items-center mb-4">
       <h2 class="text-xl font-bold">Choose Your Design Template</h2>
       <button onclick="document.getElementById('templateModal').classList.add('hidden')" class="text-gray-500 hover:text-red-600">✖</button>
     </div>
-
-    <!-- Preview Grid -->
     <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-      <!-- Template Card Example -->
-      <div class="template-card border rounded-lg overflow-hidden shadow group hover:ring-2 hover:ring-blue-500 cursor-pointer" data-template-id="template-classic">
+      <!-- Example Cards -->
+      <div class="template-card group hover:ring-2 hover:ring-blue-500 border rounded-lg shadow cursor-pointer" data-template-id="template-classic">
         <img src="/templates/classic-preview.png" class="w-full h-48 object-cover">
-        <div class="p-3">
-          <p class="font-semibold text-center">📘 Classic</p>
-          <p class="text-sm text-center text-gray-500 group-[data-selected='true']:text-green-600 hidden">✅ Selected</p>
+        <div class="p-3 text-center">
+          <p class="font-semibold">📘 Classic</p>
+          <p class="text-sm text-gray-500 group-[data-selected='true']:text-green-600 hidden">✅ Selected</p>
         </div>
       </div>
-
-      <div class="template-card border rounded-lg overflow-hidden shadow group hover:ring-2 hover:ring-blue-500 cursor-pointer" data-template-id="template-modern">
+      <div class="template-card group hover:ring-2 hover:ring-blue-500 border rounded-lg shadow cursor-pointer" data-template-id="template-modern">
         <img src="/templates/modern-preview.png" class="w-full h-48 object-cover">
-        <div class="p-3">
-          <p class="font-semibold text-center">🧑‍💻 Modern</p>
-          <p class="text-sm text-center text-gray-500 group-[data-selected='true']:text-green-600 hidden">✅ Selected</p>
+        <div class="p-3 text-center">
+          <p class="font-semibold">🧑‍💻 Modern</p>
+          <p class="text-sm text-gray-500 group-[data-selected='true']:text-green-600 hidden">✅ Selected</p>
         </div>
       </div>
-
-      <div class="template-card border rounded-lg overflow-hidden shadow group hover:ring-2 hover:ring-blue-500 cursor-pointer" data-template-id="template-elegant">
+      <div class="template-card group hover:ring-2 hover:ring-blue-500 border rounded-lg shadow cursor-pointer" data-template-id="template-elegant">
         <img src="/templates/elegant-preview.png" class="w-full h-48 object-cover">
-        <div class="p-3">
-          <p class="font-semibold text-center">💎 Elegant</p>
-          <p class="text-sm text-center text-gray-500 group-[data-selected='true']:text-green-600 hidden">✅ Selected</p>
+        <div class="p-3 text-center">
+          <p class="font-semibold">💎 Elegant</p>
+          <p class="text-sm text-gray-500 group-[data-selected='true']:text-green-600 hidden">✅ Selected</p>
         </div>
       </div>
     </div>
-
-    <!-- Footer Actions -->
     <div class="mt-6 flex justify-end gap-3">
       <button id="applyTemplateBtn" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded">Apply</button>
       <button onclick="document.getElementById('templateModal').classList.add('hidden')" class="text-gray-600 hover:underline">Cancel</button>
     </div>
   </div>
 </div>
+{% endblock %}
 
-<!-- Trigger Button Anywhere -->
-<button id="templateSelectBtn" class="bg-gray-100 text-sm border rounded px-3 py-1 hover:bg-gray-200">🎨 Choose Design Template</button>
-
-<!-- ✅ Final Scripts -->
+{% block scripts %}
 <script src="/frontend/utils.js"></script>
 <script src="/frontend/credit.js"></script>
 <script src="/frontend/generate.js"></script>
@@ -224,10 +203,11 @@
 <script src="/frontend/security.js"></script>
 
 <script>
-  window.addEventListener("DOMContentLoaded", async () => {
+  window.addEventListener("DOMContentLoaded", () => {
     if (typeof initGenerator === "function") initGenerator();
     if (typeof initRegenHandlers === "function") initRegenHandlers();
     if (typeof setupTemplatePicker === "function") setupTemplatePicker();
     if (typeof initEmailSender === "function") initEmailSender();
   });
 </script>
+{% endblock %}
