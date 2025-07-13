@@ -3,7 +3,7 @@
 {% block title %}📊 My Dashboard – LaunchBook AI{% endblock %}
 
 {% block content %}
-<!-- 🔝 Header with Avatar Dropdown -->
+<!-- 🔝 Avatar Header -->
 <header class="bg-white dark:bg-gray-800 shadow-sm sticky top-0 z-50 px-4 py-3 flex justify-between items-center">
   <a href="/" class="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 via-indigo-500 to-purple-600">LaunchBook AI</a>
   <div class="relative">
@@ -21,16 +21,12 @@
 </header>
 
 <!-- 📊 Summary Cards -->
-<section class="max-w-6xl mx-auto px-4 py-6" id="summary-cards">
-  <!-- Filled by JS -->
-</section>
+<section class="max-w-6xl mx-auto px-4 py-6" id="summary-cards"></section>
 
 <!-- 📱 Mobile Credit Badge -->
-<div id="mobile-credit-badge" class="fixed bottom-4 right-4 bg-blue-600 text-white text-sm px-4 py-2 rounded-full shadow-md block md:hidden hidden">
-  <!-- Filled by JS -->
-</div>
+<div id="mobile-credit-badge" class="fixed bottom-4 right-4 bg-blue-600 text-white text-sm px-4 py-2 rounded-full shadow-md block md:hidden hidden"></div>
 
-<!-- 📑 Tabs -->
+<!-- 📑 Tabs Section -->
 <div class="max-w-6xl mx-auto px-4">
   <div class="flex space-x-4 border-b mb-4">
     <button class="tab-btn py-2 px-4 font-medium border-b-2 border-transparent" data-tab="ebooks">📚 My eBooks</button>
@@ -40,7 +36,7 @@
     <button class="tab-btn py-2 px-4 font-medium border-b-2 border-transparent" data-tab="settings">⚙️ Settings</button>
   </div>
 
-  <!-- 🔍 Search & Filter Bar -->
+  <!-- 🔍 Search + Filter -->
   <div class="flex flex-wrap gap-4 items-center mb-4">
     <input id="searchTitle" type="text" placeholder="🔎 Search title..." class="w-full sm:w-48 px-3 py-2 rounded border dark:bg-gray-800 dark:border-gray-600" />
     <select id="filterFormat" class="px-3 py-2 rounded border dark:bg-gray-800 dark:border-gray-600">
@@ -61,11 +57,11 @@
     <button id="nextPage" class="text-blue-600 hover:underline" disabled>Next ➡</button>
   </div>
 
-  <!-- 👇 eBook Table Render -->
+  <!-- 📝 Rendered Table -->
   <div id="ebook-table-container"></div>
 </div>
 
-<!-- ✅ Other Tabs -->
+<!-- 🔁 Tab Panes -->
 <div id="tab-covers" class="tab-pane hidden"></div>
 <div id="tab-logs" class="tab-pane hidden"></div>
 <div id="tab-presets" class="tab-pane hidden"></div>
@@ -73,22 +69,22 @@
 {% endblock %}
 
 {% block scripts %}
-<!-- ✅ Global Scripts (loaded in base.njk before this block) -->
+<!-- ✅ Dashboard Scripts -->
 <script type="module" src="/src/frontend/my-dashboard.js"></script>
-<script src="/src/frontend/generate.js"></script>
-<script src="/src/frontend/email.js"></script>
-<script src="/src/frontend/regen.js"></script>
-<script src="/src/frontend/cover.js"></script>
-<script src="/src/frontend/credits.js"></script>
+<script type="module" src="/src/frontend/generate.js"></script>
+<script type="module" src="/src/frontend/email.js"></script>
+<script type="module" src="/src/frontend/regen.js"></script>
+<script type="module" src="/src/frontend/cover.js"></script>
+<script type="module" src="/src/frontend/credits.js"></script>
 
-<!-- 🧠 Avatar dropdown toggle -->
+<!-- 🔃 Avatar Dropdown Toggle -->
 <script>
   const avatarBtn = document.getElementById("avatarBtn");
   const avatarMenu = document.getElementById("avatarMenu");
   avatarBtn?.addEventListener("click", () => avatarMenu.classList.toggle("hidden"));
 </script>
 
-<!-- 📦 Supabase init -->
+<!-- 🔌 Supabase Init -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
   window.supabase = supabase.createClient(
