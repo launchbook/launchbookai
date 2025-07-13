@@ -152,6 +152,46 @@ function setupGenerateHandler() {
 
       generatedContent = result;
       renderPreview(result);
+      
+  const savePayload = {
+  user_id: currentUser.id,
+  title,
+  source_url: url || null,
+  topic: payload.topic,
+  description: payload.description,
+  author_name: currentUser.email,
+  audience: payload.audience,
+  tone: payload.tone,
+  purpose: payload.purpose,
+  language: payload.language,
+  font_type: payload.formatting.font_type,
+  font_size: payload.formatting.font_size,
+  line_spacing: parseFloat(payload.formatting.line_spacing),
+  paragraph_spacing: parseFloat(payload.formatting.paragraph_spacing),
+  text_alignment: payload.formatting.text_alignment,
+  page_size: payload.formatting.page_size,
+  margin_top: parseFloat(payload.formatting.margin_top),
+  margin_bottom: parseFloat(payload.formatting.margin_bottom),
+  margin_left: parseFloat(payload.formatting.margin_left),
+  margin_right: parseFloat(payload.formatting.margin_right),
+  cover_url: payload.cover_url,
+  cover_image_type: "user", // or "ai" if you're tracking that separately
+  cover_image_path: "",     // optional
+  output_format: payload.output_format,
+  with_images: imageCount > 0,
+  include_affiliate_links: !!payload.affiliate,
+  affiliate_label: payload.affiliate?.label || null,
+  affiliate_url: payload.affiliate?.url || null,
+  affiliate_keywords: payload.affiliate?.keywords || [],
+  template_class: payload.template_class || "",
+};
+
+const { error } = await supabase.from("ebooks").insert([savePayload]);
+if (error) {
+  console.warn("❌ Failed to save eBook:", error.message);
+} else {
+  console.log("✅ eBook saved to Supabase");
+}
 
       await logUsage(currentUser.id, currentUser.email, url ? "generate_from_url" : (format === "epub" ? "generate_epub" : "generate_pdf"), {
         pages: result.total_pages,
