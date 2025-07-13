@@ -167,3 +167,41 @@ function showToast(msg, type = "success") {
   document.body.appendChild(t);
   setTimeout(() => t.remove(), 3000);
 }
+
+document.getElementById("applyTemplateBtn").addEventListener("click", async () => {
+  const selected = document.querySelector(".template-card[data-selected='true']");
+  if (!selected) return alert("❌ Please select a template");
+
+  const templateClass = selected.dataset.templateId;
+  window.selectedTemplateClass = templateClass;
+
+  // ✅ Load template from Supabase
+  const { data, error } = await supabase
+    .from("templates")
+    .select("*")
+    .eq("template_class", templateClass)
+    .single();
+
+  if (error) {
+    console.warn("❌ Failed to fetch template:", error.message);
+  } else if (data) {
+    // Optional: apply default font
+    if (!document.getElementById("font_type").value)
+      document.getElementById("font_type").value = data.default_font;
+
+    // Optional: load CSS
+    if (data.default_css) {
+      const styleTag = document.getElementById("template-css") || document.createElement("style");
+      styleTag.id = "template-css";
+      styleTag.innerHTML = data.default_css;
+      document.head.appendChild(styleTag);
+    }
+
+    // Optional: store structure if needed later
+    window.templateStructure = data.html_structure;
+  }
+
+  document.getElementById("templateModal").classList.add("hidden");
+  showToast("✅ Template applied");
+});
+
