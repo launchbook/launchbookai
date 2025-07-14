@@ -30,6 +30,28 @@
     <div id="tab-settings" class="admin-tab-content hidden"></div>
   </main>
 </div>
+
+<!-- 📜 Logs Modal -->
+<div id="userLogsModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center">
+  <div class="bg-white dark:bg-gray-800 p-6 rounded shadow w-full max-w-3xl max-h-[90vh] overflow-y-auto">
+    <h2 class="text-lg font-bold mb-4">📜 User Logs</h2>
+    <div id="userLogsContent" class="text-sm"></div>
+    <div class="text-right mt-4">
+      <button id="closeLogsBtn" class="text-gray-600 hover:underline">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- 📊 Credit History Modal -->
+<div id="creditHistoryModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center">
+  <div class="bg-white dark:bg-gray-800 p-6 rounded shadow w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+    <h2 class="text-lg font-bold mb-4">📊 Credit History</h2>
+    <div id="creditHistoryContent" class="text-sm"></div>
+    <div class="text-right mt-4">
+      <button id="closeCreditHistoryBtn" class="text-gray-600 hover:underline">Close</button>
+    </div>
+  </div>
+</div>
 {% endblock %}
 
 {% block scripts %}
