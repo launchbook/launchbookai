@@ -23,12 +23,23 @@ window.AdminModules["users"] = {
       container.innerHTML = `
         <div class="mb-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
           <input id="userSearchInput" type="text" placeholder="🔍 Search by name, email or ID..." class="w-full md:w-96 px-4 py-2 border rounded dark:bg-gray-800 dark:border-gray-600" />
-          <div class="flex gap-2">
-            <input type="date" id="userStartDate" class="px-2 py-1 border rounded text-sm dark:bg-gray-800 dark:border-gray-600" />
-            <input type="date" id="userEndDate" class="px-2 py-1 border rounded text-sm dark:bg-gray-800 dark:border-gray-600" />
-            <button id="exportCsvBtn" class="text-sm bg-gray-200 dark:bg-gray-700 px-3 py-1 rounded">📤 Export CSV</button>
-            <button id="openAddUserModal" class="bg-blue-600 text-white px-4 py-2 rounded text-sm">➕ Add User</button>
-          </div>
+          <div class="flex flex-wrap gap-2">
+  <input type="date" id="userStartDate" class="px-2 py-1 border rounded text-sm dark:bg-gray-800 dark:border-gray-600" />
+  <input type="date" id="userEndDate" class="px-2 py-1 border rounded text-sm dark:bg-gray-800 dark:border-gray-600" />
+  <td class="p-2 text-center">
+  <select data-plan="${user.plan || ''}" data-user-id="${user.id}" class="plan-select text-xs px-2 py-1 rounded capitalize dark:bg-gray-800 dark:border-gray-600 border">
+    <option value="">Select Plan</option>
+    <option value="starter" ${user.plan === "starter" ? "selected" : ""}>Starter</option>
+    <option value="growth" ${user.plan === "growth" ? "selected" : ""}>Growth</option>
+    <option value="pro" ${user.plan === "pro" ? "selected" : ""}>Pro</option>
+    <option value="agency" ${user.plan === "agency" ? "selected" : ""}>Agency</option>
+  </select>
+</td>
+
+  <button id="exportCsvBtn" class="text-sm bg-gray-200 dark:bg-gray-700 px-3 py-1 rounded">📤 Export CSV</button>
+  <button id="openAddUserModal" class="bg-blue-600 text-white px-4 py-2 rounded text-sm">➕ Add User</button>
+</div>
+
         </div>
 
         <div class="overflow-auto border rounded">
@@ -43,6 +54,7 @@ window.AdminModules["users"] = {
                 <th class="p-2 text-center">Activity</th>
                 <th class="p-2 text-center">Joined</th>
                 <th class="p-2 text-center">Actions</th>
+                <th class="p-2 text-center">Plan</th>
               </tr>
             </thead>
             <tbody id="userTableBody" class="divide-y dark:divide-gray-700">
@@ -94,6 +106,15 @@ window.AdminModules["users"] = {
           </div>
         </div>
       `;
+// 📌 Plan Filter
+document.getElementById("planFilter").addEventListener("change", () => {
+  const selected = document.getElementById("planFilter").value;
+  container.querySelectorAll("tbody tr").forEach(row => {
+    const plan = (row.querySelector("[data-plan]")?.dataset.plan || "").toLowerCase();
+    const match = selected === "all" || plan === selected;
+    row.style.display = match ? "" : "none";
+  });
+});
 
       // 🔍 Search
       document.getElementById("userSearchInput").addEventListener("input", e => {
@@ -127,6 +148,27 @@ window.AdminModules["users"] = {
           alert("✅ Name updated.");
         });
       });
+      // 📝 Plan Change Handler
+container.querySelectorAll(".plan-select").forEach(select => {
+  select.addEventListener("change", async () => {
+    const userId = select.dataset.userId;
+    const newPlan = select.value;
+
+    const { error } = await supabase
+      .from("users")
+      .update({ plan: newPlan })
+      .eq("id", userId);
+
+    if (error) {
+      alert("❌ Failed to update plan.");
+      return;
+    }
+
+    select.dataset.plan = newPlan;
+    alert(`✅ Plan updated to ${newPlan}`);
+  });
+});
+
 
       // ➕ Add Credits
       container.querySelectorAll(".add-credit-btn").forEach(btn => {
@@ -351,6 +393,17 @@ window.AdminModules["users"] = {
                   <td class="p-2 text-center">${user.logs?.length || 0}</td>
                   <td class="p-2 text-center">${new Date(user.created_at).toLocaleDateString()}</td>
                   <td class="p-2 text-center space-x-2">
+        <td class="p-2 text-center">
+  <span class="text-xs font-semibold px-2 py-1 rounded-full capitalize
+    ${user.plan === 'starter' ? 'bg-blue-100 text-blue-700' :
+      user.plan === 'growth' ? 'bg-green-100 text-green-700' :
+      user.plan === 'pro' ? 'bg-orange-100 text-orange-700' :
+      user.plan === 'agency' ? 'bg-purple-100 text-purple-700' :
+      'bg-gray-100 text-gray-700'}">
+    ${user.plan || 'N/A'}
+  </span>
+</td>
+
                     <button class="save-name-btn text-blue-600 hover:underline text-xs">💾 Save</button>
                     <button class="add-credit-btn text-green-600 hover:underline text-xs">➕ Credits</button>
                     <button class="view-logs-btn text-purple-600 hover:underline text-xs">📜 Logs</button>
@@ -400,38 +453,140 @@ window.AdminModules["users"] = {
         </div>
       ;
 
-      document.querySelectorAll(".view-credits-btn").forEach(btn => {
-        btn.addEventListener("click", async () => {
-          const userId = btn.closest("tr").dataset.userId;
-          const { data: logs, error } = await supabase
-            .from("credits_log")
-            .select("*")
-            .eq("user_id", userId)
-            .order("created_at", { ascending: false });
+      const supabase = window.supabase;
 
-          if (error) return alert("❌ Failed to fetch credit history.");
+document.querySelectorAll(".view-credits-btn").forEach(btn => {
+  btn.addEventListener("click", () => {
+    const userId = btn.closest("tr").dataset.userId;
+    window.AdminModules["users"].openCreditHistory(userId);
 
-          const added = logs.filter(l => l.amount > 0).reduce((sum, l) => sum + l.amount, 0);
-          const used = logs.filter(l => l.amount < 0).reduce((sum, l) => sum + l.amount, 0);
+    // Show modal early with loading state
+    const modal = document.getElementById("creditHistoryModal");
+    const content = document.getElementById("creditHistoryContent");
+    content.innerHTML = `<p class="text-sm text-gray-500 italic">Loading...</p>`;
+    modal.classList.remove("hidden");
 
-          const summary = <div class="mb-2 text-sm text-gray-700 dark:text-gray-300">
-            Total Added: <strong class="text-green-600">${added}</strong><br>
-            Total Used: <strong class="text-red-600">${used}</strong>
-          </div>;
+    const { data: logs, error } = await supabase
+      .from("credits_log")
+      .select("*")
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false });
 
-          const logContent = logs.map(log => <div class="py-1 border-b dark:border-gray-700">[${new Date(log.created_at).toLocaleString()}] ${log.amount > 0 ? '➕' : '➖'} ${log.amount} (${log.reason})</div>).join("");
-
-          document.getElementById("creditHistoryContent").innerHTML = summary + (logContent || <p class="text-sm italic text-gray-500">No credit history found.</p>);
-          document.getElementById("creditHistoryModal").classList.remove("hidden");
-        });
-      });
-
-      document.getElementById("closeCreditHistoryBtn").addEventListener("click", () => {
-        document.getElementById("creditHistoryModal").classList.add("hidden");
-      });
-
-    } catch (err) {
-      container.innerHTML = `<p class="text-red-600">❌ Error loading users: ${err.message}</p>`;
+    if (error) {
+      content.innerHTML = `<p class="text-red-600">❌ Failed to fetch credit history.</p>`;
+      return;
     }
+
+    const added = logs.filter(l => l.amount > 0).reduce((sum, l) => sum + l.amount, 0);
+    const used = logs.filter(l => l.amount < 0).reduce((sum, l) => sum + l.amount, 0);
+    const remaining = added + used;
+
+    const summary = `
+      <div class="mb-2 text-sm text-gray-700 dark:text-gray-300">
+        Total Added: <strong class="text-green-600">${added}</strong><br>
+        Total Used: <strong class="text-red-600">${used}</strong><br>
+        Total Remaining: <strong class="text-blue-600">${remaining}</strong>
+      </div>
+    `;
+
+    const logContent = logs.map(log => `
+      <div class="py-1 border-b dark:border-gray-700">
+        [${new Date(log.created_at).toLocaleString()}] 
+        ${log.amount > 0 ? '➕' : '➖'} ${log.amount} 
+        (${log.reason})
+      </div>
+    `).join("");
+
+    content.innerHTML = summary + (logs.length ? logContent : `<p class="italic text-gray-500">No credit activity yet.</p>`);
+  });
+});
+
+document.getElementById("closeCreditHistoryBtn").addEventListener("click", () => {
+  document.getElementById("creditHistoryModal").classList.add("hidden");
+});
+// ✅ Expose modal opener (from other panels like global Credits tab)
+window.AdminModules["users"].openCreditHistory = async function (userId) {
+  const supabase = window.supabase;
+  const modal = document.getElementById("creditHistoryModal");
+  const content = document.getElementById("creditHistoryContent");
+
+  content.innerHTML = `<p class="text-sm text-gray-500 italic">Loading...</p>`;
+  modal.classList.remove("hidden");
+
+  const { data: logs, error } = await supabase
+    .from("credits_log")
+    .select("*")
+    .eq("user_id", userId)
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    content.innerHTML = `<p class="text-red-600">❌ Failed to fetch credit history.</p>`;
+    return;
   }
-}; 
+
+  const added = logs.filter(l => l.amount > 0).reduce((sum, l) => sum + l.amount, 0);
+  const used = logs.filter(l => l.amount < 0).reduce((sum, l) => sum + l.amount, 0);
+  const remaining = added + used;
+
+  // 🧠 Store logs in DOM for filtering
+  modal.dataset.logs = JSON.stringify(logs);
+
+  const filterUI = `
+    <div class="mb-3 flex flex-col md:flex-row md:items-center gap-2 text-sm">
+      <input id="creditHistorySearch" type="text" placeholder="🔍 Filter by reason or amount..." class="w-full md:w-80 px-3 py-1 border rounded dark:bg-gray-800 dark:border-gray-600" />
+      <select id="creditTypeFilter" class="px-3 py-1 border rounded dark:bg-gray-800 dark:border-gray-600">
+        <option value="all">All</option>
+        <option value="added">➕ Added Only</option>
+        <option value="used">➖ Used Only</option>
+      </select>
+    </div>
+  `;
+
+  const summary = `
+    <div class="mb-2 text-sm text-gray-700 dark:text-gray-300">
+      Total Added: <strong class="text-green-600">${added}</strong><br>
+      Total Used: <strong class="text-red-600">${used}</strong><br>
+      Total Remaining: <strong class="text-blue-600">${remaining}</strong>
+    </div>
+  `;
+
+  const renderLogs = (logsToRender) => {
+    return logsToRender.map(log => `
+      <div class="py-1 border-b dark:border-gray-700">
+        [${new Date(log.created_at).toLocaleString()}] 
+        ${log.amount > 0 ? '➕' : '➖'} ${log.amount} 
+        (${log.reason})
+      </div>
+    `).join("") || `<p class="italic text-gray-500">No credit activity yet.</p>`;
+  };
+
+  // Initial render
+  content.innerHTML = filterUI + summary + `<div id="creditLogFiltered">${renderLogs(logs)}</div>`;
+
+  // ✅ Filters
+  const applyFilter = () => {
+    const allLogs = JSON.parse(modal.dataset.logs || "[]");
+    const keyword = document.getElementById("creditHistorySearch").value.toLowerCase();
+    const type = document.getElementById("creditTypeFilter").value;
+
+    const filtered = allLogs.filter(log => {
+      const matchKeyword = log.reason?.toLowerCase().includes(keyword) || String(log.amount).includes(keyword);
+      const matchType =
+        type === "all" ||
+        (type === "added" && log.amount > 0) ||
+        (type === "used" && log.amount < 0);
+      return matchKeyword && matchType;
+    });
+
+    document.getElementById("creditLogFiltered").innerHTML = renderLogs(filtered);
+  };
+
+  document.getElementById("creditHistorySearch").addEventListener("input", applyFilter);
+  document.getElementById("creditTypeFilter").addEventListener("change", applyFilter);
+};
+
+// Close Modal
+document.getElementById("closeCreditHistoryBtn").addEventListener("click", () => {
+  document.getElementById("creditHistoryModal").classList.add("hidden");
+});
+
