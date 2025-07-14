@@ -589,4 +589,116 @@ window.AdminModules["users"].openCreditHistory = async function (userId) {
 document.getElementById("closeCreditHistoryBtn").addEventListener("click", () => {
   document.getElementById("creditHistoryModal").classList.add("hidden");
 });
+window.AdminModules = window.AdminModules || {};
+window.AdminModules["users"] = {
+  init: async function (container) {
+    const supabase = window.supabase;
+    container.innerHTML = `<p class="text-sm text-gray-600 mb-4">Loading users...</p>`;
+
+    const { data: users, error } = await supabase
+      .from("users")
+      .select("id, email, created_at, blocked")
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      container.innerHTML = `<p class="text-red-600">❌ Failed to load users: ${error.message}</p>`;
+      return;
+    }
+
+    container.innerHTML = `
+      <table class="w-full text-sm">
+        <thead>
+          <tr class="border-b">
+            <th class="text-left py-2">Email</th>
+            <th class="text-left py-2">Joined</th>
+            <th class="text-left py-2">Blocked?</th>
+            <th class="text-left py-2">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${users.map(user => `
+            <tr class="border-b">
+              <td class="py-2">${user.email}</td>
+              <td class="py-2">${new Date(user.created_at).toLocaleDateString()}</td>
+              <td class="py-2">${user.blocked ? '🚫 Yes' : '✅ No'}</td>
+              <td class="py-2 space-x-2">
+                <button class="text-blue-600 text-xs" data-view-credits="${user.id}">📊 Credit History</button>
+                <button class="text-red-600 text-xs" data-block="${user.id}">🚫 Block</button>
+                <button class="text-green-600 text-xs" data-unblock="${user.id}">✅ Unblock</button>
+              </td>
+            </tr>
+          `).join("")}
+        </tbody>
+      </table>
+
+      <div id="creditModal" class="fixed inset-0 hidden items-center justify-center bg-black bg-opacity-50 z-50">
+        <div class="bg-white dark:bg-gray-900 p-6 rounded shadow-lg max-w-lg w-full">
+          <h3 class="text-lg font-semibold mb-4">📊 Credit History</h3>
+          <div id="creditLogsContent" class="text-sm max-h-[400px] overflow-y-auto"></div>
+          <button id="closeCreditModal" class="mt-4 px-4 py-2 bg-gray-700 text-white rounded">Close</button>
+        </div>
+      </div>
+    `;
+
+    // Manual block logic
+    container.querySelectorAll("[data-block]").forEach(btn => {
+      btn.addEventListener("click", async () => {
+        const id = btn.dataset.block;
+        await supabase.from("users").update({ blocked: true }).eq("id", id);
+        await supabase.from("blocked_logs").insert({
+          user_id: id,
+          reason: "Manual block from admin panel",
+          triggered_by: "manual"
+        });
+        alert("🚫 User blocked");
+        location.reload();
+      });
+    });
+
+    container.querySelectorAll("[data-unblock]").forEach(btn => {
+      btn.addEventListener("click", async () => {
+        const id = btn.dataset.unblock;
+        await supabase.from("users").update({ blocked: false }).eq("id", id);
+        alert("✅ User unblocked");
+        location.reload();
+      });
+    });
+
+    // Credit history view
+    container.querySelectorAll("[data-view-credits]").forEach(btn => {
+      btn.addEventListener("click", async () => {
+        const id = btn.dataset.viewCredits;
+        const modal = document.getElementById("creditModal");
+        const content = document.getElementById("creditLogsContent");
+        modal.classList.remove("hidden");
+        content.innerHTML = "Loading...";
+
+        const { data: logs } = await supabase
+          .from("credits_log")
+          .select("created_at, credits_used, action")
+          .eq("user_id", id)
+          .order("created_at", { ascending: false })
+          .limit(100);
+
+        if (logs?.length) {
+          content.innerHTML = `
+            <ul class="list-disc pl-5 space-y-1">
+              ${logs.map(log => `
+                <li>
+                  ${new Date(log.created_at).toLocaleString()}: <strong>${log.credits_used}</strong> credits used for <code>${log.action}</code>
+                </li>
+              `).join("")}
+            </ul>
+          `;
+        } else {
+          content.textContent = "No logs found.";
+        }
+      });
+    });
+
+    document.getElementById("closeCreditModal").addEventListener("click", () => {
+      document.getElementById("creditModal").classList.add("hidden");
+    });
+  }
+};
 
