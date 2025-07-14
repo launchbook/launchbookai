@@ -1,8 +1,9 @@
-// src/admin/admin-covers.js
-
 window.AdminModules = window.AdminModules || {};
+
 window.AdminModules["covers"] = {
   init: async function (container) {
+    if (await window.utils.checkIfBlocked()) return;
+
     container.innerHTML = `<p class="text-sm text-gray-600 mb-4">Loading covers...</p>`;
     const supabase = window.supabase;
 
