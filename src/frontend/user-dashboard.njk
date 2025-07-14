@@ -23,6 +23,17 @@
 <!-- 📊 Summary Cards -->
 <section class="max-w-6xl mx-auto px-4 py-6" id="summary-cards"></section>
 
+<!-- 💳 Buy Extra Credits -->
+<section class="max-w-6xl mx-auto px-4 py-6">
+  <h2 class="text-lg font-semibold mb-3">💳 Buy Extra Credits</h2>
+  <div class="flex gap-4 flex-wrap">
+    <button class="bg-green-600 text-white px-4 py-2 rounded" data-buy-credits="5000">Buy 5,000 Credits</button>
+    <button class="bg-blue-600 text-white px-4 py-2 rounded" data-buy-credits="10000">Buy 10,000 Credits</button>
+    <button class="bg-purple-600 text-white px-4 py-2 rounded" data-buy-credits="25000">Buy 25,000 Credits</button>
+  </div>
+</section>
+
+
 <!-- 📱 Mobile Credit Badge -->
 <div id="mobile-credit-badge" class="fixed bottom-4 right-4 bg-blue-600 text-white text-sm px-4 py-2 rounded-full shadow-md block md:hidden hidden"></div>
 
@@ -76,6 +87,8 @@
 <script type="module" src="/src/frontend/regen.js"></script>
 <script type="module" src="/src/frontend/cover.js"></script>
 <script type="module" src="/src/frontend/credits.js"></script>
+<script type="module" src="/src/frontend/buy-credits.js"></script>
+
 
 <!-- 🔃 Avatar Dropdown Toggle -->
 <script>
