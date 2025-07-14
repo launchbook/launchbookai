@@ -76,44 +76,47 @@ window.AdminModules["credits"] = {
       });
 
       // 📊 View credit history
-      container.querySelectorAll(".view-credits-btn").forEach(btn => {
-        btn.addEventListener("click", () => {
-          const userId = btn.dataset.userId;
-          const email = btn.dataset.email;
-          window.showCreditHistoryModal(userId, email);
-        });
-      });
+     // 🧠 Core logic: adjust and log
+async function adjustUserCredits(userId, delta, note = "") {
+  const { data: userData, error: fetchErr } = await supabase
+    .from("users")
+    .select("credits, email")
+    .eq("id", userId)
+    .single();
 
-      // 🧠 Core logic: adjust and log
-      async function adjustUserCredits(userId, delta, note = "") {
-        const { data: userData, error: fetchErr } = await supabase
-          .from("users")
-          .select("credits")
-          .eq("id", userId)
-          .single();
+  if (fetchErr) return alert("❌ Failed to fetch user credits.");
+  const newCredit = Math.max((userData.credits || 0) + delta, 0);
 
-        if (fetchErr) return alert("❌ Failed to fetch user credits.");
-        const newCredit = Math.max((userData.credits || 0) + delta, 0);
+  const { error: updateErr } = await supabase
+    .from("users")
+    .update({ credits: newCredit })
+    .eq("id", userId);
 
-        const { error: updateErr } = await supabase
-          .from("users")
-          .update({ credits: newCredit })
-          .eq("id", userId);
+  if (updateErr) return alert("❌ Failed to update credits.");
 
-        if (updateErr) return alert("❌ Failed to update credits.");
+  await supabase.from("credit_logs").insert({
+    user_id: userId,
+    delta,
+    new_balance: newCredit,
+    note: note || null
+  });
 
-        await supabase.from("credit_logs").insert({
-          user_id: userId,
-          delta,
-          new_balance: newCredit,
-          note: note || null
-        });
+  // ✅ Auto-notify admin
+  await supabase.functions.invoke("notify_admin", {
+    body: {
+      user_id: userId,
+      type: delta > 0 ? "manual_credit_add" : "manual_credit_deduct",
+      message: `Admin ${delta > 0 ? "added" : "deducted"} ${Math.abs(delta)} credits`,
+      metadata: { delta, note, new_balance: newCredit, email: userData.email }
+    }
+  });
 
-        // Update DOM
-        const creditCell = document.getElementById(`credit-${userId}`);
-        if (creditCell) creditCell.textContent = newCredit;
-        alert("✅ Credits updated.");
-      }
+  // Update DOM
+  const creditCell = document.getElementById(`credit-${userId}`);
+  if (creditCell) creditCell.textContent = newCredit;
+  alert("✅ Credits updated and logged.");
+}
+
 
     } catch (err) {
       container.innerHTML = `<p class="text-red-600 text-sm">❌ Error loading credits: ${err.message}</p>`;
@@ -121,4 +124,12 @@ window.AdminModules["credits"] = {
   }
 };
 
+await supabase.functions.invoke("notify_admin", {
+  body: {
+    user_id: userData.user.id,
+    type: "credit_purchase", // or "plan_upgrade", etc.
+    message: `User bought 10,000 credits`,
+    metadata: { credits: 10000 }
+  }
+});
 
