@@ -95,3 +95,55 @@ window.addEventListener("DOMContentLoaded", () => {
     }
   });
 });
+// ✅ Email Logs tab for admins
+window.AdminModules["email_logs"] = {
+  init: async function (container) {
+    const supabase = window.supabase;
+    container.innerHTML = `<p class="text-sm text-gray-600 mb-4">Loading email logs...</p>`;
+
+    try {
+      const { data: logs, error } = await supabase
+        .from("emails_log")
+        .select("*, user:users(email)")
+        .order("created_at", { ascending: false })
+        .limit(100);
+
+      if (error) throw error;
+
+      if (!logs.length) {
+        container.innerHTML = `<p class="text-gray-500 italic">No emails logged yet.</p>`;
+        return;
+      }
+
+      container.innerHTML = `
+        <h2 class="text-lg font-semibold mb-4">📧 Email Logs</h2>
+        <div class="overflow-x-auto">
+          <table class="min-w-full text-sm">
+            <thead>
+              <tr class="border-b font-semibold">
+                <th class="text-left py-2 px-3">Date</th>
+                <th class="text-left py-2 px-3">Status</th>
+                <th class="text-left py-2 px-3">Subject</th>
+                <th class="text-left py-2 px-3">User</th>
+                <th class="text-left py-2 px-3">To</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${logs.map(log => `
+                <tr class="border-b">
+                  <td class="py-2 px-3">${new Date(log.created_at).toLocaleString()}</td>
+                  <td class="py-2 px-3">${log.status || "unknown"}</td>
+                  <td class="py-2 px-3">${log.subject}</td>
+                  <td class="py-2 px-3 text-gray-500">${log.user?.email || log.user_id}</td>
+                  <td class="py-2 px-3">${log.to}</td>
+                </tr>
+              `).join("")}
+            </tbody>
+          </table>
+        </div>
+      `;
+    } catch (err) {
+      container.innerHTML = `<p class="text-red-600">❌ Failed to load emails: ${err.message}</p>`;
+    }
+  }
+};
