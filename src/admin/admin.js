@@ -3,22 +3,21 @@
 const tabButtons = document.querySelectorAll(".admin-tab-btn");
 const tabContents = document.querySelectorAll(".admin-tab-content");
 
-// 🧠 Global registry: Each admin module must register like AdminModules['users'] = { init: fn }
+// 🧠 Global registry for lazy tab loading
 window.AdminModules = {};
 const loadedTabs = new Set();
 
 function switchTab(tabName) {
-  // UI update
   tabButtons.forEach(btn => {
-    btn.classList.toggle("border-blue-600", btn.dataset.tab === tabName);
-    btn.classList.toggle("text-blue-600", btn.dataset.tab === tabName);
+    const isActive = btn.dataset.tab === tabName;
+    btn.classList.toggle("border-blue-600", isActive);
+    btn.classList.toggle("text-blue-600", isActive);
   });
 
   tabContents.forEach(content => {
     content.classList.toggle("hidden", content.id !== `tab-${tabName}`);
   });
 
-  // First-time load
   if (!loadedTabs.has(tabName) && AdminModules[tabName]?.init) {
     const container = document.getElementById(`tab-${tabName}`);
     AdminModules[tabName].init(container);
@@ -26,7 +25,7 @@ function switchTab(tabName) {
   }
 }
 
-// ✅ Notifications tab for admins
+// ✅ Notifications tab
 window.AdminModules["notifications"] = {
   init: async function (container) {
     const supabase = window.supabase;
@@ -77,25 +76,7 @@ window.AdminModules["notifications"] = {
   }
 };
 
-// ✅ Bind tab buttons and auto-load modules
-window.addEventListener("DOMContentLoaded", () => {
-  document.querySelectorAll(".admin-tab-btn").forEach(btn => {
-    btn.addEventListener("click", () => switchTab(btn.dataset.tab));
-  });
-
-  // 🟢 Default tab
-  switchTab("users");
-
-  // 🔄 Auto-load any pre-rendered tabs
-  tabContents.forEach(content => {
-    const tabName = content.id.replace("tab-", "");
-    if (!loadedTabs.has(tabName) && AdminModules[tabName]?.init) {
-      AdminModules[tabName].init(content);
-      loadedTabs.add(tabName);
-    }
-  });
-});
-// ✅ Email Logs tab for admins
+// ✅ Email Logs tab
 window.AdminModules["email_logs"] = {
   init: async function (container) {
     const supabase = window.supabase;
@@ -147,3 +128,22 @@ window.AdminModules["email_logs"] = {
     }
   }
 };
+
+// ✅ Auto-bind all tab buttons
+window.addEventListener("DOMContentLoaded", () => {
+  document.querySelectorAll(".admin-tab-btn").forEach(btn => {
+    btn.addEventListener("click", () => switchTab(btn.dataset.tab));
+  });
+
+  // 🟢 Default tab
+  switchTab("users");
+
+  // 🔄 Load any tabs that are already visible in DOM
+  tabContents.forEach(content => {
+    const tabName = content.id.replace("tab-", "");
+    if (!loadedTabs.has(tabName) && AdminModules[tabName]?.init) {
+      AdminModules[tabName].init(content);
+      loadedTabs.add(tabName);
+    }
+  });
+});
