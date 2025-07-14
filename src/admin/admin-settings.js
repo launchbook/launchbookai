@@ -96,6 +96,12 @@ window.AdminModules["settings"] = {
           <summary class="text-sm font-medium cursor-pointer">🕓 View Settings Change Logs</summary>
           <div id="settingsLogs" class="text-xs mt-4 text-gray-500">Loading logs...</div>
         </details>
+
+        <hr class="my-6" />
+        <div class="flex gap-4">
+          <button id="exportSpikeLogs" class="bg-yellow-600 text-white px-4 py-2 rounded text-sm">📤 Export Spike Logs</button>
+          <button id="exportBlockedLogs" class="bg-red-600 text-white px-4 py-2 rounded text-sm">📤 Export Blocked Users</button>
+        </div>
       `;
 
       // Save logic
@@ -177,6 +183,12 @@ window.AdminModules["settings"] = {
                 reason: `Exceeded ${limit} credits on ${date}`,
                 triggered_by: "auto"
               });
+              await supabase.functions.invoke("send_admin_email", {
+                body: {
+                  subject: `🚫 User auto-blocked`,
+                  message: `User ID ${userId} was auto-blocked for exceeding ${limit} credits on ${date}.`
+                }
+              });
               warn.push(`🚫 Auto-blocked user ${userId} for using ${userDailyUsage[userId][date]} credits on ${date}`);
             }
           }
@@ -221,6 +233,33 @@ window.AdminModules["settings"] = {
       } else {
         document.getElementById("settingsLogs").textContent = "No recent changes found.";
       }
+
+      // Export buttons
+      document.getElementById("exportSpikeLogs").addEventListener("click", async () => {
+        const { data: logs } = await supabase.from("generation_logs").select("created_at, user_id, credits_used");
+        const rows = logs.map(log => `${log.created_at},${log.user_id},${log.credits_used}`);
+        const csv = "created_at,user_id,credits_used\n" + rows.join("\n");
+        const blob = new Blob([csv], { type: "text/csv" });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = "spike_logs.csv";
+        link.click();
+      });
+
+      document.getElementById("exportBlockedLogs").addEventListener("click", async () => {
+        const { data: logs } = await supabase.from("blocked_logs").select("*");
+        const rows = logs.map(log =>
+          `${log.created_at},${log.user_id},${log.reason},${log.triggered_by}`
+        );
+        const csv = "created_at,user_id,reason,triggered_by\n" + rows.join("\n");
+        const blob = new Blob([csv], { type: "text/csv" });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = "blocked_users.csv";
+        link.click();
+      });
 
     } catch (err) {
       container.innerHTML = `<p class="text-red-600 text-sm">❌ Error loading settings: ${err.message}</p>`;
