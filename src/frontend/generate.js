@@ -464,3 +464,14 @@ document.addEventListener('DOMContentLoaded', () => {
     })
     .catch(console.error);
 });
+const { loadTemplateJSON } = require("/templateEngine/template-loader.js");
+const { renderTemplatePages } = require("/templateEngine/template-renderer.js");
+const { enableEditing } = require("/templateEngine/template-editor.js");
+
+// 👇 This loads and renders the kids template when generate-dev.njk opens
+document.addEventListener("DOMContentLoaded", async () => {
+  const templateUrl = "/templates/kids/kids_template_1.json";
+  const template = await loadTemplateJSON(templateUrl);
+  renderTemplatePages(template.pages);
+  enableEditing(); // Allow live image/text edits
+});
