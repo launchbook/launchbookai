@@ -4,8 +4,13 @@
 <section class="min-h-screen flex items-center justify-center bg-[#f9fafb] px-4">
   <div class="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md text-center">
     <h1 class="text-2xl font-bold text-[#1e40af] mb-4">📧 Verify Your Email</h1>
-    <p class="text-gray-600 mb-6">We've sent a confirmation link to your inbox. Please verify your email to continue.</p>
-    <button id="resend-email" class="bg-blue-600 text-white px-5 py-2 rounded-lg hover:bg-blue-700">🔁 Resend Verification Email</button>
+    <p class="text-gray-600 mb-6">
+      We've sent a confirmation link to your inbox.<br>
+      Please verify your email to continue.
+    </p>
+    <button id="resend-email" class="bg-blue-600 text-white px-5 py-2 rounded-lg hover:bg-blue-700">
+      🔁 Resend Verification Email
+    </button>
     <p id="resend-status" class="text-sm text-gray-500 mt-3 hidden">🔄 Sending...</p>
   </div>
 </section>
@@ -15,22 +20,29 @@
 <script src="/frontend/auth.js"></script>
 <script>
   window.addEventListener("DOMContentLoaded", async () => {
-    const status = document.getElementById("resend-status");
     const resendBtn = document.getElementById("resend-email");
+    const status = document.getElementById("resend-status");
 
     resendBtn.addEventListener("click", async () => {
       status.classList.remove("hidden");
       status.textContent = "🔄 Sending...";
 
       const { error } = await supabase.auth.resend();
-      if (error) status.textContent = "❌ " + error.message;
-      else status.textContent = "✅ Email sent again!";
+      if (error) {
+        status.textContent = "❌ " + error.message;
+      } else {
+        status.textContent = "✅ Email sent again!";
+      }
     });
 
-    // ⏳ Poll every 30s for email confirmation
+    // ⏳ Poll every 30 seconds to check if email verified
     setInterval(async () => {
       const { data: { user } } = await supabase.auth.getUser();
-      if (user?.email_confirmed_at) window.location.href = "/dashboard";
+      if (user?.email_confirmed_at) {
+        // ✅ Show toast after redirect
+        localStorage.setItem("emailVerified", "true");
+        window.location.href = "/dashboard";
+      }
     }, 30000);
   });
 </script>
