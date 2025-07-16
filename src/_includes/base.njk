@@ -11,6 +11,8 @@
   <style>body { font-family: 'Inter', sans-serif; }</style>
   <style id="template-css"></style>
 
+<audio id="toast-sound" src="/sounds/toast.mp3" preload="auto"></audio>
+
   <script src="/utils/checkBlocked.js"></script>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
@@ -73,7 +75,7 @@
   <!-- 🔻 Footer -->
   <footer class="bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 text-gray-300 py-12 text-sm">
     <div class="max-w-7xl mx-auto px-4 flex flex-col md:flex-row justify-between items-center">
-      <p class="text-center md:text-left">&copy; {{ "now" | date("yyyy") }} LaunchBook AI. All rights reserved.</p>
+      <p class="text-center md:text-left">&copy; &copy; <span id="year"></span> LaunchBook AI. All rights reserved.</p>
       <div class="space-x-4 mt-4 md:mt-0 text-center md:text-right">
         <a href="/terms" class="hover:underline text-gray-400 hover:text-white">Terms</a>
         <a href="/privacy" class="hover:underline text-gray-400 hover:text-white">Privacy</a>
@@ -155,10 +157,97 @@
       });
 
       document.getElementById("logoutBtn").addEventListener("click", async () => {
-        await supabase.auth.signOut();
-        window.location.href = "/signin";
-      });
+  await supabase.auth.signOut();
+  localStorage.toastType = "success";
+  localStorage.toastMessage = "✅ You've been logged out successfully.";
+  window.location.href = "/signin";
+});
+
     });
   </script>
+
+<!-- 🟨 Toast Container -->
+<div id="toast-container" class="fixed top-5 right-5 space-y-3 z-[9999]"></div>
+
+<!-- 🌀 Animations -->
+<style>
+  @keyframes fadeSlide {
+    from { opacity: 0; transform: translateY(-20px) translateX(-50%); }
+    to { opacity: 1; transform: translateY(0) translateX(-50%); }
+  }
+  @keyframes slide-in {
+    from { opacity: 0; transform: translateX(20px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+  @keyframes fadein {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .animate-fadeSlide { animation: fadeSlide 0.4s ease-out; }
+  .animate-slide-in { animation: slide-in 0.3s ease forwards; }
+  .animate-fadein { animation: fadein 0.3s ease-out; }
+</style>
+
+<script>
+  // ✅ Toast Handler
+  window.showToast = (message, type = "success", duration = 4000) => {
+    const container = document.getElementById("toast-container");
+    if (!container) return;
+    const wrapper = document.createElement("div");
+    wrapper.className = `flex items-start gap-3 max-w-sm w-full px-4 py-3 rounded-lg shadow-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm text-gray-800 dark:text-gray-100 relative animate-slide-in`;
+    wrapper.innerHTML = `
+      <span class="text-lg">${type === "error" ? "❌" : type === "info" ? "ℹ️" : "✅"}</span>
+      <div class="flex-1">${message}</div>
+      <button class="text-gray-400 hover:text-red-500 absolute top-2 right-2 text-sm" aria-label="Close">&times;</button>
+    `;
+    wrapper.querySelector("button").addEventListener("click", () => wrapper.remove());
+    container.appendChild(wrapper);
+    setTimeout(() => {
+      wrapper.classList.add("opacity-0", "translate-x-5");
+      setTimeout(() => wrapper.remove(), 500);
+    }, duration);
+  };
+
+  // ✅ Load toast if it was set
+  const toastMsg = localStorage.getItem("toastMessage");
+  const toastType = localStorage.getItem("toastType") || "success";
+  if (toastMsg) {
+    window.showToast(toastMsg, toastType);
+    localStorage.removeItem("toastMessage");
+    localStorage.removeItem("toastType");
+  }
+</script>
+
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<script>
+  window.onload = function () {
+    if (window.google?.accounts?.id) {
+      google.accounts.id.initialize({
+        client_id: "755135885950-a784v2qb5lcurno3k2p2qseg6692bfki.apps.googleusercontent.com",
+        callback: async (response) => {
+          const { data, error } = await supabase.auth.signInWithIdToken({
+            provider: "google",
+            token: response.credential,
+          });
+          if (error) {
+            window.showToast("Google sign-in failed", "error");
+          } else {
+            window.location.href = "/dashboard";
+          }
+        },
+        auto_select: false,
+        itp_support: true,
+        context: "signin",
+        prompt_parent_id: "body",
+      });
+      google.accounts.id.prompt();
+    }
+  };
+</script>
+
+<script>
+  document.getElementById("year").textContent = new Date().getFullYear();
+</script>
+
 </body>
 </html>
