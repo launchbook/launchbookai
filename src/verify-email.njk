@@ -25,22 +25,27 @@
 
     resendBtn.addEventListener("click", async () => {
       status.classList.remove("hidden");
+      resendBtn.disabled = true;
       status.textContent = "🔄 Sending...";
 
-      const { error } = await supabase.auth.resend();
+      const { error } = await window.supabase.auth.resend();
       if (error) {
         status.textContent = "❌ " + error.message;
       } else {
         status.textContent = "✅ Email sent again!";
       }
+
+      setTimeout(() => {
+        resendBtn.disabled = false;
+      }, 2000);
     });
 
-    // ⏳ Poll every 30 seconds to check if email verified
+    // ⏳ Poll every 30 seconds to check if verified
     setInterval(async () => {
-      const { data: { user } } = await supabase.auth.getUser();
+      const { data: { user } } = await window.supabase.auth.getUser();
       if (user?.email_confirmed_at) {
-        // ✅ Show toast after redirect
-        localStorage.setItem("emailVerified", "true");
+        localStorage.setItem("toastMessage", "✅ Email verified! Welcome back.");
+        localStorage.setItem("toastType", "success");
         window.location.href = "/dashboard";
       }
     }, 30000);
