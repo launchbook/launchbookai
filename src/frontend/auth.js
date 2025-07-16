@@ -1,9 +1,8 @@
-// public/frontend/auth.js (Fully Enhanced CommonJS Version)
 const { createClient } = require("@supabase/supabase-js");
 
 const supabase = createClient(
   "https://wgvquzflchtmgdgwugrq.supabase.co",
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndndnF1emZsY2h0bWdkZ3d1Z3JxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTE3ODcwNTYsImV4cCI6MjA2NzM2MzA1Nn0.xMIbM0AYW24qerEeAi3SDTxrNOtO5tWUYHMudxNwTjg"
+  "YOUR_ANON_KEY" // Replace with actual anon key
 );
 
 window.addEventListener("DOMContentLoaded", async () => {
@@ -26,7 +25,7 @@ window.addEventListener("DOMContentLoaded", async () => {
     });
   });
 
-  // ✅ Signup Form
+  // ✅ Signup
   const signupForm = document.querySelector("#signup-form");
   if (signupForm) {
     signupForm.addEventListener("submit", async (e) => {
@@ -57,13 +56,14 @@ window.addEventListener("DOMContentLoaded", async () => {
     });
   }
 
-  // ✅ Login Form
+  // ✅ Signin with Remember Me + Last Login Tracking
   const loginForm = document.querySelector("#signin-form");
   if (loginForm) {
     loginForm.addEventListener("submit", async (e) => {
       e.preventDefault();
       const email = loginForm["signin-email"].value.trim();
       const password = loginForm["signin-password"].value;
+      const rememberMe = loginForm.querySelector("#remember-me")?.checked;
 
       const btn = loginForm.querySelector("button");
       btn.disabled = true;
@@ -76,7 +76,12 @@ window.addEventListener("DOMContentLoaded", async () => {
         return;
       }
 
-      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+      const { data, error } = await supabase.auth.signInWithPassword(
+        { email, password },
+        {
+          session: rememberMe ? "persist" : "session",
+        }
+      );
 
       if (error) {
         alert("❌ " + error.message);
@@ -91,12 +96,17 @@ window.addEventListener("DOMContentLoaded", async () => {
         return;
       }
 
+      // ✅ Update last login metadata
+      await supabase.auth.updateUser({
+        data: { last_login_at: new Date().toISOString() },
+      });
+
       alert("✅ Logged in!");
       window.location.href = "/dashboard";
     });
   }
 
-  // ✅ Google OAuth
+  // ✅ Google OAuth Click
   const googleBtn = document.querySelector("#google-signin") || document.querySelector("#google-signup") || document.querySelector("#google-login");
   if (googleBtn) {
     googleBtn.addEventListener("click", async () => {
@@ -110,7 +120,7 @@ window.addEventListener("DOMContentLoaded", async () => {
     });
   }
 
-  // ✅ Magic Link Login
+  // ✅ Magic Link
   const magicForm = document.querySelector("#magic-login-form");
   if (magicForm) {
     magicForm.addEventListener("submit", async (e) => {
@@ -139,47 +149,7 @@ window.addEventListener("DOMContentLoaded", async () => {
     });
   }
 
-  // ✅ Email Verification Screen
-  const resendBtn = document.querySelector("#resend-email");
-  if (resendBtn) {
-    const status = document.getElementById("resend-status");
-
-    resendBtn.addEventListener("click", async () => {
-      status.classList.remove("hidden");
-      status.textContent = "🔄 Sending...";
-
-      const { error } = await supabase.auth.resend();
-      if (error) status.textContent = "❌ " + error.message;
-      else status.textContent = "✅ Email sent again!";
-    });
-
-    setInterval(async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user?.email_confirmed_at) {
-        window.location.href = "/dashboard";
-      }
-    }, 30000);
-  }
-
-  // ✅ Google One Tap + Auth Guard
-  supabase.auth.onAuthStateChange(async (event, session) => {
-    if (event === "SIGNED_IN" && session) {
-      window.location.href = "/dashboard";
-    }
-  });
-
-  const pathname = window.location.pathname;
-  const { data: { session } } = await supabase.auth.getSession();
-
-  if (session && ["/signin", "/signup", "/magic-login"].includes(pathname)) {
-    window.location.href = "/dashboard";
-  }
-
-  if (!session && pathname === "/dashboard") {
-    window.location.href = "/signin";
-  }
-
-  // ✅ Forgot Password Flow
+  // ✅ Forgot Password
   const forgotForm = document.querySelector("#forgot-password-form");
   if (forgotForm) {
     forgotForm.addEventListener("submit", async (e) => {
@@ -203,5 +173,90 @@ window.addEventListener("DOMContentLoaded", async () => {
       alert("✅ Reset link sent! Check your email.");
       btn.textContent = "Sent!";
     });
+  }
+
+  // ✅ Resend Email + Poll for Verification
+  const resendBtn = document.querySelector("#resend-email");
+  if (resendBtn) {
+    const status = document.getElementById("resend-status");
+
+    resendBtn.addEventListener("click", async () => {
+      status.classList.remove("hidden");
+      status.textContent = "🔄 Sending...";
+
+      const { error } = await supabase.auth.resend();
+      if (error) status.textContent = "❌ " + error.message;
+      else status.textContent = "✅ Email sent again!";
+    });
+
+    setInterval(async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user?.email_confirmed_at) {
+        window.location.href = "/dashboard";
+      }
+    }, 30000);
+  }
+
+  // ✅ Auth Guards + Admin Redirect
+  const { data: { session } } = await supabase.auth.getSession();
+  const { data: { user } } = await supabase.auth.getUser();
+  const pathname = window.location.pathname;
+
+  if (session && ["/signin", "/signup", "/magic-login"].includes(pathname)) {
+    window.location.href = "/dashboard";
+  }
+
+  if (!session && pathname === "/dashboard") {
+    window.location.href = "/signin";
+  }
+
+  if (user?.email === "admin@launchebookai.com" && pathname === "/dashboard") {
+    window.location.href = "/admin";
+  }
+
+  if (pathname === "/dashboard" && !user?.email_confirmed_at) {
+    alert("⚠️ Please verify your email to access the dashboard.");
+    window.location.href = "/verify-email";
+  }
+
+  // ✅ Session Expire
+  supabase.auth.onAuthStateChange((event, session) => {
+    if (event === "SIGNED_OUT") {
+      alert("🔒 Session expired. Please sign in again.");
+      setTimeout(() => {
+        window.location.href = "/signin";
+      }, 1200);
+    }
+  });
+
+  // ✅ Google One Tap
+  if (!session) {
+    const script = document.createElement("script");
+    script.src = "https://accounts.google.com/gsi/client";
+    script.async = true;
+    script.onload = () => {
+      window.google.accounts.id.initialize({
+        client_id: "YOUR_GOOGLE_CLIENT_ID", // Replace this
+        callback: async (response) => {
+          const { error } = await supabase.auth.signInWithIdToken({
+            provider: "google",
+            token: response.credential,
+          });
+          if (error) {
+            alert("❌ Google One Tap failed: " + error.message);
+          } else {
+            // ✅ Update last login metadata after One Tap
+            await supabase.auth.updateUser({
+              data: { last_login_at: new Date().toISOString() },
+            });
+            window.location.href = "/dashboard";
+          }
+        },
+        auto_select: true,
+        cancel_on_tap_outside: false,
+      });
+      window.google.accounts.id.prompt();
+    };
+    document.head.appendChild(script);
   }
 });
