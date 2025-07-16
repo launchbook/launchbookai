@@ -166,4 +166,31 @@ document.querySelectorAll(".toggle-password").forEach((btn) => {
   if (!session && pathname === "/dashboard") {
     window.location.href = "/signin";
   }
+
+    // ✅ Forgot Password Flow
+  const forgotForm = document.querySelector("#forgot-password-form");
+  if (forgotForm) {
+    forgotForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const email = document.getElementById("forgot-email").value;
+      const btn = forgotForm.querySelector("button");
+      btn.disabled = true;
+      btn.textContent = "Sending...";
+
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: "https://launchebookai.leostarearn.com/reset-password",
+      });
+
+      if (error) {
+        alert("❌ " + error.message);
+        btn.disabled = false;
+        btn.textContent = "Send Reset Link";
+        return;
+      }
+
+      alert("✅ Reset link sent! Check your email.");
+      btn.textContent = "Sent!";
+    });
+  }
+
 });
