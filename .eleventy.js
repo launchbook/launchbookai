@@ -1,10 +1,10 @@
 const { DateTime } = require("luxon");
 
 module.exports = function (eleventyConfig) {
-  // ✅ Add this line
-  eleventyConfig.addPassthroughCopy("public");
+  // ✅ Static folders
+  eleventyConfig.addPassthroughCopy({ "src/templates": "templates" }); // For JSON templates
 
-  // Existing filters, etc.
+  // ✅ Filters
   eleventyConfig.addFilter("date", (value, format = "yyyy") => {
     return DateTime.fromJSDate(new Date(value)).toFormat(format);
   });
