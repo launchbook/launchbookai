@@ -39,8 +39,6 @@
       </a>
 
       <nav id="main-nav" class="hidden md:flex items-center space-x-6 text-sm font-medium">
-  <a href="#how-it-works" class="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition">How It Works</a>
-  <a href="#pricing" class="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition">Pricing</a>
 
   <!-- 👤 Avatar Dropdown (hidden by default) -->
   <div id="nav-user-dropdown" class="relative hidden">
@@ -131,20 +129,23 @@
 
     supabase.auth.getUser().then(({ data: { user } }) => {
       if (!nav || !user) {
-        const signIn = document.createElement("a");
-        signIn.href = "/signin";
-        signIn.textContent = "Sign In";
-        signIn.className = "text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition";
+  const signIn = document.createElement("a");
+  signIn.href = "/signin";
+  signIn.textContent = "Sign In";
+  signIn.className = "text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition";
 
-        const signUp = document.createElement("a");
-        signUp.href = "/signup";
-        signUp.textContent = "Get Started";
-        signUp.className = "bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition";
+  const signUp = document.createElement("a");
+  signUp.href = "/signup";
+  signUp.textContent = "Get Started";
+  signUp.className = "bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition";
 
-        nav.appendChild(signIn);
-        nav.appendChild(signUp);
-        return;
-      }
+  // 👇 Insert before the darkToggle button
+  const darkToggle = document.getElementById("darkToggle");
+  nav.insertBefore(signIn, darkToggle);
+  nav.insertBefore(signUp, darkToggle);
+
+  return;
+}
 
       const name = user.user_metadata?.name || user.email;
       avatar.textContent = name.charAt(0).toUpperCase();
