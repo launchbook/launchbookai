@@ -7,24 +7,24 @@ const supabase = createClient(
 );
 
 window.addEventListener("DOMContentLoaded", async () => {
-  // Toggle password visibility with SVG icons
-document.querySelectorAll(".toggle-password").forEach((btn) => {
-  btn.addEventListener("click", () => {
-    const input = btn.closest(".relative").querySelector("input");
-    const eyeIcon = btn.querySelector(".eye-icon");
-    const eyeOffIcon = btn.querySelector(".eye-off-icon");
+  // 👁️ Toggle password visibility
+  document.querySelectorAll(".toggle-password").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const input = btn.closest(".relative").querySelector("input");
+      const eyeIcon = btn.querySelector(".eye-icon");
+      const eyeOffIcon = btn.querySelector(".eye-off-icon");
 
-    if (input.type === "password") {
-      input.type = "text";
-      eyeIcon.classList.add("hidden");
-      eyeOffIcon.classList.remove("hidden");
-    } else {
-      input.type = "password";
-      eyeOffIcon.classList.add("hidden");
-      eyeIcon.classList.remove("hidden");
-    }
+      if (input.type === "password") {
+        input.type = "text";
+        eyeIcon.classList.add("hidden");
+        eyeOffIcon.classList.remove("hidden");
+      } else {
+        input.type = "password";
+        eyeOffIcon.classList.add("hidden");
+        eyeIcon.classList.remove("hidden");
+      }
+    });
   });
-});
 
   // ✅ Signup Form
   const signupForm = document.querySelector("#signup-form");
@@ -62,18 +62,32 @@ document.querySelectorAll(".toggle-password").forEach((btn) => {
   if (loginForm) {
     loginForm.addEventListener("submit", async (e) => {
       e.preventDefault();
-      const email = loginForm["signin-email"].value;
+      const email = loginForm["signin-email"].value.trim();
       const password = loginForm["signin-password"].value;
 
       const btn = loginForm.querySelector("button");
       btn.disabled = true;
       btn.textContent = "Signing in...";
 
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      if (!email || !password) {
+        alert("❗ Please fill in both email and password");
+        btn.disabled = false;
+        btn.textContent = "Sign In";
+        return;
+      }
+
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+
       if (error) {
         alert("❌ " + error.message);
         btn.disabled = false;
         btn.textContent = "Sign In";
+        return;
+      }
+
+      if (!data.user?.email_confirmed_at) {
+        alert("⚠️ Please verify your email first.");
+        window.location.href = "/verify-email";
         return;
       }
 
@@ -139,7 +153,6 @@ document.querySelectorAll(".toggle-password").forEach((btn) => {
       else status.textContent = "✅ Email sent again!";
     });
 
-    // ⏳ Poll every 30s to check if verified
     setInterval(async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (user?.email_confirmed_at) {
@@ -148,14 +161,13 @@ document.querySelectorAll(".toggle-password").forEach((btn) => {
     }, 30000);
   }
 
-  // ✅ Google One Tap + Session check
+  // ✅ Google One Tap + Auth Guard
   supabase.auth.onAuthStateChange(async (event, session) => {
     if (event === "SIGNED_IN" && session) {
       window.location.href = "/dashboard";
     }
   });
 
-  // ✅ Redirection guard (Auto redirect based on auth state)
   const pathname = window.location.pathname;
   const { data: { session } } = await supabase.auth.getSession();
 
@@ -167,7 +179,7 @@ document.querySelectorAll(".toggle-password").forEach((btn) => {
     window.location.href = "/signin";
   }
 
-    // ✅ Forgot Password Flow
+  // ✅ Forgot Password Flow
   const forgotForm = document.querySelector("#forgot-password-form");
   if (forgotForm) {
     forgotForm.addEventListener("submit", async (e) => {
@@ -192,5 +204,4 @@ document.querySelectorAll(".toggle-password").forEach((btn) => {
       btn.textContent = "Sent!";
     });
   }
-
 });
