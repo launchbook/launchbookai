@@ -1,5 +1,5 @@
-// src/templateEngine/template-editor.js
-export function enableImageEditing(container) {
+// template-editor.js
+function enableImageEditing(container) {
   container.querySelectorAll('.image-uploader').forEach(input => {
     const img = input.closest('div').querySelector('[data-editable-image]');
     input.addEventListener('change', () => {
@@ -26,7 +26,11 @@ export function enableImageEditing(container) {
 }
 
 async function generateImageFromPrompt(prompt) {
-  // TODO: Replace with your actual image generation API logic (e.g., DALL·E, Stability, or internal endpoint)
-  const fakePlaceholder = `https://source.unsplash.com/800x600/?illustration,${encodeURIComponent(prompt)}`;
-  return fakePlaceholder;
+  // TODO: Replace with actual API logic
+  const fallback = `https://source.unsplash.com/800x600/?illustration,${encodeURIComponent(prompt)}`;
+  return fallback;
 }
+
+module.exports = {
+  enableImageEditing
+};
