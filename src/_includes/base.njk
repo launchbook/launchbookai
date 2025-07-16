@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" class="dark">
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -28,6 +28,7 @@
     };
   </script>
 </head>
+
 <body class="transition-colors duration-300 bg-gray-50 text-gray-900 dark:bg-gray-900 dark:text-gray-100 flex flex-col min-h-screen">
 
 <header class="bg-gradient-to-r from-blue-50 to-white dark:from-gray-900 dark:to-gray-800 shadow-sm sticky top-0 z-50">
@@ -38,6 +39,12 @@
     <nav id="main-nav" class="hidden md:flex items-center space-x-6 text-sm font-medium">
       <a href="#how-it-works" class="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition">How It Works</a>
       <a href="#pricing" class="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition">Pricing</a>
+
+      <!-- Default Auth Buttons -->
+      <a href="/signin" id="nav-signin" class="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition">Sign In</a>
+      <a href="/signup" id="nav-signup" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition">Get Started</a>
+
+      <!-- User Dropdown -->
       <div id="nav-user-dropdown" class="relative hidden">
         <button id="user-avatar" class="w-9 h-9 rounded-full bg-blue-600 text-white font-semibold text-sm flex items-center justify-center hover:opacity-90">👤</button>
         <div id="user-menu" class="absolute right-0 mt-2 w-52 bg-white dark:bg-gray-800 rounded shadow-lg border border-gray-200 dark:border-gray-700 hidden z-50">
@@ -49,12 +56,16 @@
           <button id="logoutBtn" class="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-800">🚪 Logout</button>
         </div>
       </div>
+
+      <!-- Dark Mode Toggle -->
       <button id="darkToggle" class="ml-4 text-xl hover:text-blue-600 dark:hover:text-blue-400 transition">
         <svg id="darkIcon" xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
           <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" />
         </svg>
       </button>
     </nav>
+
+    <!-- Mobile -->
     <button id="mobile-menu-btn" class="md:hidden text-2xl ml-auto focus:outline-none">☰</button>
     <div id="mobile-nav" class="md:hidden hidden flex-col items-start space-y-4 text-sm px-4 py-4 bg-white dark:bg-gray-900 border-t dark:border-gray-700 absolute top-full left-0 w-full z-40">
       <a href="#how-it-works" class="block text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition">How It Works</a>
@@ -80,6 +91,7 @@
 
 <div id="toast-container" class="fixed top-5 right-5 space-y-3 z-[9999]"></div>
 
+<!-- Animations -->
 <style>
   @keyframes fadeSlide {
     from { opacity: 0; transform: translateY(-20px) translateX(-50%); }
@@ -98,12 +110,10 @@
   .animate-fadein { animation: fadein 0.3s ease-out; }
 </style>
 
+<!-- Scripts -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js/dist/umd/supabase.min.js"></script>
 <script>
-  const supabase = supabase.createClient(
-    "https://wgvquzflchtmgdgwugrq.supabase.co",
-    "YOUR_PUBLIC_ANON_KEY"
-  );
+  const supabase = supabase.createClient("https://wgvquzflchtmgdgwugrq.supabase.co", "YOUR_PUBLIC_ANON_KEY");
 
   const nav = document.getElementById("main-nav");
   const avatar = document.getElementById("user-avatar");
@@ -111,20 +121,9 @@
   const dropdown = document.getElementById("nav-user-dropdown");
 
   supabase.auth.getUser().then(({ data: { user } }) => {
-    if (!user) {
-      const signIn = document.createElement("a");
-      signIn.href = "/signin";
-      signIn.textContent = "Sign In";
-      signIn.className = "text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition";
-
-      const signUp = document.createElement("a");
-      signUp.href = "/signup";
-      signUp.textContent = "Get Started";
-      signUp.className = "bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition";
-
-      nav.appendChild(signIn);
-      nav.appendChild(signUp);
-    } else {
+    if (user) {
+      document.getElementById("nav-signin")?.remove();
+      document.getElementById("nav-signup")?.remove();
       dropdown.classList.remove("hidden");
       avatar.textContent = (user.user_metadata?.full_name || user.email)?.[0]?.toUpperCase() || "👤";
 
@@ -132,10 +131,7 @@
         document.getElementById("admin-link")?.classList.remove("hidden");
       }
 
-      avatar.addEventListener("click", () => {
-        menu.classList.toggle("hidden");
-      });
-
+      avatar.addEventListener("click", () => menu.classList.toggle("hidden"));
       document.getElementById("logoutBtn")?.addEventListener("click", async () => {
         await supabase.auth.signOut();
         localStorage.toastType = "success";
@@ -145,10 +141,8 @@
     }
   });
 
-  // Toasts
   const toastMsg = localStorage.getItem("toastMessage");
   const toastType = localStorage.getItem("toastType") || "success";
-
   if (toastMsg) {
     window.showToast(toastMsg, toastType);
     localStorage.removeItem("toastMessage");
@@ -158,7 +152,6 @@
   window.showToast = (message, type = "success", duration = 4000) => {
     const container = document.getElementById("toast-container");
     if (!container) return;
-
     const wrapper = document.createElement("div");
     wrapper.className = `flex items-start gap-3 max-w-sm w-full px-4 py-3 rounded-lg shadow-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm text-gray-800 dark:text-gray-100 relative animate-slide-in`;
     wrapper.innerHTML = `
@@ -168,24 +161,21 @@
     `;
     wrapper.querySelector("button").addEventListener("click", () => wrapper.remove());
     container.appendChild(wrapper);
-
     setTimeout(() => {
       wrapper.classList.add("opacity-0", "translate-x-5");
       setTimeout(() => wrapper.remove(), 500);
     }, duration);
   };
 
-  // Google One Tap Login (CommonJS)
   window.onload = function () {
     if (window.google?.accounts?.id) {
       google.accounts.id.initialize({
-        client_id: "755135885950-a784v2qb5lcurno3k2p2qseg6692bfki.apps.googleusercontent.com", // ✅ Your Google Client ID
+        client_id: "755135885950-a784v2qb5lcurno3k2p2qseg6692bfki.apps.googleusercontent.com",
         callback: async (response) => {
           const { data, error } = await supabase.auth.signInWithIdToken({
             provider: "google",
             token: response.credential,
           });
-
           if (error) {
             window.showToast("Google sign-in failed", "error");
           } else {
@@ -197,19 +187,19 @@
         context: "signin",
         prompt_parent_id: "body",
       });
-
       google.accounts.id.prompt();
     }
   };
 
-  // Mobile nav toggle
-  document.addEventListener("DOMContentLoaded", () => {
-    document.getElementById("mobile-menu-btn")?.addEventListener("click", () => {
-      document.getElementById("mobile-nav")?.classList.toggle("hidden");
-    });
+  // Dark/light toggle
+  document.getElementById("darkToggle")?.addEventListener("click", () => {
+    document.documentElement.classList.toggle("dark");
+  });
+
+  // Mobile nav
+  document.getElementById("mobile-menu-btn")?.addEventListener("click", () => {
+    document.getElementById("mobile-nav")?.classList.toggle("hidden");
   });
 </script>
-
-
 </body>
 </html>
