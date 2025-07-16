@@ -1,8 +1,6 @@
----
-layout: base.njk
-title: Generate Dev
----
+{% extends "base.njk" %}
 
+{% block content %}
 <section class="p-10">
   <h1 class="text-3xl font-bold mb-4">📘 Generate eBook (Dev Mode)</h1>
   
@@ -13,8 +11,11 @@ title: Generate Dev
     <button id="download-btn" class="bg-black text-white px-6 py-2 rounded-xl">📥 Download</button>
   </div>
 </section>
+{% endblock %}
 
-<script src="/templateEngine/template-loader.js"></script>
-<script src="/templateEngine/template-renderer.js"></script>
-<script src="/templateEngine/template-editor.js"></script>
-<script src="/generate.js"></script>
+{% block scripts %}
+  <script src="/templateEngine/template-loader.js"></script>
+  <script src="/templateEngine/template-renderer.js"></script>
+  <script src="/templateEngine/template-editor.js"></script>
+  <script src="/generate.js"></script>
+{% endblock %}
