@@ -1,7 +1,7 @@
-// src/templateEngine/template-renderer.js
-import { enableImageEditing } from './template-editor.js';
+// template-renderer.js
+const { enableImageEditing } = require('./template-editor.js');
 
-export function renderTemplate(template, container) {
+function renderTemplate(template, container) {
   container.innerHTML = '';
   template.pages.forEach((page, i) => {
     const section = renderBlock(page, i);
@@ -84,3 +84,7 @@ function renderBlock(page, index) {
 
   return section;
 }
+
+module.exports = {
+  renderTemplate
+};
