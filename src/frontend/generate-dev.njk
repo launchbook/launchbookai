@@ -1,0 +1,20 @@
+---
+layout: base.njk
+title: Generate Dev
+---
+
+<section class="p-10">
+  <h1 class="text-3xl font-bold mb-4">📘 Generate eBook (Dev Mode)</h1>
+  
+  <div id="template-picker-container"></div>
+  <div id="live-preview" class="mt-8"></div>
+
+  <div class="fixed bottom-0 left-0 right-0 bg-white border-t p-4 shadow">
+    <button id="download-btn" class="bg-black text-white px-6 py-2 rounded-xl">📥 Download</button>
+  </div>
+</section>
+
+<script src="/templateEngine/template-loader.js"></script>
+<script src="/templateEngine/template-renderer.js"></script>
+<script src="/templateEngine/template-editor.js"></script>
+<script src="/generate.js"></script>
