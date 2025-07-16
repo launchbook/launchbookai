@@ -3,6 +3,12 @@
 {% block title %}📊 My Dashboard – LaunchBook AI{% endblock %}
 
 {% block content %}
+
+<!-- ✅ Flash Toast for Password Updated -->
+<div id="password-toast" class="hidden max-w-xl mx-auto mt-6 p-4 bg-green-100 text-green-800 rounded-lg shadow text-center font-medium">
+  ✅ Your password has been successfully updated.
+</div>
+
 <!-- 🔝 Avatar Header -->
 <header class="bg-white dark:bg-gray-800 shadow-sm sticky top-0 z-50 px-4 py-3 flex justify-between items-center">
   <a href="/" class="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 via-indigo-500 to-purple-600">LaunchBook AI</a>
@@ -32,7 +38,6 @@
     <button class="bg-purple-600 text-white px-4 py-2 rounded" data-buy-credits="25000">Buy 25,000 Credits</button>
   </div>
 </section>
-
 
 <!-- 📱 Mobile Credit Badge -->
 <div id="mobile-credit-badge" class="fixed bottom-4 right-4 bg-blue-600 text-white text-sm px-4 py-2 rounded-full shadow-md block md:hidden hidden"></div>
@@ -77,6 +82,7 @@
 <div id="tab-logs" class="tab-pane hidden"></div>
 <div id="tab-presets" class="tab-pane hidden"></div>
 <div id="tab-settings" class="tab-pane hidden"></div>
+
 {% endblock %}
 
 {% block scripts %}
@@ -89,12 +95,23 @@
 <script type="module" src="/src/frontend/credits.js"></script>
 <script type="module" src="/src/frontend/buy-credits.js"></script>
 
-
 <!-- 🔃 Avatar Dropdown Toggle -->
 <script>
   const avatarBtn = document.getElementById("avatarBtn");
   const avatarMenu = document.getElementById("avatarMenu");
   avatarBtn?.addEventListener("click", () => avatarMenu.classList.toggle("hidden"));
+</script>
+
+<!-- ✅ Show toast if password updated -->
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    const toast = document.getElementById("password-toast");
+    if (localStorage.getItem("passwordUpdated") === "true") {
+      toast.classList.remove("hidden");
+      localStorage.removeItem("passwordUpdated");
+      setTimeout(() => toast.classList.add("hidden"), 4000);
+    }
+  });
 </script>
 
 <!-- 🔌 Supabase Init -->
