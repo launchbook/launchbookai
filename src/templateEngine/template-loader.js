@@ -1,6 +1,12 @@
-// src/templateEngine/template-loader.js
-export async function loadTemplate(path) {
-  const res = await fetch(path);
-  if (!res.ok) throw new Error(`Failed to load template: ${path}`);
-  return await res.json();
+// template-loader.js
+function loadTemplate(path) {
+  return fetch(path)
+    .then((res) => {
+      if (!res.ok) throw new Error(`Failed to load template: ${path}`);
+      return res.json();
+    });
 }
+
+module.exports = {
+  loadTemplate
+};
