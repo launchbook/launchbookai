@@ -13,7 +13,9 @@
       </div>
 
       <button type="submit"
-        class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 rounded-lg transition">Send Magic Link</button>
+        class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 rounded-lg transition">
+        Send Magic Link
+      </button>
     </form>
 
     <p class="mt-6 text-center text-sm text-gray-600">
@@ -25,28 +27,5 @@
 {% endblock %}
 
 {% block scripts %}
-<script>
-  const form = document.getElementById("magic-login-form");
-  form.addEventListener("submit", async (e) => {
-    e.preventDefault();
-    const email = document.getElementById("magic-email").value;
-    const btn = form.querySelector("button");
-    btn.disabled = true;
-    btn.textContent = "Sending...";
-
-    const { createClient } = supabase;
-    const client = createClient("https://wgvquzflchtmgdgwugrq.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...");
-
-    const { error } = await client.auth.signInWithOtp({ email });
-    if (error) {
-      alert("❌ " + error.message);
-      btn.disabled = false;
-      btn.textContent = "Send Magic Link";
-      return;
-    }
-
-    alert("✅ Magic link sent. Check your email!");
-    btn.textContent = "Sent!";
-  });
-</script>
+<script src="/frontend/auth.js"></script>
 {% endblock %}
