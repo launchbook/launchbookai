@@ -98,46 +98,57 @@
   .animate-fadein { animation: fadein 0.3s ease-out; }
 </style>
 
-<script type="module">
-  import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
-  const supabase = createClient("https://wgvquzflchtmgdgwugrq.supabase.co", "YOUR_PUBLIC_ANON_KEY");
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js/dist/umd/supabase.min.js"></script>
+<script>
+  const supabase = supabase.createClient(
+    "https://wgvquzflchtmgdgwugrq.supabase.co",
+    "YOUR_PUBLIC_ANON_KEY"
+  );
 
   const nav = document.getElementById("main-nav");
   const avatar = document.getElementById("user-avatar");
   const menu = document.getElementById("user-menu");
   const dropdown = document.getElementById("nav-user-dropdown");
-  const { data: { user } } = await supabase.auth.getUser();
 
-  if (!user) {
-    const signIn = document.createElement("a");
-    signIn.href = "/signin";
-    signIn.textContent = "Sign In";
-    signIn.className = "text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition";
+  supabase.auth.getUser().then(({ data: { user } }) => {
+    if (!user) {
+      const signIn = document.createElement("a");
+      signIn.href = "/signin";
+      signIn.textContent = "Sign In";
+      signIn.className = "text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition";
 
-    const signUp = document.createElement("a");
-    signUp.href = "/signup";
-    signUp.textContent = "Get Started";
-    signUp.className = "bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition";
+      const signUp = document.createElement("a");
+      signUp.href = "/signup";
+      signUp.textContent = "Get Started";
+      signUp.className = "bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition";
 
-    nav.appendChild(signIn);
-    nav.appendChild(signUp);
-  } else {
-    dropdown.classList.remove("hidden");
-    avatar.textContent = (user.user_metadata?.full_name || user.email)?.[0]?.toUpperCase() || "👤";
-    if (user.email === "admin@launchebookai.com") {
-      document.getElementById("admin-link")?.classList.remove("hidden");
+      nav.appendChild(signIn);
+      nav.appendChild(signUp);
+    } else {
+      dropdown.classList.remove("hidden");
+      avatar.textContent = (user.user_metadata?.full_name || user.email)?.[0]?.toUpperCase() || "👤";
+
+      if (user.email === "admin@launchebookai.com") {
+        document.getElementById("admin-link")?.classList.remove("hidden");
+      }
+
+      avatar.addEventListener("click", () => {
+        menu.classList.toggle("hidden");
+      });
+
+      document.getElementById("logoutBtn")?.addEventListener("click", async () => {
+        await supabase.auth.signOut();
+        localStorage.toastType = "success";
+        localStorage.toastMessage = "✅ You've been logged out successfully.";
+        window.location.href = "/signin";
+      });
     }
-    avatar.addEventListener("click", () => menu.classList.toggle("hidden"));
-    document.getElementById("logoutBtn")?.addEventListener("click", async () => {
-      await supabase.auth.signOut();
-      localStorage.toastType = "success";
-      localStorage.toastMessage = "✅ You've been logged out successfully.";
-      window.location.href = "/signin";
-    });
-  }
+  });
 
+  // Toasts
   const toastMsg = localStorage.getItem("toastMessage");
   const toastType = localStorage.getItem("toastType") || "success";
+
   if (toastMsg) {
     window.showToast(toastMsg, toastType);
     localStorage.removeItem("toastMessage");
@@ -147,6 +158,7 @@
   window.showToast = (message, type = "success", duration = 4000) => {
     const container = document.getElementById("toast-container");
     if (!container) return;
+
     const wrapper = document.createElement("div");
     wrapper.className = `flex items-start gap-3 max-w-sm w-full px-4 py-3 rounded-lg shadow-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm text-gray-800 dark:text-gray-100 relative animate-slide-in`;
     wrapper.innerHTML = `
@@ -156,42 +168,48 @@
     `;
     wrapper.querySelector("button").addEventListener("click", () => wrapper.remove());
     container.appendChild(wrapper);
+
     setTimeout(() => {
       wrapper.classList.add("opacity-0", "translate-x-5");
       setTimeout(() => wrapper.remove(), 500);
     }, duration);
   };
 
-  window.onload = () => {
-    google.accounts.id.initialize({
-      client_id: "1234567890-abcxyz.apps.googleusercontent.com", // ✅ Replace with your actual Google OAuth client ID
-      callback: async (response) => {
-        const { data, error } = await supabase.auth.signInWithIdToken({
-          provider: 'google',
-          token: response.credential
-        });
-        if (error) {
-          window.showToast("Google sign-in failed", "error");
-        } else {
-          window.location.href = "/dashboard";
-        }
-      },
-      auto_select: false,
-      itp_support: true,
-      context: 'signin',
-      prompt_parent_id: "body" // Optional customization
-    });
-    google.accounts.id.prompt();
-  }
-</script>
+  // Google One Tap Login (CommonJS)
+  window.onload = function () {
+    if (window.google?.accounts?.id) {
+      google.accounts.id.initialize({
+        client_id: "755135885950-a784v2qb5lcurno3k2p2qseg6692bfki.apps.googleusercontent.com", // ✅ Your Google Client ID
+        callback: async (response) => {
+          const { data, error } = await supabase.auth.signInWithIdToken({
+            provider: "google",
+            token: response.credential,
+          });
 
-<script>
+          if (error) {
+            window.showToast("Google sign-in failed", "error");
+          } else {
+            window.location.href = "/dashboard";
+          }
+        },
+        auto_select: false,
+        itp_support: true,
+        context: "signin",
+        prompt_parent_id: "body",
+      });
+
+      google.accounts.id.prompt();
+    }
+  };
+
+  // Mobile nav toggle
   document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("mobile-menu-btn")?.addEventListener("click", () => {
       document.getElementById("mobile-nav")?.classList.toggle("hidden");
     });
   });
 </script>
+
 
 </body>
 </html>
