@@ -408,3 +408,30 @@ window.createAnother = () => {
 
   showToast("📚 New eBook started");
 };
+const { loadTemplate } = require('./templateEngine/template-loader.js');
+const { renderTemplate } = require('./templateEngine/template-renderer.js');
+
+// Optional: Replace placeholders
+function injectUserData(json, replacements) {
+  const str = JSON.stringify(json);
+  const replaced = Object.entries(replacements).reduce(
+    (out, [key, val]) => out.replaceAll(`{{ ${key} }}`, val),
+    str
+  );
+  return JSON.parse(replaced);
+}
+
+const container = document.getElementById('live-preview');
+
+loadTemplate('/templates/kids/kids_template_1.json')
+  .then(template => {
+    const filled = injectUserData(template, {
+      author: "Ashish Kumar",
+      coverImage: "/img/default-cover.jpg",
+      image1: "/img/story-1.jpg",
+      image2: "/img/story-2.jpg",
+      image3: "/img/story-3.jpg"
+    });
+    renderTemplate(filled, container);
+  })
+  .catch(console.error);
