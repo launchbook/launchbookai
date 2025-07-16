@@ -191,16 +191,15 @@
     }
   };
 
-  // Dark/light toggle
-  // Load saved theme preference
+  // --- 🌙 Dark/Light Toggle Patch ---
 if (localStorage.getItem('theme') === 'dark') {
   document.documentElement.classList.add('dark');
+} else {
+  document.documentElement.classList.remove('dark');
 }
 
-// Toggle dark mode and save preference
 document.getElementById("darkToggle")?.addEventListener("click", () => {
-  document.documentElement.classList.toggle("dark");
-  const isDark = document.documentElement.classList.contains("dark");
+  const isDark = document.documentElement.classList.toggle("dark");
   localStorage.setItem("theme", isDark ? "dark" : "light");
 });
 
