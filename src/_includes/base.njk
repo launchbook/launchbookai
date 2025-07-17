@@ -119,7 +119,7 @@
 
   <!-- 👤 Supabase Auth (CommonJS style) -->
   <script>
-    const supabase = window.supabase.createClient('https://YOUR_SUPABASE_URL.supabase.co', 'YOUR_PUBLIC_ANON_KEY');
+    const supabase = window.supabase.createClient('https://wgvquzflchtmgdgwugrq.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndndnF1emZsY2h0bWdkZ3d1Z3JxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTE3ODcwNTYsImV4cCI6MjA2NzM2MzA1Nn0.xMIbM0AYW24qerEeAi3SDTxrNOtO5tWUYHMudxNwTjg');
 
     const nav = document.getElementById("main-nav");
     const avatar = document.getElementById("user-avatar");
@@ -146,13 +146,13 @@
   return;
 }
 
-      const name = user.user_metadata?.name || user.email;
+     const name = user.user_metadata?.full_name || user.user_metadata?.name || user.email;
       avatar.textContent = name.charAt(0).toUpperCase();
       dropdown.classList.remove("hidden");
 
-      if (user.email === 'admin@launchebookai.com') {
-        document.getElementById("admin-link").classList.remove("hidden");
-      }
+      if (user.user_metadata?.role === 'admin') {
+       document.getElementById("admin-link").classList.remove("hidden");
+       }
 
       avatar.addEventListener("click", () => {
         menu.classList.toggle("hidden");
