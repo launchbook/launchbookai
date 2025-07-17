@@ -1,9 +1,7 @@
 const { createClient } = require("@supabase/supabase-js");
 
 const supabase = createClient(
-  "https://wgvquzflchtmgdgwugrq.supabase.co",
-  "YOUR_ANON_KEY" // Replace with actual anon key
-);
+  "https://wgvquzflchtmgdgwugrq.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndndnF1emZsY2h0bWdkZ3d1Z3JxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTE3ODcwNTYsImV4cCI6MjA2NzM2MzA1Nn0.xMIbM0AYW24qerEeAi3SDTxrNOtO5tWUYHMudxNwTjg" // Replace with actual anon key);
 
 window.addEventListener("DOMContentLoaded", async () => {
   // 👁️ Toggle password visibility
@@ -57,97 +55,127 @@ window.addEventListener("DOMContentLoaded", async () => {
   }
 
   // ✅ Signin with Remember Me + Last Login Tracking
-  const loginForm = document.querySelector("#signin-form");
-  if (loginForm) {
-    loginForm.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const email = loginForm["signin-email"].value.trim();
-      const password = loginForm["signin-password"].value;
-      const rememberMe = loginForm.querySelector("#remember-me")?.checked;
+const loginForm = document.querySelector("#signin-form");
 
-      const btn = loginForm.querySelector("button");
-      btn.disabled = true;
-      btn.textContent = "Signing in...";
+if (loginForm) {
+  loginForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
 
-      if (!email || !password) {
-        alert("❗ Please fill in both email and password");
-        btn.disabled = false;
-        btn.textContent = "Sign In";
-        return;
-      }
+    const email = loginForm["signin-email"].value.trim();
+    const password = loginForm["signin-password"].value;
+    const rememberMe = loginForm.querySelector("#remember-me")?.checked;
 
-      const { data, error } = await supabase.auth.signInWithPassword(
-        { email, password },
-        {
-          session: rememberMe ? "persist" : "session",
-        }
-      );
+    const btn = loginForm.querySelector("button");
+    btn.disabled = true;
+    btn.textContent = "Signing in...";
 
-      if (error) {
-        alert("❌ " + error.message);
-        btn.disabled = false;
-        btn.textContent = "Sign In";
-        return;
-      }
+    if (!email || !password) {
+      alert("❗ Please fill in both email and password");
+      btn.disabled = false;
+      btn.textContent = "Sign In";
+      return;
+    }
 
-      if (!data.user?.email_confirmed_at) {
-        alert("⚠️ Please verify your email first.");
-        window.location.href = "/verify-email";
-        return;
-      }
-
-      // ✅ Update last login metadata
-      await supabase.auth.updateUser({
-        data: { last_login_at: new Date().toISOString() },
-      });
-
-      alert("✅ Logged in!");
-      window.location.href = "/dashboard";
+    // ✅ 1. SIGN IN using password
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
     });
-  }
+
+    if (error) {
+      alert("❌ " + error.message);
+      btn.disabled = false;
+      btn.textContent = "Sign In";
+      return;
+    }
+
+    // ✅ 2. Email must be confirmed
+    if (!data.user?.email_confirmed_at) {
+      alert("⚠️ Please verify your email first.");
+      window.location.href = "/verify-email";
+      return;
+    }
+
+    // ✅ 3. Update last login metadata
+    await supabase.auth.updateUser({
+      data: {
+        last_login_at: new Date().toISOString(),
+      },
+    });
+
+    // ✅ 4. Set session persistence (remember me)
+    if (rememberMe) {
+      localStorage.setItem("supabase.auth.persistSession", "true");
+    } else {
+      localStorage.setItem("supabase.auth.persistSession", "false");
+    }
+
+    // ✅ 5. Redirect
+    alert("✅ Logged in!");
+    window.location.href = "/dashboard";
+  });
+}
+
 
   // ✅ Google OAuth Click
-  const googleBtn = document.querySelector("#google-signin") || document.querySelector("#google-signup") || document.querySelector("#google-login");
-  if (googleBtn) {
-    googleBtn.addEventListener("click", async () => {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: "google",
-        options: {
-          redirectTo: "https://launchebookai.leostarearn.com/dashboard",
-        },
-      });
-      if (error) alert("❌ Google login failed: " + error.message);
+const googleBtn =
+  document.querySelector("#google-signin") ||
+  document.querySelector("#google-signup") ||
+  document.querySelector("#google-login");
+
+if (googleBtn) {
+  googleBtn.addEventListener("click", async () => {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: "https://launchebookai.leostarearn.com/dashboard", // or handle email verification logic here if needed
+      },
     });
-  }
 
-  // ✅ Magic Link
-  const magicForm = document.querySelector("#magic-login-form");
-  if (magicForm) {
-    magicForm.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const email = document.getElementById("magic-email").value;
-      const btn = magicForm.querySelector("button");
-      btn.disabled = true;
-      btn.textContent = "Sending...";
+    if (error) {
+      alert("❌ Google login failed: " + error.message);
+    }
+  });
+}
 
-      const { error } = await supabase.auth.signInWithOtp({
-        email,
-        options: {
-          emailRedirectTo: "https://launchebookai.leostarearn.com/dashboard",
-        },
-      });
+// ✅ Magic Link Login
+const magicForm = document.querySelector("#magic-login-form");
 
-      if (error) {
-        alert("❌ " + error.message);
-        btn.disabled = false;
-        btn.textContent = "Send Magic Link";
-        return;
-      }
+if (magicForm) {
+  magicForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
 
-      alert("✅ Magic link sent. Check your inbox!");
-      btn.textContent = "Sent!";
+    const email = document.getElementById("magic-email").value.trim();
+    const btn = magicForm.querySelector("button");
+    btn.disabled = true;
+    btn.textContent = "Sending...";
+
+    if (!email) {
+      alert("❗ Please enter your email address.");
+      btn.disabled = false;
+      btn.textContent = "Send Magic Link";
+      return;
+    }
+
+    const { error } = await supabase.auth.signInWithOtp({
+      email,
+      options: {
+        emailRedirectTo: "https://launchebookai.leostarearn.com/dashboard",
+      },
     });
-  }
+
+    if (error) {
+      alert("❌ " + error.message);
+      btn.disabled = false;
+      btn.textContent = "Send Magic Link";
+      return;
+    }
+
+    alert("✅ Magic link sent. Check your inbox!");
+    btn.textContent = "Sent!";
+  });
+}
+
 
   // ✅ Forgot Password
   const forgotForm = document.querySelector("#forgot-password-form");
@@ -236,7 +264,7 @@ window.addEventListener("DOMContentLoaded", async () => {
     script.async = true;
     script.onload = () => {
       window.google.accounts.id.initialize({
-        client_id: "YOUR_GOOGLE_CLIENT_ID", // Replace this
+        client_id: "755135885950-a784v2qb5lcurno3k2p2qseg6692bfki.apps.googleusercontent.com", // Replace this
         callback: async (response) => {
           const { error } = await supabase.auth.signInWithIdToken({
             provider: "google",
