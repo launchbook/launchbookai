@@ -48,6 +48,12 @@ window.addEventListener("DOMContentLoaded", async () => {
         btn.textContent = "Create Account";
         return;
       }
+      if (!data.user) {
+  alert("❌ Signup failed: No user returned.");
+  btn.disabled = false;
+  btn.textContent = "Create Account";
+  return;
+}
 
       alert("✅ Signup successful. Please verify your email.");
       window.location.href = "/verify-email";
@@ -118,17 +124,12 @@ if (loginForm) {
 
 
   // ✅ Google OAuth Click
-const googleBtn =
-  document.querySelector("#google-signin") ||
-  document.querySelector("#google-signup") ||
-  document.querySelector("#google-login");
-
-if (googleBtn) {
-  googleBtn.addEventListener("click", async () => {
+document.querySelectorAll("#google-signin, #google-signup, #google-login").forEach((btn) => {
+  btn.addEventListener("click", async () => {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: "https://launchebookai.leostarearn.com/dashboard", // or handle email verification logic here if needed
+        redirectTo: "https://launchebookai.leostarearn.com/dashboard",
       },
     });
 
@@ -136,7 +137,7 @@ if (googleBtn) {
       alert("❌ Google login failed: " + error.message);
     }
   });
-}
+});
 
 // ✅ Magic Link Login
 const magicForm = document.querySelector("#magic-login-form");
