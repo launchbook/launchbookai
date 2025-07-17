@@ -24,41 +24,48 @@ window.addEventListener("DOMContentLoaded", async () => {
   });
 
   // ✅ Signup
-  const signupForm = document.querySelector("#signup-form");
-  if (signupForm) {
-    signupForm.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const email = signupForm["signup-email"].value;
-      const password = signupForm["signup-password"].value;
-      const fullName = signupForm["signup-fullname"].value;
+  const signUpForm = document.querySelector("#signup-form");
+if (signUpForm) {
+  signUpForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const btn = signUpForm.querySelector("button[type=submit]");
+    const fullName = signUpForm.querySelector("#full_name")?.value.trim();
+    const email = signUpForm.querySelector("#email")?.value.trim();
+    const password = signUpForm.querySelector("#password")?.value;
 
-      const btn = signupForm.querySelector("button");
-      btn.disabled = true;
-      btn.textContent = "Creating...";
+    // ✅ 3.1 Add Basic Validation
+    if (!email || !password || !fullName) {
+      alert("❗ All fields are required.");
+      return;
+    }
 
-      const { error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: { data: { full_name: fullName } },
-      });
+    btn.disabled = true;
+    btn.textContent = "Creating...";
 
-      if (error) {
-        alert("❌ " + error.message);
-        btn.disabled = false;
-        btn.textContent = "Create Account";
-        return;
-      }
-      if (!data.user) {
-  alert("❌ Signup failed: No user returned.");
-  btn.disabled = false;
-  btn.textContent = "Create Account";
-  return;
+    // ✅ Properly destructure data + error
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: {
+          full_name: fullName,
+        },
+        emailRedirectTo: "https://launchebookai.leostarearn.com/verify-email", // this matches your flow
+      },
+    });
+
+    if (error) {
+      alert("❌ Signup failed: " + error.message);
+      btn.disabled = false;
+      btn.textContent = "Create Account";
+      return;
+    }
+
+    // ✅ Redirect to verify email screen
+    window.location.href = "/verify-email";
+  });
 }
 
-      alert("✅ Signup successful. Please verify your email.");
-      window.location.href = "/verify-email";
-    });
-  }
 
   // ✅ Signin with Remember Me + Last Login Tracking
 const loginForm = document.querySelector("#signin-form");
@@ -83,24 +90,26 @@ if (loginForm) {
     }
 
     // ✅ 1. SIGN IN using password
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+const { data, error } = await supabase.auth.signInWithPassword({
+  email,
+  password,
+});
 
-    if (error) {
-      alert("❌ " + error.message);
-      btn.disabled = false;
-      btn.textContent = "Sign In";
-      return;
-    }
+if (error) {
+  alert("❌ " + error.message);
+  btn.disabled = false;
+  btn.textContent = "Sign In";
+  return;
+}
 
-    // ✅ 2. Email must be confirmed
-    if (!data.user?.email_confirmed_at) {
-      alert("⚠️ Please verify your email first.");
-      window.location.href = "/verify-email";
-      return;
-    }
+// ✅ 2. Safer check: is email verified?
+const { data: userData } = await supabase.auth.getUser();
+if (!userData.user?.email_confirmed_at) {
+  alert("⚠️ Please verify your email first.");
+  window.location.href = "/verify-email";
+  return;
+}
+
 
     // ✅ 3. Update last login metadata
     await supabase.auth.updateUser({
